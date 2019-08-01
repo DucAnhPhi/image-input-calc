@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 class Webcam:
-    def show():
+    def show(self):
         cap = cv2.VideoCapture(0)
         while(True):
             # Capture frame-by-frame
@@ -23,4 +23,4 @@ class Webcam:
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    Webcam.show()
+    Webcam().show()
