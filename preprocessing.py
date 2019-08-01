@@ -6,7 +6,7 @@ class PreProcessing:
         return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
     def gaussian_blur(self, img):
-        return cv2.GaussianBlur(img,(9,9),0)
+        return cv2.GaussianBlur(img,(7,7),0)
     
     def median_blur(self, img):
         return cv2.medianBlur(img, 3)
@@ -36,5 +36,6 @@ class PreProcessing:
         #preprocessed = self.morph_open(preprocessed)
         #preprocessed = self.morph_gradient(preprocessed)
         preprocessed = self.binarize(preprocessed)
+        #preprocessed = self.morph_close(preprocessed)
         #preprocessed = self.median_blur(preprocessed)
         return preprocessed
