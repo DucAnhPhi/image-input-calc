@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from preprocessing import PreProcessing
 
 class Webcam:
     def show(self):
@@ -9,10 +10,10 @@ class Webcam:
             ret, frame = cap.read()
 
             # Our operations on the frame come here
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            preprocessed = PreProcessing().preprocess(frame)
 
             # Display the resulting frame
-            cv2.imshow('frame', gray)
+            cv2.imshow('frame', preprocessed)
             
             # Press ESC to quit
             if cv2.waitKey(1) == 27:
