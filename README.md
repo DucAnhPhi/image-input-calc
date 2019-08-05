@@ -14,9 +14,16 @@ $ virtualenv -p python3.6 virtual_env
 ```
 
 - to begin using the virtual environment, it needs to be activated:
+- Run the following on Linux or MacOS:
 
 ```
 $ source virtual_env/bin/activate
+```
+
+- Run the following if you are working on Windows:
+
+```
+$ virtual_env/Scripts/activate.bat
 ```
 
 - finally install all dependencies running:
