@@ -63,6 +63,14 @@ $ deactivate
 - Each remaining character is then cropped from original frame and resized(typically shrunk) to a predetermined dimension so that ANN doesn't have to deal with huge varying-sized inputs
 
 ### 4. Ordering
+
+
+
+
+
+
+
+
 - infer correct mathematical structure (ordering) of math symbols, letters and numbers
 - apply local rules to comprehend compound fractions:
 
@@ -72,7 +80,12 @@ $ deactivate
 4. once all ratios evaluated, step backwards through recursive process and read left-to-right
 
 ### 5. Recognition
-**TODO**
-
+- [x] CNN to recognize single characters
+- [ ] Training and test procedure for handwritten formulars
+  - [ ] Direct segmented symbols as an input to the network
+  - [ ] Outsource outliers
+  - [ ] Training data?
+  - [ ] Pretraining with MNIST?
+ - [ ] Extract formula from recognized symbols
 ### 6. Symbolic math solver
 - solve recognized equations using SymPy
