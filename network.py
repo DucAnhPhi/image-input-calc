@@ -20,7 +20,7 @@ class CharacterClassifier(nn.Module):
             layers.append(nn.ReLU())
             height, width = (1 + (height - 2), 1 + (width - 2))
 
-        self.out_layer = nn.Linear(hidden_layers[len(hidden_layers)-1]*height*width, 10)
+        self.out_layer = nn.Linear(hidden_layers[len(hidden_layers)-1]*height*width, output_dim)
         self.layers = nn.Sequential(*layers)
         self.sigmoid = nn.Sigmoid()
 
