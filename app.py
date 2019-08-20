@@ -33,8 +33,8 @@ class App:
                 preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
             # get bounding boxes of contours and filter them
-            rects = [cv.boundingRect(cnt) for cnt in contours]
-            rects = Segmentation().filter_bounding_boxes(preprocessed, rects, hierarchy)
+            filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
+            rects = [cv.boundingRect(cnt) for cnt in filtered]
 
             # draw each bounding box
             for rect in rects:
@@ -56,7 +56,7 @@ class App:
         cv.destroyAllWindows()
 
     def run_with_img(self):
-        frame = cv.imread('sample2.jpg', 1)
+        frame = cv.imread('sample.jpg', 1)
 
         # define window of interest
         fHeight, fWidth, _ = frame.shape
@@ -77,8 +77,8 @@ class App:
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
         # get bounding boxes of contours and filter them
-        rects = [cv.boundingRect(cnt) for cnt in contours]
-        rects = Segmentation().filter_bounding_boxes(preprocessed, rects, hierarchy)
+        filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
+        rects = [cv.boundingRect(cnt) for cnt in filtered]
 
         # draw each bounding box
         for rect in rects:
