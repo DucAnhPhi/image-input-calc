@@ -43,5 +43,6 @@ class PreProcessing:
         preprocessed = self.morph_open(preprocessed)
         preprocessed = self.gaussian_blur(preprocessed)
         preprocessed = self.binarize(preprocessed)
-        preprocessed = self.erode(preprocessed)
+        # preprocessed = self.erode(preprocessed)
+        preprocessed = self.morph_close(preprocessed)
         return preprocessed

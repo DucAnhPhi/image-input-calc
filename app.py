@@ -6,22 +6,8 @@ from segmentation import Segmentation
 
 class App:
     def process(self, frame):
-        # Our operations on the frame come here
-
-        # define window of interest
-        fHeight, fWidth, _ = frame.shape
-        window = (100, 100, fWidth-200, fHeight-200)
-        wX, wY, wWidth, wHeight = window
-
-        # draw window
-        cv.rectangle(frame, (wX, wY), (wX+wWidth,
-                                       wY+wHeight), (0, 0, 255), 2)
-
-        # crop frame according to defined window
-        cropped = frame[wY:wY+wHeight, wX:wX+wWidth]
-
         # preprocess cropped image
-        preprocessed = PreProcessing().preprocess(cropped)
+        preprocessed = PreProcessing().preprocess(frame)
 
         # find contours using algorithm by Suzuki et al. (1985)
         contours, hierarchy = cv.findContours(
@@ -34,14 +20,12 @@ class App:
         # draw each bounding box
         for rect in rects:
             rX, rY, rWidth, rHeight = rect
-            rX = rX + wX
-            rY = rY + wY
             cv.rectangle(frame, (rX, rY), (rX+rWidth,
                                            rY+rHeight), (0, 255, 0), 2)
-        # preprocessing()
         # BorderRemoval()
         # Segmentation()
         # LineFitting()
+        return preprocessed
 
     def run_with_webcam(self):
         cap = cv.VideoCapture(0)
@@ -51,7 +35,7 @@ class App:
             _, frame = cap.read()
 
             # Processing the frame
-            self.process(frame)
+            preprocessed = self.process(frame)
 
             # Display the resulting frame
             cv.imshow('frame', frame)
@@ -67,7 +51,7 @@ class App:
     def run_with_img(self):
         frame = cv.imread('sample.jpg', 1)
 
-        self.process(frame)
+        preprocessed = self.process(frame)
 
         # Display the resulting frame
         cv.imshow('frame', frame)
@@ -84,9 +68,10 @@ class App:
                 _, frame = cap.read()
 
                 # Processing the frame
-                self.process(frame)
+                preprocessed = self.process(frame)
 
                 # Display the resulting frame
+                # cv.imshow('frame', frame)
                 cv.imshow('frame', frame)
 
                 # Press ESC to quit
