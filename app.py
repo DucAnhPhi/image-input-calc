@@ -22,10 +22,7 @@ class App:
             rX, rY, rWidth, rHeight = rect
             cv.rectangle(frame, (rX, rY), (rX+rWidth,
                                            rY+rHeight), (0, 255, 0), 2)
-        # BorderRemoval()
-        # Segmentation()
-        # LineFitting()
-        # return preprocessed
+
         return preprocessed
 
     def run_with_webcam(self):

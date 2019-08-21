@@ -38,7 +38,7 @@ class PreProcessing:
                                          cv.THRESH_BINARY, 11, 2)
         return binarized
 
-    def mediumbinarize(self, img):
+    def medium_binarize(self, img):
         # We add a specialized threshold to binarize
         boundary = (np.amin(img) + np.amax(img)) / 2
         _, medianbinarized = cv.threshold(
@@ -53,7 +53,7 @@ class PreProcessing:
         preprocessed = self.erode(preprocessed)
         return preprocessed
 
-    def mask_preprocess(self, img):
+    def preprocess_for_mask(self, img):
         preprocessed = self.convert_gray(img)
         preprocessed = self.gaussian_blur(preprocessed)
         preprocessed = self.morph_open(preprocessed)
@@ -62,46 +62,44 @@ class PreProcessing:
         preprocessed = self.morph_close(preprocessed)
         return preprocessed
 
-    def BorderRemovalMask(self, InIm, kernelsize=20, iterating=10):  # 5,5
+    def get_background_removal_mask(self, frame, kernelsize=20, iterating=10):
+        # preprocessing for mask generation
+        preprocessed = self.preprocess_for_mask(frame)
+
         # We try to remove any and all contours which connect to the border, because letters tend not to connect and most others do.
         # Create a black border. This is important for eroding and floodfilling later
-        RetIm = cv.copyMakeBorder(
-            InIm, 10, 10, 10, 10, cv.BORDER_CONSTANT, value=(0, 0, 0))
+        mask = cv.copyMakeBorder(
+            preprocessed, 10, 10, 10, 10, cv.BORDER_CONSTANT, value=(0, 0, 0))
 
         # We erode to ensure that we don't miss isolated points
         # Please note that we erode the image so strongly, that it is no longer usefull.
         # Instead we use this to create a fairly good mask
         kernel = np.ones((kernelsize, kernelsize))
-        RetIm = cv.erode(RetIm, kernel, iterating)
-
-        # Other filters that I found might be usefull. They didn't make the cut though
-        # cv.morphologyEx(PLIm, cv.MORPH_OPEN, kernel, iterations=1)
-        # PLIm = cv.GaussianBlur(PLIm, (9, 9), 0)
+        mask = cv.erode(mask, kernel, iterating)
 
         # IMPORTANT: We use mediumbinarize not binarize here, because we have a high contrast image.
         # Using binarize would give contours to the outside contours, which we don't want.
-        RetIm = self.mediumbinarize(RetIm)
+        mask = self.medium_binarize(mask)
 
         # creating a mask for flood fill
-        h = RetIm.shape[0]
-        w = RetIm.shape[1]
+        h = mask.shape[0]
+        w = mask.shape[1]
 
-        mask = np.zeros((h + 2, w + 2), np.uint8)
+        floodFillMask = np.zeros((h + 2, w + 2), np.uint8)
 
         # we flood fill the border, removing any and all contours near it. Ideally only unique features in the centre of the image remains
-        cv.floodFill(RetIm, mask, (1, 1), 255)
+        cv.floodFill(mask, floodFillMask, (1, 1), 255)
 
         # We remove the border to ensure that our image has the same dimensions as it originally had
-        RetIm = RetIm[10:h - 10, 10:w - 10]
+        mask = mask[10:h - 10, 10:w - 10]
 
-        return RetIm
+        return mask
 
     def background_contour_removal(self, frame):
-        # better preprocessing for clearer image
-        framePreprocessed = PreProcessing().preprocess(frame)
-        # better preprocessing for mask generation
-        maskPreprocessed = PreProcessing().mask_preprocess(frame)
+        # preprocessing for clearer image
+        preprocessed = self.preprocess(frame)
         # mask generation
-        borderRemovalMask = PreProcessing().BorderRemovalMask(maskPreprocessed)
-        preprocessed = np.where(borderRemovalMask == 0, framePreprocessed, 255)
+        mask = self.get_background_removal_mask(frame)
+        # apply mask on preprocessed image
+        preprocessed = np.where(mask == 0, preprocessed, 255)
         return preprocessed
