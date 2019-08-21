@@ -61,12 +61,6 @@ class Segmentation:
                         return False
             return True
 
-    def filter_contour_on_edge(self, img, cnt):
-        rX, rY, rWidth, rHeight = cv.boundingRect(cnt)
-        if rX == 0 or rY == 0 or (rX+rWidth) == len(img[0]) or (rY+rHeight) == len(img):
-            return False
-        return True
-
     def filter_contours(self, img, contours, hierarchy):
         filtered = []
         for i in range(len(contours)):
@@ -75,7 +69,6 @@ class Segmentation:
             valid = valid & self.filter_small_contour(img, cnt)
             valid = valid & self.filter_nested_contour(
                 img, contours, hierarchy, cnt, i)
-            valid = valid & self.filter_contour_on_edge(img, cnt)
             if valid:
                 filtered.append(cnt)
         filtered = self.filter_far_away_contours(filtered)
