@@ -92,7 +92,13 @@ $ deactivate
 
 ### 5. Recognition
 
-**TODO**
+- [x] CNN to recognize single characters
+- [ ] Training and test procedure for handwritten formulars
+  - [ ] Direct segmented symbols as an input to the network
+  - [ ] Outsource outliers
+  - [ ] Training data?
+  - [ ] Pretraining with MNIST?
+- [ ] Extract formula from recognized symbols
 
 ### 6. Symbolic math solver
 
