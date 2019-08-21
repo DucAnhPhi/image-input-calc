@@ -5,10 +5,10 @@ from segmentation import Segmentation
 
 
 class App:
-    def process(self, frame):
-        # preprocess cropped image
-        preprocessed = PreProcessing().preprocess(frame)
 
+    def process(self, frame):
+        preprocessed = PreProcessing().background_contour_removal(
+            frame)
         # find contours using algorithm by Suzuki et al. (1985)
         contours, hierarchy = cv.findContours(
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
@@ -25,6 +25,7 @@ class App:
         # BorderRemoval()
         # Segmentation()
         # LineFitting()
+        # return preprocessed
         return preprocessed
 
     def run_with_webcam(self):
