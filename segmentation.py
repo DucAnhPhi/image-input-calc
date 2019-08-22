@@ -74,9 +74,33 @@ class Segmentation:
         filtered = self.filter_far_away_contours(filtered)
         return filtered
 
-    def approx_contour(self, cnt, precision=0.1):
-        # approx contour shape to another shape with less # vertices depending on precision we specify - uses Douglas-Peucker algorithm.
-        # epsilon is max distance from contour to approx. contour
-        epsilon = precision * cv.arcLength(cnt, True)
-        approx = cv.approxPolyDP(cnt, epsilon, True)
-        return approx
+    def resize_keep_ratio(self, img, size=75, interpolation=cv.INTER_AREA):
+        h, w = img.shape[:2]
+        c = None if len(img.shape) < 3 else img.shape[2]
+        if h == w:
+            return cv.resize(img, (size, size), interpolation)
+        if h > w:
+            dif = h
+        else:
+            dif = w
+        x_pos = int((dif-w)/2.)
+        y_pos = int((dif-h)/2.)
+        if c is None:
+            mask = np.zeros((dif, dif), dtype=img.dtype)
+            mask[y_pos:y_pos+h, x_pos:x_pos+w] = img[:h, :w]
+        else:
+            mask = np.zeros((dif, dif, c), dtype=img.dtype)
+            mask[y_pos:y_pos+h, x_pos:x_pos+w,
+                 :] = img[:h, :w, :] = img[:h, :w, :]
+        return cv.resize(mask, (size, size), interpolation)
+
+    def get_subimage_from_contour(self, frame, cnt):
+        x, y, cntWidth, cntHeight = cv.boundingRect(cnt)
+        blankImg = np.zeros(
+            shape=frame.shape, dtype=np.uint8)
+        cv.drawContours(
+            blankImg, [cnt], -1, (255, 255, 255), 1)
+        cv.fillPoly(blankImg, pts=[cnt], color=(255, 255, 255))
+        subImg = blankImg[y:y+cntHeight, x:x+cntWidth]
+        subImg = self.resize_keep_ratio(subImg)
+        return subImg
