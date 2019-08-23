@@ -1,44 +1,82 @@
 import torch
 import os
 import csv
-import cv2
+from PIL import Image
 import numpy as np
 from torch.utils.data import Dataset
+from torchvision import transforms
+from tqdm import tqdm
+
 
 class HASY(Dataset):
 
-    def __init__(self, data_root, train=True, transform=None):
+    def __init__(self, data_root, data_subfolder=os.path.join('classification-task', 'fold-1'), train=True):
         super(HASY, self).__init__()
         self.train = train
-        self.transform = transform
         self.data_root = data_root
-        self.label_map = {}
-        imgs, labels = self.__get_full_dataset()
-        self.data = torch.Tensor(imgs)
-        self.labels = torch.Tensor(labels)
-        self.size = len(imgs)
+        self.data_subfolder = os.path.join(self.data_root, data_subfolder)
+        self.__make_label_maps()
+        self.no_labels = 369
+        self.img_dims = (3, 32, 32)
+        if train:
+            imgs, labels = self.__get_data_from_file('train.csv')
+        else:
+            imgs, labels = self.__get_data_from_file('test.csv')
+        self.data = imgs
+        self.targets = labels
+        self.size = imgs.shape[0]
 
-    def __load_splits(self):
-        pass
-
-    def __get_full_dataset(self):
-        imgs = []
-        labels = []
-        with open(os.path.join(self.data_root, 'hasy-data-labels.csv')) as label_file:
+    def __get_data_from_file(self, file):
+        with open(os.path.join(self.data_subfolder, file)) as label_file:
             label_reader = csv.DictReader(label_file)
-            for label in label_reader:
-                img = np.asarray(cv2.imread(label['path']))
+            rows = list(label_reader)
+            idx = 0
+            length = len(rows)
+            imgs = torch.zeros((length, 3, 64, 64))
+            labels = torch.zeros(length)
+            for i, label in tqdm(enumerate(rows)):
+                img = Image.open(os.path.join(self.data_subfolder, label['path']))
                 label_id = label['symbol_id']
-                imgs.append(img)
-                labels.append(label_id)
-                self.label_map[label_id] = label['latex']
+                imgs[idx] = self.__preprocess(img)
+                labels[idx] = self.symbol_to_label[label_id]
+                idx += 1
         return imgs, labels
 
-    def show_label(self, symbol_id):
-        return self.label_map[symbol_id]
+    def __make_label_maps(self):
+        self.symbol_to_label = {}
+        self.label_to_symbol = {}
+        self.symbol_to_latex = {}
+        i = 0
+        with open(os.path.join(self.data_root, 'symbols.csv')) as mapping_file:
+            reader = csv.DictReader(mapping_file)
+            for row in reader:
+                self.symbol_to_label[row['symbol_id']] = i
+                self.label_to_symbol[i] = row['symbol_id']
+                self.symbol_to_latex = row['latex']
+
+    def __preprocess(self, img):
+        normalize = transforms.Normalize(
+            mean=[0.5],
+            std=[0.229]
+        )
+        preprocess = transforms.Compose([
+            transforms.Grayscale(1),   
+            transforms.Resize(64),
+            transforms.ToTensor(),
+            normalize
+        ])
+        return preprocess(img)
+
+    def get_symbol(self, idx):
+        return self.label_to_symbol[idx]
+
+    def get_character(self, idx):
+        return self.symbol_to_latex[self.get_symbol(idx)]
 
     def __len__(self):
         return self.size
 
-    def __getitem__(self, item):
-        return self.data[item]
+    def __getitem__(self, index):
+        # Stolen from pytorch
+        img, target = self.data[index], int(self.targets[index])
+        return img, target
