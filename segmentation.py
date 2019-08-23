@@ -80,3 +80,25 @@ class Segmentation:
         epsilon = precision * cv.arcLength(cnt, True)
         approx = cv.approxPolyDP(cnt, epsilon, True)
         return approx
+
+
+    def filtered_to_contourlist(self,filtered):
+        filteredContours=[]
+        for cnt in filtered:
+            filteredContours.append(cnt)
+        return filteredContours
+
+    def get_properties_mincircle(self,filteredContours):
+        xList = []
+        yList = []
+        rList = []
+
+        for i in range(len(filteredContours)):
+
+            (x, y), r = cv.minEnclosingCircle(filteredContours[i])
+
+            xList.append(x)
+            yList.append(y)
+            rList.append(r)
+
+        return xList,yList,rList

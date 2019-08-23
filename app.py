@@ -2,7 +2,9 @@ import numpy as np
 import cv2 as cv
 from preprocessing import PreProcessing
 from segmentation import Segmentation
+from ordering import LineOrdering
 
+from drawing import Draw
 
 class App:
 
@@ -15,15 +17,25 @@ class App:
 
         # get bounding boxes of contours and filter them
         filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
-        rects = [cv.boundingRect(cnt) for cnt in filtered]
+
+        # creating a List of the Filtered Contours
+        filteredContours=Segmentation().filtered_to_contourlist(filtered)
 
         # draw each bounding box
-        for rect in rects:
-            rX, rY, rWidth, rHeight = rect
-            cv.rectangle(frame, (rX, rY), (rX+rWidth,
-                                           rY+rHeight), (0, 255, 0), 2)
 
-        return preprocessed
+        boundingBoxFrame=Draw().draw_bounding_boxes(frame, filtered)
+
+
+
+        lineList,orderedImage=LineOrdering().line_assignement(filteredContours,preprocessed)
+
+        orderedLineList=LineOrdering().lineList_ordering(lineList)
+
+        orderedImage = Draw().draw_orderedImage(frame, orderedLineList)
+
+
+
+        return orderedImage
 
     def run_with_webcam(self):
         cap = cv.VideoCapture(0)
@@ -70,7 +82,8 @@ class App:
 
                 # Display the resulting frame
                 # cv.imshow('frame', frame)
-                cv.imshow('frame', frame)
+                cv.imshow('frame', preprocessed)
+
 
                 # Press ESC to quit
                 if cv.waitKey(1) == 27:
