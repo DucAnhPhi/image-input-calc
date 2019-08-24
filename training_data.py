@@ -7,6 +7,13 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from tqdm import tqdm
 
+MATH_SYMBOLS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+                'v', 'w', 'x', 'y', 'z', '*', '-', '+', '/', '(', ')']
+SYMBOL_CODES = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+                90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108,
+                110, 111, 112, 113, 114, 115,
+                184, 195, 196, 526, 923, 924]
 
 class HASY(Dataset):
 
@@ -15,8 +22,7 @@ class HASY(Dataset):
         self.train = train
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
-        self.__make_label_maps()
-        self.no_labels = len(self.label_to_symbol)
+        self.no_labels = len(MATH_SYMBOLS)
         self.img_dims = (1, 32, 32)
         if train:
             imgs, labels = self.__get_data_from_file('train.csv')
@@ -24,36 +30,22 @@ class HASY(Dataset):
             imgs, labels = self.__get_data_from_file('test.csv')
         self.data = imgs
         self.targets = labels
-        self.size = imgs.shape[0]
+        self.size = len(imgs)
 
     def __get_data_from_file(self, file):
         with open(os.path.join(self.data_subfolder, file)) as label_file:
             label_reader = csv.DictReader(label_file)
             rows = list(label_reader)
-            idx = 0
-            length = len(rows)
-            imgs = torch.zeros((length, self.img_dims[0], self.img_dims[1], self.img_dims[2]))
-            labels = torch.zeros(length)
+            imgs = []
+            labels = []
             for i, label in enumerate(tqdm(rows)):
-                img = Image.open(os.path.join(self.data_subfolder, label['path']))
-                label_id = label['symbol_id']
-                imgs[idx] = self.__preprocess(img)
-                labels[idx] = self.symbol_to_label[label_id]
-                idx += 1
+                label_id = int(label['symbol_id'])
+                for label_idx, symbol in enumerate(SYMBOL_CODES):
+                    if symbol == label_id:
+                        img = Image.open(os.path.join(self.data_subfolder, label['path']))
+                        imgs.append(self.__preprocess(img))
+                        labels.append(label_idx)
         return imgs, labels
-
-    def __make_label_maps(self):
-        self.symbol_to_label = {}
-        self.label_to_symbol = {}
-        self.symbol_to_latex = {}
-        i = 0
-        with open(os.path.join(self.data_root, 'symbols.csv')) as mapping_file:
-            reader = csv.DictReader(mapping_file)
-            for row in reader:
-                self.symbol_to_label[row['symbol_id']] = i
-                self.label_to_symbol[i] = row['symbol_id']
-                self.symbol_to_latex[row['symbol_id']] = row['latex']
-                i += 1
 
     def __preprocess(self, img):
         normalize = transforms.Normalize(
@@ -68,10 +60,10 @@ class HASY(Dataset):
         return preprocess(img)
 
     def get_symbol(self, idx):
-        return self.label_to_symbol[idx]
+        return SYMBOL_CODES[idx]
 
     def get_character(self, idx):
-        return self.symbol_to_latex[self.get_symbol(idx)]
+        return MATH_SYMBOLS[self.get_symbol(idx)]
 
     def __len__(self):
         return self.size
