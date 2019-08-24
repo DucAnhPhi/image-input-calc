@@ -16,7 +16,7 @@ class HASY(Dataset):
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
         self.__make_label_maps()
-        self.no_labels = 369
+        self.no_labels = len(self.label_to_symbol)
         self.img_dims = (1, 32, 32)
         if train:
             imgs, labels = self.__get_data_from_file('train.csv')
@@ -52,7 +52,8 @@ class HASY(Dataset):
             for row in reader:
                 self.symbol_to_label[row['symbol_id']] = i
                 self.label_to_symbol[i] = row['symbol_id']
-                self.symbol_to_latex = row['latex']
+                self.symbol_to_latex[row['symbol_id']] = row['latex']
+                i += 1
 
     def __preprocess(self, img):
         normalize = transforms.Normalize(
