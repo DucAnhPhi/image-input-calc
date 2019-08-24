@@ -17,7 +17,7 @@ class HASY(Dataset):
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
         self.__make_label_maps()
         self.no_labels = 369
-        self.img_dims = (3, 32, 32)
+        self.img_dims = (1, 32, 32)
         if train:
             imgs, labels = self.__get_data_from_file('train.csv')
         else:
@@ -32,9 +32,9 @@ class HASY(Dataset):
             rows = list(label_reader)
             idx = 0
             length = len(rows)
-            imgs = torch.zeros((length, 3, 64, 64))
+            imgs = torch.zeros((length, self.img_dims[0], self.img_dims[1], self.img_dims[2]))
             labels = torch.zeros(length)
-            for i, label in tqdm(enumerate(rows)):
+            for i, label in enumerate(tqdm(rows)):
                 img = Image.open(os.path.join(self.data_subfolder, label['path']))
                 label_id = label['symbol_id']
                 imgs[idx] = self.__preprocess(img)
@@ -57,11 +57,10 @@ class HASY(Dataset):
     def __preprocess(self, img):
         normalize = transforms.Normalize(
             mean=[0.5],
-            std=[0.229]
+            std=[0.2]
         )
         preprocess = transforms.Compose([
-            transforms.Grayscale(1),   
-            transforms.Resize(64),
+            transforms.Grayscale(num_output_channels=1),
             transforms.ToTensor(),
             normalize
         ])
