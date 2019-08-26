@@ -11,21 +11,22 @@ MATH_SYMBOLS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
                 'x', 'y', 'z', '*', '-', '+', '/', '(', ')']
 SYMBOL_CODES = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
                 113, 114, 115,
-                184, 195, 196, 526, 923, 924]
+                184, 195, 196, 922, 923, 924]
 
-class HASY(Dataset):
 
-    def __init__(self, data_root, data_subfolder=os.path.join('classification-task', 'fold-1'), train=True):
-        super(HASY, self).__init__()
+class MyDataSet(Dataset):
+
+    def __init__(self, data_root, data_subfolder='', train_file='', test_file='', train=True):
+        super(MyDataSet, self).__init__()
         self.train = train
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
         self.no_labels = len(MATH_SYMBOLS)
         self.img_dims = (1, 32, 32)
         if train:
-            imgs, labels = self.__get_data_from_file('train.csv')
+            imgs, labels = self.__get_data_from_file(train_file)
         else:
-            imgs, labels = self.__get_data_from_file('test.csv')
+            imgs, labels = self.__get_data_from_file(test_file)
         self.data = imgs
         self.targets = labels
         self.size = len(imgs)
@@ -51,7 +52,6 @@ class HASY(Dataset):
                         labels.append(label_idx)
         return imgs, labels
 
-
     def __preprocess(self, img):
         normalize = transforms.Normalize(
             mean=[0.5],
@@ -59,16 +59,11 @@ class HASY(Dataset):
         )
         preprocess = transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
+            transforms.Resize(32),
             transforms.ToTensor(),
             normalize
         ])
         return preprocess(img)
-
-    def get_symbol(self, idx):
-        return SYMBOL_CODES[idx]
-
-    def get_character(self, idx):
-        return MATH_SYMBOLS[self.get_symbol(idx)]
 
     def __len__(self):
         return self.size
@@ -77,3 +72,22 @@ class HASY(Dataset):
         # Stolen from pytorch
         img, target = self.data[index], int(self.targets[index])
         return img, target
+
+    def get_symbol(self, idx):
+        return SYMBOL_CODES[idx]
+
+    def get_character(self, idx):
+        return MATH_SYMBOLS[self.get_symbol(idx)]
+
+
+class HASY(MyDataSet):
+
+    def __init__(self, data_root, train=True):
+        super(HASY, self).__init__(data_root, data_subfolder=os.path.join('classification-task', 'fold-1'),
+                                   train_file='train.csv', test_file='test.csv', train=train)
+
+
+class SegmentedImgs(MyDataSet):
+
+    def __init__(self, data_root, train=True):
+        super(SegmentedImgs, self).__init__(data_root, train_file='labels.csv', test_file='labels.csv', train=train)

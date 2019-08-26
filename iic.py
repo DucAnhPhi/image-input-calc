@@ -20,9 +20,9 @@ def extract_labels(model):
     for file_name in sorted(os.listdir(file_path)):
         sym_idx.append([int(i) for i in re.findall(r'\d+', file_name)])
         img = cv2.imread(file_path + '/' + file_name)
-        img = cv2.resize(img, (28, 28), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(img, (32, 32), interpolation=cv2.INTER_AREA)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        np_img = np.asarray(img).reshape((1, 28, 28))
+        np_img = np.asarray(img).reshape((1, 32, 32))
         images.append(np_img)
     image_tensor = torch.Tensor(images)
     prediction = model(image_tensor)
@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
     # TODO: Change the dimensions, when a model with real training data is used
 
-    classifier = CharacterClassifier((1, 28, 28), [50], 42)
-    classifier.load_state_dict(torch.load('hasy_model-02.ckpt'))
+    classifier = CharacterClassifier((1, 32, 32), [50], 19)
+    classifier.load_state_dict(torch.load('hasy_model-trans.ckpt'))
 
     recognized = extract_labels(classifier)
 
