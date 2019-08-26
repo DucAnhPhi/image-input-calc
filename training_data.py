@@ -40,10 +40,17 @@ class HASY(Dataset):
                 label_id = int(label['symbol_id'])
                 for label_idx, symbol in enumerate(SYMBOL_CODES):
                     if symbol == label_id:
+                        rotation = transforms.RandomRotation(180)
+                        flip = transforms.RandomHorizontalFlip()
                         img = Image.open(os.path.join(self.data_subfolder, label['path']))
                         imgs.append(self.__preprocess(img))
+                        imgs.append(self.__preprocess(rotation(img)))
+                        imgs.append(self.__preprocess(flip(img)))
+                        labels.append(label_idx)
+                        labels.append(label_idx)
                         labels.append(label_idx)
         return imgs, labels
+
 
     def __preprocess(self, img):
         normalize = transforms.Normalize(

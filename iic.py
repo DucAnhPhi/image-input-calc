@@ -5,6 +5,7 @@ import cv2
 import os
 import numpy as np
 from network import CharacterClassifier
+import training_data as td
 
 
 def data_collection():
@@ -36,8 +37,7 @@ def extract_labels(model):
         if current_line_idx != sym_idx[i][0]:
             lines.append(line)
             line = []
-        if prediction[i][labels[i]].item() > eps:
-            line.append(labels[i].item())
+        line.append(td.MATH_SYMBOLS[labels[i].item()])
         current_line_idx = sym_idx[i][0]
     return lines
 
@@ -46,12 +46,9 @@ if __name__ == '__main__':
     data_collection()
 
     # TODO: Change the dimensions, when a model with real training data is used
-    input_dim = (1, 28, 28)
-    hidden_layers = [50, 100, 500]
-    output_dim = 10
 
-    classifier = CharacterClassifier(input_dim, hidden_layers, output_dim)
-    classifier.load_state_dict(torch.load('model/cc3749.ckpt'))
+    classifier = CharacterClassifier((1, 28, 28), [50], 42)
+    classifier.load_state_dict(torch.load('hasy_model-02.ckpt'))
 
     recognized = extract_labels(classifier)
 
