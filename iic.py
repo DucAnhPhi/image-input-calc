@@ -4,7 +4,7 @@ import re
 import cv2
 import os
 import numpy as np
-from network import CharacterClassifier
+from network import CharacterClassifier, classify
 import training_data as td
 
 
