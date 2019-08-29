@@ -171,15 +171,32 @@ class LineOrdering2:
 
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
 
-        p = []
+        yh = horVec[0]
+        xh = horVec[1]
+
+        sortHelperTuple=[]
 
         for i in range(len(contours)):
-            p.append((yList[i], xList[i]))
+            sortHelperTuple.append((contours[i],(yh*yList[i]+xh*xList[i])))
+
+        sortHelperTuple.sort(key=lambda tup: tup[1],reverse=True)
+
+        sortedLine = []
+        for i in range(len(sortHelperTuple)):
+            sortedLine.append(sortHelperTuple[i][0])
+
+        return sortedLine
+
+    def size_sorter(self, contours):
+
+        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
+
+
 
         sortHelperTuple=[]
 
         for i in range(len(p)):
-            sortHelperTuple.append((contours[i],self.scalarMultiplication(p[i],horVec)))
+            sortHelperTuple.append((contours[i],rList[i]))
 
         sortHelperTuple.sort(key=lambda tup: tup[1],reverse=True)
 
@@ -190,15 +207,13 @@ class LineOrdering2:
         return sortedLine
 
 
-
-
     def get_horVec2(self, contours):
 
 
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
 
         p = self.get_coords_list(yList, xList)
-        cutOffMean=0.2*np.mean(rList)
+        cutOffMean=np.mean(rList)
 
         vectorList = []
 
@@ -276,8 +291,8 @@ class LineOrdering2:
             return False,inIm
 
 
-    def get_OrthDistList(self,contours,xList,yList, horVec):
-
+    def get_OrthDistList(self,contours, horVec):
+        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
         orthDistList=[]
         normHorVec=self.normalise_vector(horVec)
 
@@ -289,13 +304,29 @@ class LineOrdering2:
         for i in range(len(xList)):
             yOrth=yO*yList[i]
             xOrth=xO*xList[i]
-            orthDistList.append((contours[i],np.sqrt(xOrth**2+yOrth**2)))
+            orthDistList.append(np.sqrt(xOrth**2+yOrth**2))
         return orthDistList
 
 
+    def get_linePositionList(self,orthDistList,rList):
+        maxRad=0
+        linePosition=0
+        nearestContourList = -1
+        for i in range(len(orthDistList)):
+            if rList[i]>maxRad:
+                linePosition=orthDistList[i]
+                maxRad=rList[i]
+                nearestContourList=i
+        linePositionList=[]
+        print(orthDistList)
+        linePositionList.append(linePosition)
+        return linePositionList,nearestContourList
 
     def get_orderedLineList2(self,contours,inIm):
-
+        if len(contours)==0:
+            print("ERROR NO CONTOURS DETECTED")
+            cv.waitKey()
+            return None, (0,0), inIm
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
         p=self.get_coords_list(yList,xList)
 
@@ -304,15 +335,11 @@ class LineOrdering2:
         cutOffRadius=0.5*np.mean(rList)
         contoursLargerThanRadius=self.get_contoursLargerThanRadius(contours, cutOffRadius,rList=rList)
 
-        horVec= self.get_horVec2(contours)
+        horVec= self.get_horVec2(contoursLargerThanRadius)
+        horVec=(0,10)
+
 
         print("Mark 3")
-
-        horVec=(0,10)
-        sortedContours=self.horVec_sorter2(contours,horVec)
-
-        print("Mark 4")
-        contoursCopy = contoursLargerThanRadius.copy()
 
 
 
@@ -321,60 +348,90 @@ class LineOrdering2:
 
 
 
-        print("Mark 5")
-        contourOrthDistList=self.get_OrthDistList(contours,xList,yList, horVec)
+        print("Mark 4")
+        orthDistList=self.get_OrthDistList(contours, horVec)
 
-        sorted(contourOrthDistList, key=lambda x: x[1])
 
+
+        cutOffRadius = np.mean(rList)
+        contoursLargerThanRadius = self.get_contoursLargerThanRadius(contours, cutOffRadius, rList=rList)
+        print("Mark 4.1")
+        #largeContourOrthDistList=self.get_OrthDistList(contoursLargerThanRadius, horVec)
+
+        linePositionList,nearestContourIndex= self.get_linePositionList(orthDistList,rList)
+
+        yh=.1*int(horVec[0])
+        xh=.1*int(horVec[1])
+        cv.circle(inIm, (int(xList[nearestContourIndex]), int(yList[nearestContourIndex])), int(maxRad), (255,0,0), 10)
+        cv.circle(inIm, (int(xList[nearestContourIndex]), int(yList[nearestContourIndex])), int(rList[nearestContourIndex]), (0,255,0), 10)
+
+        cv.line(inIm, (int(xList[nearestContourIndex]), int(yList[nearestContourIndex])), (int(xList[nearestContourIndex]+ xh), int(yList[nearestContourIndex]+yh)), (200, 100, 150), 10)
+
+        for i in range(len(orthDistList)):
+
+            cv.putText(inIm, str(int(orthDistList[i])), (int(xList[i]), int(yList[i])), cv.FONT_HERSHEY_SIMPLEX, 2 , (255,0,0),2,cv.LINE_AA)
 
         orderedLineList = []
 
         toAddLine = []
-        toAddLine.append(contourOrthDistList[0][0])
+
+
+        lineAcceptanceRadius=0.5*maxRad
+
         print("maxRad = ", maxRad)
-
-        upperOrthDist=contourOrthDistList[0][1]
-
-        #for i in range(1,len(contourOrthDistList)):
-        #    print("OrthDist Value:",contourOrthDistList[i][1])
-        #    if contourOrthDistList[i][1]< upperOrthDist and contourOrthDistList[i][1] > (upperOrthDist - maxRad):
-        #        toAddLine.append(contourOrthDistList[i][0])
-        #    else:
-        #        print(" ")
-        #        upperOrthDist=contourOrthDistList[i][1]
-        #        orderedLineList.append(toAddLine)
-        #        toAddLine=[]
-        #        toAddLine.append(contourOrthDistList[i][0])
+        print("Area of Acceptance: ", str(linePositionList[0] + lineAcceptanceRadius) , " to ", str(linePositionList[0] - lineAcceptanceRadius))
 
 
-        while len(contoursCopy)>0:
-            toAddLine=[]
-            toAddLine.append(contoursCopy[0])
-            del contoursCopy[0]
+        contoursCopy = contours.copy()
+        for i in range(len(linePositionList)):
 
-            i=0
-            while i<len(toAddLine):
-                j=0
-                (x, y), r = cv.minEnclosingCircle(toAddLine[i])
-                if r>cutOffRadius:
-                    while j<len(contoursCopy):
-                        isAccepted, inIm = self.is_accepted_in_line(toAddLine[i],contoursCopy[j],horVec,inIm,maxRad)
-                        if isAccepted:
-                            toAddLine.append(contoursCopy[j])
-                            del contoursCopy[j]
-                        else:
-                            j=j+1
-                i=i+1
-
-            sortedToAddLine=self.horVec_sorter2(toAddLine,horVec)
-            orderedLineList.append(sortedToAddLine)
+            #print("linePositionList: ", i, " / ", linePositionList[i])
+            for j in range(len(contoursCopy)):
+                #print("orthDistList: ", j, " / ", orthDistList[j])
+                if orthDistList[j]< (linePositionList[i] + lineAcceptanceRadius) and orthDistList[j] > (linePositionList[i] - lineAcceptanceRadius):
+                    toAddLine.append(contours[j])
+                    print("Added a contour")
+                else:
+                    print(" ")
+            orderedLineList.append(toAddLine)
 
 
-        print("Mark 6")
+        #while len(contoursCopy)>0:
+        #    toAddLine=[]
+        #    toAddLine.append(contoursCopy[0])
+        #    del contoursCopy[0]
+        #    i=0
+        #    while i<len(toAddLine):
+        #        j=0
+        #        (x, y), r = cv.minEnclosingCircle(toAddLine[i])
+        #        if r>cutOffRadius:
+        #            while j<len(contoursCopy):
+        #                isAccepted, inIm = self.is_accepted_in_line(toAddLine[i],contoursCopy[j],horVec,inIm,maxRad)
+        #                if isAccepted:
+        #                    toAddLine.append(contoursCopy[j])
+        #                    del contoursCopy[j]
+        #                else:
+        #                    j=j+1
+        #        i=i+1
+
+        #    sortedToAddLine=self.horVec_sorter2(toAddLine,horVec)
+        #    orderedLineList.append(sortedToAddLine)
+
+
+        print("Mark 5")
         reducedOrderedLineList=self.remove_lines_with_length_less_than(orderedLineList)
 
 
+        print("Mark 6")
+        for i in range(len(reducedOrderedLineList)):
+            reducedOrderedLineList[i]=self.horVec_sorter2(reducedOrderedLineList[i],horVec)
+
+
+
+        horVec = self.normalise_vector(horVec)
         print("Mark 7")
+
+
 
         return reducedOrderedLineList, horVec, inIm
 

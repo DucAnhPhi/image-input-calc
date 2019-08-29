@@ -31,35 +31,53 @@ class App:
 
         return orderedLineList,orderedImage
 
-    def process(self, frame):
+    def process(self, frame,name="TrainingSamples/Image_"):
         preprocessed = PreProcessing().background_contour_removal(
             frame)
+
+
+        preprocessed=PreProcessing().preprocess3(frame)
+        preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
+        preprocessed = PreProcessing().background_contour_removal(preprocessed)
+
+
+        preprocessedForImages=preprocessed.copy()
+
+        print("Preprocessing Done")
+
         # find contours using algorithm by Suzuki et al. (1985)
         contours, hierarchy = cv.findContours(
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
-        print("Preprocessing Done")
+        print("Segmentation Done")
 
         # get bounding boxes of contours and filter them
         filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
 
-        print("Segmentation Done")
-
-        # creating a List of the Filtered Contours
-        filteredContours=Segmentation().filtered_to_contourlist(filtered)
 
         print("Segmentation Filtering Done")
 
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
+        contoursUsedForOrdering=filtered.copy()
+
+        if len(contoursUsedForOrdering)==0:
+            print("ERROR NO CONTOURS DETECTED")
+            cv.waitKey()
+            return preprocessed
+
 
         # draw each bounding box
         #boundingBoxFrame, orderedImage = Draw().draw_bounding_boxes_around_contours(preprocessed, filteredContours)
         print("Starting Line Ordering Done")
         # create ordered List of Contours
-        orderedLineList, orderedImage = self.line_ordering(filteredContours, preprocessed.copy(), method=2)
+        orderedLineList, orderedImage = self.line_ordering(contoursUsedForOrdering, preprocessed.copy(), method=2)
         print("Line Ordering Done")
+
+        #imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
+
+        Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
 
         return orderedImage
 
@@ -69,7 +87,6 @@ class App:
         result = Draw().scale_image(result , 0.25)
         cv.imshow('frame', frame)
         cv.imshow('preprocessed', result)
-        cv.waitKey()
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
 
 
@@ -94,10 +111,10 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    def run_with_img(self,source='sample.jpg'):
+    def run_with_img(self,source='sample.jpg',name="TrainingSamples/Image_"):
         frame = cv.imread(source, 1)
 
-        preprocessed = self.process(frame)
+        preprocessed = self.process(frame,name)
 
         # Display the resulting frame
         self.show_results(frame, preprocessed)
@@ -134,6 +151,13 @@ class App:
             print("Using Webcam")
             App().run_with_webcam()
 
+        if (source=="TrainingSamples"):
+            for i in range(0, 42):
+                name = ("TrainingSamples/Image_" + str(292 + i) + "_")
+                source=("SampleImages\IMG_0"+str(292+i)+".JPG")
+                print("Opening Image")
+                print(source)
+                App().run_with_img(source,name)
         sourceEnding = source.split(".", 1)[1]
 
         if sourceEnding == "MOV":
@@ -147,7 +171,8 @@ class App:
 
 
 if __name__ == '__main__':
-    App().run("SampleImages\IMG_0328.JPG")#"sample.MOV")
+
+    App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     # App().run_with_webcam()
     # App().run_with_img()
     # App().run_with_video('sample.MOV')

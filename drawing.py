@@ -65,8 +65,10 @@ class Draw:
         yList = []
         rList = []
 
-        yh=10*int(horVec[0])
-        xh=10*int(horVec[1])
+
+        yh=int(100*horVec[0])
+        xh=int(100*horVec[1])
+
 
         for i in range(len(orderedLine)):
             (x, y), r = cv.minEnclosingCircle(orderedLine[i])
@@ -81,7 +83,7 @@ class Draw:
             cv.line(inIm, (xList[i], yList[i]), (xList[i]+xh, yList[i]+yh), (200,100,150), 10)
             if(i!=0 ):
                 cv.line(inIm,(xList[i-1],yList[i-1]),(xList[i],yList[i]),color,10)
-            cv.putText(inIm, str((i+1)), (xList[i],yList[i]), cv.FONT_HERSHEY_SIMPLEX, 2 , color,1,cv.LINE_AA)
+            #cv.putText(inIm, str((i+1)), (xList[i],yList[i]), cv.FONT_HERSHEY_SIMPLEX, 2 , color,1,cv.LINE_AA)
         return inIm
 
     def draw_orderedImage2(self,orderedLineList,horVec,inIm):
