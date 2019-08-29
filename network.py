@@ -7,7 +7,6 @@ class CharacterClassifier(nn.Module):
 
     def __init__(self, input_dim, hidden_layers, output_dim=18):
         super(CharacterClassifier, self).__init__()
-        # We got 18 characters in total: (0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ,+, -, *, /, x, y, m, =)
         channels, height, width = input_dim
         layers = []
         layers.append(nn.Conv2d(channels, height*width, (5,5)))
@@ -34,7 +33,7 @@ class CharacterClassifier(nn.Module):
 
 
 def classify(img):
-    img_tensor = torch.Tensor((img)).reshape((1, 1, 32, 32))
+    img_tensor = torch.Tensor(img).reshape((1, 1, 32, 32))
     classifier = CharacterClassifier((1, 32, 32), [50], 19)
     classifier.load_state_dict(torch.load('hasy_model-02.ckpt'))
 

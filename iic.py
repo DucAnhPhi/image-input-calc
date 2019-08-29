@@ -1,4 +1,3 @@
-import datacollection as dc
 import torch
 import re
 import cv2
@@ -48,7 +47,7 @@ if __name__ == '__main__':
     # TODO: Change the dimensions, when a model with real training data is used
 
     classifier = CharacterClassifier((1, 32, 32), [50], 19)
-    classifier.load_state_dict(torch.load('hasy_model-trans.ckpt'))
+    classifier.load_state_dict(torch.load('hasy_model-02.ckpt'))
 
     recognized = extract_labels(classifier)
 

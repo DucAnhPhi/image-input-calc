@@ -41,12 +41,14 @@ class MyDataSet(Dataset):
                 label_id = int(label['symbol_id'])
                 for label_idx, symbol in enumerate(SYMBOL_CODES):
                     if symbol == label_id:
-                        rotation = transforms.RandomRotation(180)
-                        flip = transforms.RandomHorizontalFlip()
+                        rotation = transforms.RandomRotation(45)
+                        color_jitter = transforms.ColorJitter(0.5, 0.5, 0.5, 0.5)
                         img = Image.open(os.path.join(self.data_subfolder, label['path']))
                         imgs.append(self.__preprocess(img))
                         imgs.append(self.__preprocess(rotation(img)))
-                        imgs.append(self.__preprocess(flip(img)))
+                        imgs.append(self.__preprocess(color_jitter(img)))
+                        imgs.append(self.__preprocess(color_jitter(rotation(img))))
+                        labels.append(label_idx)
                         labels.append(label_idx)
                         labels.append(label_idx)
                         labels.append(label_idx)
@@ -58,7 +60,7 @@ class MyDataSet(Dataset):
             std=[0.2]
         )
         preprocess = transforms.Compose([
-            transforms.Grayscale(num_output_channels=1),
+            transforms.Grayscale(num_output_channels=3),
             transforms.Resize(32),
             transforms.ToTensor(),
             normalize
