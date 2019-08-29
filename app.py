@@ -5,7 +5,6 @@ from preprocessing import PreProcessing
 
 from segmentation import Segmentation
 
-from ordering import LineOrdering
 from ordering2 import LineOrdering2
 
 from drawing import Draw
@@ -16,20 +15,7 @@ from drawing import Draw
 
 class App:
 
-    def line_ordering(self, contours, inIm, method=1):
 
-        if method ==1:
-            lineList, orderedImage = LineOrdering().line_assignement(contours, inIm, n=2)
-
-            orderedLineList = LineOrdering().lineList_ordering(lineList)
-
-            orderedImage = Draw().draw_orderedImage(inIm, orderedLineList)
-        if method ==2:
-            orderedLineList, horVec, orderedImage = LineOrdering2().get_orderedLineList2(contours,inIm)
-
-            orderedImage = Draw().draw_orderedImage2( orderedLineList, horVec,orderedImage)
-
-        return orderedLineList,orderedImage
 
     def process(self, frame,name="TrainingSamples/Image_"):
         preprocessed = PreProcessing().background_contour_removal(
@@ -72,7 +58,10 @@ class App:
         #boundingBoxFrame, orderedImage = Draw().draw_bounding_boxes_around_contours(preprocessed, filteredContours)
         print("Starting Line Ordering Done")
         # create ordered List of Contours
-        orderedLineList, orderedImage = self.line_ordering(contoursUsedForOrdering, preprocessed.copy(), method=2)
+
+        orderedLineList, horVec, orderedImage = LineOrdering2().get_orderedLineList2(contoursUsedForOrdering, preprocessed.copy())
+
+        orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
         print("Line Ordering Done")
 
         #imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
