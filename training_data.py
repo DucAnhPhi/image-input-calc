@@ -13,6 +13,8 @@ SYMBOL_CODES = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
                 113, 114, 115,
                 184, 195, 196, 922, 923, 924]
 
+IMAGE_DIMS = (1, 32, 32)
+
 
 class MyDataSet(Dataset):
 
@@ -22,7 +24,7 @@ class MyDataSet(Dataset):
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
         self.no_labels = len(MATH_SYMBOLS)
-        self.img_dims = (1, 32, 32)
+        self.img_dims = IMAGE_DIMS
         if train:
             imgs, labels = self.__get_data_from_file(train_file)
         else:
@@ -41,12 +43,14 @@ class MyDataSet(Dataset):
                 label_id = int(label['symbol_id'])
                 for label_idx, symbol in enumerate(SYMBOL_CODES):
                     if symbol == label_id:
-                        rotation = transforms.RandomRotation(180)
-                        flip = transforms.RandomHorizontalFlip()
+                        rotation = transforms.RandomRotation(45)
+                        color_jitter = transforms.ColorJitter(0.5, 0.5, 0.5, 0.5)
                         img = Image.open(os.path.join(self.data_subfolder, label['path']))
                         imgs.append(self.__preprocess(img))
                         imgs.append(self.__preprocess(rotation(img)))
-                        imgs.append(self.__preprocess(flip(img)))
+                        imgs.append(self.__preprocess(color_jitter(img)))
+                        imgs.append(self.__preprocess(color_jitter(rotation(img))))
+                        labels.append(label_idx)
                         labels.append(label_idx)
                         labels.append(label_idx)
                         labels.append(label_idx)
@@ -55,10 +59,9 @@ class MyDataSet(Dataset):
     def __preprocess(self, img):
         normalize = transforms.Normalize(
             mean=[0.5],
-            std=[0.2]
+            std=[0.5]
         )
         preprocess = transforms.Compose([
-            transforms.Grayscale(num_output_channels=1),
             transforms.Resize(32),
             transforms.ToTensor(),
             normalize
