@@ -31,12 +31,3 @@ class CharacterClassifier(nn.Module):
             out = layer(out)
         out = out.reshape(out.shape[0], out.shape[1]*out.shape[2]*out.shape[3])
         return self.sigmoid(self.out_layer(out))
-
-
-def classify(img):
-    img_tensor = torch.Tensor((img)).reshape((1, 1, 32, 32))
-    classifier = CharacterClassifier((1, 32, 32), [50], 19)
-    classifier.load_state_dict(torch.load('hasy_model-02.ckpt'))
-
-    label = torch.argmax(classifier(img_tensor))
-    print(training_data.MATH_SYMBOLS[label])
