@@ -22,9 +22,9 @@ class App:
             frame)
 
 
-        preprocessed=PreProcessing().preprocess3(frame)
-        preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
-        preprocessed = PreProcessing().background_contour_removal(preprocessed)
+        #preprocessed=PreProcessing().preprocess3(frame)
+        #preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
+        #preprocessed = PreProcessing().background_contour_removal(preprocessed)
 
 
         preprocessedForImages=preprocessed.copy()
@@ -66,7 +66,7 @@ class App:
 
         #imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
 
-        Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
+        #Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
 
         return orderedImage
 
@@ -160,8 +160,9 @@ class App:
 
 
 if __name__ == '__main__':
+    #App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
+    App().run("sample.MOV")
 
-    App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     # App().run_with_webcam()
     # App().run_with_img()
     # App().run_with_video('sample.MOV')

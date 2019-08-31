@@ -5,66 +5,52 @@ import numpy as np
 from segmentation import Segmentation
 from drawing import Draw
 
+
+
 class LineOrdering2:
 
+    # returns the magnitude of a vector
     def mag(self,vectorIn):
         return np.sqrt(vectorIn[0]**2+vectorIn[1]**2)
 
+    # returns the distance between two points
     def get_distanceVector(self,p1,p2):
         return (p2[0]-p1[0],p2[1]-p1[1])
 
-    def scalarVectorMul(self, vector1, scalar):
-        return (vector1[0]*scalar,vector1[1]*scalar)
+    # returns the vector multiplied with the scalar
+    def scalarVectorMul(self, vector, scalar):
+        return (vector[0]*scalar,vector[1]*scalar)
 
+    # returns the scalar product of two vectors
     def scalarMultiplication(self, vector1,vector2):
         return (vector1[0]*vector2[0]+vector1[1]*vector2[1])
 
+    # returns the vector difference between two vectors
     def subtract(self,v1,v2):
         return (v1[0]-v2[0],v1[1]-v2[1])
 
-    def return_radius(self, item):
-        return item[3]
-
-    def return_length(self, item):
-        return len(item)
-
-
-    def within_radius(self, p1, p2, r):
-        x1,y1=p1
-        x2,y2=p2
-        if (x1-x2)**2+(y1-y2)**2>r**2:
-            return False
-        else:
-            return True
-
+    # returns the integerized vector of a vector. Important for pixels
     def turn_vector_into_intVector(self,v1):
         return (int(v1[0]),int(v1[1]))
 
+    # swap x and y. Usefull for transition of (x,y) and (y,x) vectors
     def get_transposed_vector(self,vector):
         return (vector[1],vector[0])
 
+    #get distance between two points
     def get_distance(self, p1, p2):
         x1, y1 = p1
         x2, y2 = p2
         return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
+    # transfer y- and x- coordinate-Lists to a List of (y,x)-coordinate tupels
     def get_coords_list(self, yList,xList):
         p = []
         for i in range(len(xList)):
             p.append((yList[i], xList[i]))
         return p
 
-
-    def relative_change(self, filteredContoursData, Bias=10):
-        relativeChange = []
-        for i in range(len(filteredContoursData) - 1):
-            rThis = filteredContoursData[i + 1][3]
-            rNext = filteredContoursData[i][3]
-            relativeChange.append((rThis - rNext) / (rThis+Bias))
-
-
-        return relativeChange
-
+    # normalise a vector. This gives an error if you try to normalise (0,0)
     def normalise_vector(self,v1):
         if self.mag(v1)>0:
             v1=self.scalarVectorMul(v1,(1/self.mag(v1)))
@@ -72,8 +58,7 @@ class LineOrdering2:
             print("Trying to normalise (0,0)")
         return v1
 
-
-
+    # get the average Vector out of a List of Vectors
     def get_meanVector(self, vectorList):
         x = 0
         y = 0
@@ -84,6 +69,7 @@ class LineOrdering2:
 
         return (x,y)
 
+    # reverse all Vectors in a List that point in the opposite direction as "direction"
     def directionalize(self, vectorList, direction):
         returnVectorList=[]
         for i in range(len(vectorList)):
@@ -95,7 +81,7 @@ class LineOrdering2:
 
         return returnVectorList
 
-
+    # Input is a List of Lists. This removes all Sub-Lists with length than 2 from the Input-List
     def remove_lines_with_length_less_than(self,orderedLineList, length=2):
         reducedOrderedLineList = []
         for i in range(len(orderedLineList)):
@@ -103,7 +89,7 @@ class LineOrdering2:
                 reducedOrderedLineList.append(orderedLineList[i])
         return reducedOrderedLineList
 
-
+    # This returns a List of contours that are larger than the cutOffRadius
     def get_contoursLargerThanRadius(self,contours, cutOffRadius, rList=None):
         if rList==None:
             xList, yList, rList = Segmentation().get_properties_mincircle(contours)
@@ -117,56 +103,7 @@ class LineOrdering2:
 
 
 
-
-
-
-
-
-
-
-
-
-
-    def bordering_contours(self, contour1, contour2):
-        (x1, y1), r1 = cv.minEnclosingCircle(contour1)
-        (x2, y2), r2 = cv.minEnclosingCircle(contour2)
-
-        d = self.get_distance((x1, y1), (x2, y2))
-
-        maxAcceptRatio = 3.0
-        if (d < maxAcceptRatio * r1 and d < maxAcceptRatio * r2):
-            return True
-        else:
-            return False
-
-    def get_largestVector(self, contours):
-        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
-
-        p = []
-
-        for i in range(len(contours)):
-            p.append((yList[i], xList[i]))
-
-        fullVectorList=[]
-
-        for i in range(len(contours)):
-            for j in range(len(contours)):
-                if i<j:
-                    fullVectorList.append(self.get_distanceVector(p[i],p[j]))
-
-        maxLength=0
-        maxLengthIndex=-1
-        maxVector=(0.1,0)
-        for i in range(len(fullVectorList)):
-            if self.mag(fullVectorList[i])>maxLength:
-                maxLength=self.mag(fullVectorList[i])
-                maxLengthIndex=i
-                maxVector=fullVectorList[maxLengthIndex]
-
-
-        return maxVector
-
-
+    #sort the contours by position in horVec direction
     def horVec_sorter2(self, contours, horVec):
 
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
@@ -187,6 +124,7 @@ class LineOrdering2:
 
         return sortedLine
 
+    #sort contours by size
     def size_sorter(self, contours):
 
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
@@ -206,91 +144,22 @@ class LineOrdering2:
 
         return sortedLine
 
-
-    def get_horVec2(self, contours):
-
-
-        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
-
-        p = self.get_coords_list(yList, xList)
-        cutOffMean=np.mean(rList)
-
-        vectorList = []
-
-        for i in range(len(contours)):
-            if rList[i]>cutOffMean:
-                for j in range(i,len(contours)):
-                    if rList[j]>cutOffMean:
-                        #if self.bordering_contours(contours[i], contours[j]):
-                        vectorList.append(self.get_distanceVector(p[i], p[j]))
-
-        directionalisedVectorList=self.directionalize(vectorList,self.get_largestVector(contours))
-        horVec=self.get_meanVector(directionalisedVectorList)
-        print("horVec = ", horVec)
-        return horVec
+    # get the index of the maximum value in a list
+    def get_index_with_max_value(self,anyList):
+        if len(anyList)==0:
+            print("ERROR: Empty List was given")
+            return -1
+        minIndex=0
+        minValue=anyList[0]
+        for i in range(len(anyList)):
+            if anyList[i]<minValue:
+                minValue=anyList[i]
+                minIndex=i
+        return minIndex
 
 
 
-    def get_orthDist(self, p1,p2, vector, inIm):
-
-        distVec=self.get_distanceVector(p1,p2)
-
-        if(self.mag(vector)>0):
-            norm=1/self.mag(vector)
-        else:
-            norm=1
-        vector1=self.scalarVectorMul(self.get_transposed_vector(vector),norm)
-
-        parallelLength=self.scalarMultiplication(distVec,vector1)
-
-        parallelVec = self.scalarVectorMul(vector1, parallelLength)
-
-        orthDistVector=self.subtract(distVec,parallelVec)
-
-        if (np.abs(self.scalarMultiplication(orthDistVector,parallelVec))>1e-8):
-            print("FATAL ERROR IN CALCULATION :" , self.scalarMultiplication(orthDistVector,parallelVec))
-
-        orthDist= self.mag(orthDistVector)
-
-        closestPoint=self.turn_vector_into_intVector((p1[0]+parallelVec[0], p2[1]+parallelVec[1]))
-
-
-        return orthDist, inIm
-
-
-
-    def is_accepted_in_line(self, inLineContour, candidateContour, horVec, inIm, r):
-
-        (x1, y1), r1 = cv.minEnclosingCircle(inLineContour)
-        (x2, y2), r2 = cv.minEnclosingCircle(candidateContour)
-
-
-        p1=self.turn_vector_into_intVector((x1,y1))
-        p2=self.turn_vector_into_intVector((x2,y2))
-
-        distVec=self.get_distanceVector(p1,p2)
-
-
-        if (self.mag(distVec) < 3 * r):
-            # print(orthDist / self.mag (distVec))
-            # cv.line(inIm, p1, p2, (0,0,255), 4)
-            pass
-        else:
-            return False, inIm
-
-        orthDist, inIm=self.get_orthDist(p1,p2,horVec,inIm)
-
-
-        if (orthDist/self.mag(distVec) < 0.3 and orthDist < r and self.mag(distVec)<3*r):
-            #yh = (horVec[0])/self.mag(horVec)
-            #xh = (horVec[1])/self.mag(horVec)
-            #print(orthDist / self.mag (distVec))
-            #cv.line(inIm, p2, (int(x2+orthDist*yh),int( y2 - orthDist*xh)), (0,0,255), 10)
-            return True,inIm
-        else:
-            return False,inIm
-
-
+    # get the orthogonal distance to (0,0) of every contour
     def get_OrthDistList(self,contours, horVec):
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
         orthDistList=[]
@@ -308,131 +177,228 @@ class LineOrdering2:
         return orthDistList
 
 
-    def get_linePositionList(self,orthDistList,rList):
-        maxRad=0
-        linePosition=0
-        nearestContourList = -1
-        for i in range(len(orthDistList)):
-            if rList[i]>maxRad:
-                linePosition=orthDistList[i]
-                maxRad=rList[i]
-                nearestContourList=i
-        linePositionList=[]
-        print(orthDistList)
-        linePositionList.append(linePosition)
-        return linePositionList,nearestContourList
 
+
+
+
+    # This is an arbitrary acceptance condition which may be used for calculating the horizontal Vector of a line.
+    def bordering_contours(self, contour1, contour2):
+        (x1, y1), r1 = cv.minEnclosingCircle(contour1)
+        (x2, y2), r2 = cv.minEnclosingCircle(contour2)
+
+        d = self.get_distance((x1, y1), (x2, y2))
+
+        maxAcceptRatio = 3.0
+        if (d < maxAcceptRatio * r1 and d < maxAcceptRatio * r2):
+            return True
+        else:
+            return False
+
+    #Here we get a list of all vectors between any contours (fullVectorList) and a list of all vectors larger than a certain radius (largeContourVectorList).
+    # We need this list to determine the horizontal Vector
+    def get_fullVectorList_and_largeContourVectorList(self,rList,points,cutOffRadius):
+
+        fullVectorList = []
+        largeContourVectorList = []
+
+        # get a List of all Vectors
+        for i in range(len(points)):
+            for j in range(i + 1, len(points)):
+                distanceVector=self.get_distanceVector(points[i], points[j])
+                fullVectorList.append(distanceVector)
+                if rList[i] > cutOffRadius:
+                    if rList[j] > cutOffRadius:
+                        largeContourVectorList.append(distanceVector)
+
+        return fullVectorList,largeContourVectorList
+
+    # returns the distance vector of the two most distant contours in arbitrary direction. This is a good vector to use for directionalisation
+    def get_largestVector(self, contours,fullVectorList):
+        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
+
+        #get coordinate tupels (y[i],x[i]) instead of separate lists
+        p = self.get_coords_list(yList,xList)
+
+
+
+        maxLength=0
+        maxLengthIndex=-1
+        maxVector=(0.1,0)
+
+        for i in range(len(fullVectorList)):
+            if self.mag(fullVectorList[i])>maxLength:
+                maxLength=self.mag(fullVectorList[i])
+                maxLengthIndex=i
+                maxVector=fullVectorList[maxLengthIndex]
+
+
+        return maxVector
+
+
+
+    # Here we determine the direction of the line of text.
+    def get_horVec2(self, contours):
+        # Concept:
+        # We want to determine the direction in which the line is written.
+        # The Problem is that our Input is likely to not be perfect.
+        # Very likely we will have very many random dots and some large contours which do not belong into the line.
+        # For determining the horizontal Vector (horVec) we will use a list of all possible vectors pointing from one contour to another.
+        # Because a significant percentage of these will be between in-line variables, we can determine the horVec by calculating the mean.
+        #
+        # ToDo: There could be a problem if the largestVector is orthogonal to the line.
+        #
+
+
+
+        #Getting some general variables for latter usage
+        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
+        points = self.get_coords_list(yList, xList)
+
+        # we calculate here a radius that should be ideally larger than the points and smaller than the symbols.
+        cutOffRadius=np.mean(rList)
+
+        # We get the full Vector list here (and the one of Vectors between contours larger than cutOffRadius, which is actually a lot more usefull)
+        fullVectorList,largeContourVectorList=self.get_fullVectorList_and_largeContourVectorList(rList,points,cutOffRadius)
+
+        # We directionalise with the help of largest Vector. This Vector is not likely parallel to the horVec.
+        # However, it will likely not be close to orthogonal to it, which is important in this case.
+        directionalisedVectorList=self.directionalize(largeContourVectorList,self.get_largestVector(contours,largeContourVectorList))#fullVectorList))
+
+        # We normalise the Vectors, because far of contours produce large Vectors. By normalising all Vectors, we reduce this problem.
+        # The process also works without. But this is an improvement
+        for i in range(len(directionalisedVectorList)):
+            directionalisedVectorList[i]=self.normalise_vector(directionalisedVectorList[i])
+
+        # We calculate the mean Vector
+        horVec=self.get_meanVector(directionalisedVectorList)
+
+
+        #to avoid it getting integerized out of existance
+        horVec=self.scalarVectorMul(horVec,100)
+
+        print("horVec = ", horVec)
+
+        return horVec
+
+
+
+
+
+
+
+
+    # get a list of the position of all lines in orthogonal Distance.
+    def get_linePositionList(self,contours, orthDistList,maxRad):
+        minOrthDist=np.min(orthDistList)
+        maxOrthDist=np.max(orthDistList)
+
+        linePositionList=[]
+
+        currentPoint=minOrthDist
+
+        while currentPoint < maxOrthDist:
+            linePositionList.append(currentPoint)
+            currentPoint=currentPoint+maxRad
+
+        return linePositionList,0
+
+
+
+        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
+
+        currentBorders=[]
+        unassignedSymbols=contours.copy
+        orthDistListCopy=orthDistList.copy()
+
+        maxRIndex=self.get_index_with_max_value(rList)
+        currentLineOrthDist=orthDistListCopy[maxRIndex]
+
+
+        #maxRad=0
+        #linePosition=0
+        #nearestContourList = -1
+        #for i in range(len(orthDistList)):
+        #    if rList[i]>maxRad:
+        #        linePosition=orthDistList[i]
+        #        maxRad=rList[i]
+        #        nearestContourList=i
+
+        meanR=np.mean(rList)
+
+
+
+        linePositionList=[]
+        #print(orthDistList)
+        linePositionList.append(currentLineOrthDist)
+        return linePositionList,maxRIndex
+
+
+
+    # get the ordered line lists of the contours. The 2 is here because this is the second attempt at this.
     def get_orderedLineList2(self,contours,inIm):
+        # check if contours were detected. If not, nothing can be done here, except for errors produced
         if len(contours)==0:
             print("ERROR NO CONTOURS DETECTED")
             cv.waitKey()
             return None, (0,0), inIm
+
+        #determining some variables to be used later
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
-        p=self.get_coords_list(yList,xList)
-
-        print("Mark 2")
-
-        cutOffRadius=0.5*np.mean(rList)
-        contoursLargerThanRadius=self.get_contoursLargerThanRadius(contours, cutOffRadius,rList=rList)
-
-        horVec= self.get_horVec2(contoursLargerThanRadius)
-        horVec=(0,10)
-
-
-        print("Mark 3")
-
-
-
-        maxRad= max(rList)
-
-
-
-
-        print("Mark 4")
-        orthDistList=self.get_OrthDistList(contours, horVec)
-
-
-
+        maxRad = max(rList)
         cutOffRadius = np.mean(rList)
-        contoursLargerThanRadius = self.get_contoursLargerThanRadius(contours, cutOffRadius, rList=rList)
-        print("Mark 4.1")
-        #largeContourOrthDistList=self.get_OrthDistList(contoursLargerThanRadius, horVec)
-
-        linePositionList,nearestContourIndex= self.get_linePositionList(orthDistList,rList)
-
-        yh=.1*int(horVec[0])
-        xh=.1*int(horVec[1])
-        cv.circle(inIm, (int(xList[nearestContourIndex]), int(yList[nearestContourIndex])), int(maxRad), (255,0,0), 10)
-        cv.circle(inIm, (int(xList[nearestContourIndex]), int(yList[nearestContourIndex])), int(rList[nearestContourIndex]), (0,255,0), 10)
-
-        cv.line(inIm, (int(xList[nearestContourIndex]), int(yList[nearestContourIndex])), (int(xList[nearestContourIndex]+ xh), int(yList[nearestContourIndex]+yh)), (200, 100, 150), 10)
-
-        for i in range(len(orthDistList)):
-
-            cv.putText(inIm, str(int(orthDistList[i])), (int(xList[i]), int(yList[i])), cv.FONT_HERSHEY_SIMPLEX, 2 , (255,0,0),2,cv.LINE_AA)
-
-        orderedLineList = []
-
-        toAddLine = []
-
-
         lineAcceptanceRadius=0.5*maxRad
 
-        print("maxRad = ", maxRad)
-        print("Area of Acceptance: ", str(linePositionList[0] + lineAcceptanceRadius) , " to ", str(linePositionList[0] - lineAcceptanceRadius))
+        # get the direction in which the line is written
+        horVec= self.get_horVec2(contours)
+
+        # determine the distance from (0,0) have along the orthogonal axis to the writing direction
+        orthDistList=self.get_OrthDistList(contours, horVec)
+
+        # determine the position of all the lines in the image
+        linePositionList,nearestContourIndex= self.get_linePositionList(contours,orthDistList,maxRad)
+
+        # Just feedback
+        inIm = Draw().LineFeedBack(inIm,contours,contours[nearestContourIndex],orthDistList,horVec,maxRad)
 
 
-        contoursCopy = contours.copy()
+
+        # We will return this. Time to fill it
+        orderedLineList = []
+        # We add the lines separately
+        toAddLine = []
+
+        # print("maxRad = ", maxRad)
+        # print("Area of Acceptance: ", str(linePositionList[0] + lineAcceptanceRadius) , " to ", str(linePositionList[0] - lineAcceptanceRadius))
+
+        # In case you want to change it
+        contoursUsed = contours.copy()
+
+        # For every line we check every contour if it fits.
         for i in range(len(linePositionList)):
-
-            #print("linePositionList: ", i, " / ", linePositionList[i])
-            for j in range(len(contoursCopy)):
-                #print("orthDistList: ", j, " / ", orthDistList[j])
+            toAddLine=[]
+            for j in range(len(contoursUsed)):
                 if orthDistList[j]< (linePositionList[i] + lineAcceptanceRadius) and orthDistList[j] > (linePositionList[i] - lineAcceptanceRadius):
-                    toAddLine.append(contours[j])
-                    print("Added a contour")
-                else:
-                    print(" ")
+                    toAddLine.append(contoursUsed[j])
+            # Line is checked. Time to add it.
             orderedLineList.append(toAddLine)
 
 
-        #while len(contoursCopy)>0:
-        #    toAddLine=[]
-        #    toAddLine.append(contoursCopy[0])
-        #    del contoursCopy[0]
-        #    i=0
-        #    while i<len(toAddLine):
-        #        j=0
-        #        (x, y), r = cv.minEnclosingCircle(toAddLine[i])
-        #        if r>cutOffRadius:
-        #            while j<len(contoursCopy):
-        #                isAccepted, inIm = self.is_accepted_in_line(toAddLine[i],contoursCopy[j],horVec,inIm,maxRad)
-        #                if isAccepted:
-        #                    toAddLine.append(contoursCopy[j])
-        #                    del contoursCopy[j]
-        #                else:
-        #                    j=j+1
-        #        i=i+1
-
-        #    sortedToAddLine=self.horVec_sorter2(toAddLine,horVec)
-        #    orderedLineList.append(sortedToAddLine)
-
-
-        print("Mark 5")
+        # remove Lines with length less than 2
         reducedOrderedLineList=self.remove_lines_with_length_less_than(orderedLineList)
 
-
-        print("Mark 6")
+        # sort all lines along the horVec axis
         for i in range(len(reducedOrderedLineList)):
             reducedOrderedLineList[i]=self.horVec_sorter2(reducedOrderedLineList[i],horVec)
 
 
-
+        # not necessary, but nice to do.
         horVec = self.normalise_vector(horVec)
-        print("Mark 7")
 
 
+        print("We have ", len(reducedOrderedLineList), " lines")
 
+        for i in range(len(reducedOrderedLineList)):
+            print("   Line: ", i, " has ", len(reducedOrderedLineList[i]), " symbols")
         return reducedOrderedLineList, horVec, inIm
 
 

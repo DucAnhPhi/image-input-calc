@@ -114,3 +114,43 @@ class Draw:
             (x, y), r = cv.minEnclosingCircle(contours[i])
             cv.circle(inIm,(int(x),int(y)), 5,(100,0,0),2)
         return inIm
+
+    # Stolen from Segmentation.py Importing it here seemed a BAD idea
+    def get_properties_mincircle(self,filteredContours):
+        xList = []
+        yList = []
+        rList = []
+
+        for i in range(len(filteredContours)):
+
+            (x, y), r = cv.minEnclosingCircle(filteredContours[i])
+
+            xList.append(x)
+            yList.append(y)
+            rList.append(r)
+
+        return xList,yList,rList
+
+
+    def LineFeedBack(self,inIm,contours,nearestContour,orthDistList,horVec,maxRad):
+
+        xList, yList, rList = self.get_properties_mincircle(contours)
+        (xNear, yNear), rNear = cv.minEnclosingCircle(nearestContour)
+
+        intXNear=int(xNear)
+        intYNear=int(yNear)
+        intRNear=int(rNear)
+
+        yh=.1*int(horVec[0])
+        xh=.1*int(horVec[1])
+        cv.circle(inIm, (intXNear,intYNear), int(maxRad), (255,0,0), 10)
+        cv.circle(inIm, (intXNear,intYNear), intRNear, (0,255,0), 10)
+
+        cv.line(inIm, (intXNear,intYNear), (int(xNear+ xh), int(yNear+yh)), (200, 100, 150), 10)
+
+        for i in range(len(orthDistList)):
+
+            cv.putText(inIm, str(int(orthDistList[i])), (int(xList[i]), int(yList[i])), cv.FONT_HERSHEY_SIMPLEX, 2 , (255,0,0),2,cv.LINE_AA)
+
+
+        return inIm
