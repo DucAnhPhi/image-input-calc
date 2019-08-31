@@ -304,36 +304,6 @@ class LineOrdering2:
 
 
 
-        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
-
-        currentBorders=[]
-        unassignedSymbols=contours.copy
-        orthDistListCopy=orthDistList.copy()
-
-        maxRIndex=self.get_index_with_max_value(rList)
-        currentLineOrthDist=orthDistListCopy[maxRIndex]
-
-
-        #maxRad=0
-        #linePosition=0
-        #nearestContourList = -1
-        #for i in range(len(orthDistList)):
-        #    if rList[i]>maxRad:
-        #        linePosition=orthDistList[i]
-        #        maxRad=rList[i]
-        #        nearestContourList=i
-
-        meanR=np.mean(rList)
-
-
-
-        linePositionList=[]
-        #print(orthDistList)
-        linePositionList.append(currentLineOrthDist)
-        return linePositionList,maxRIndex
-
-
-
     # get the ordered line lists of the contours. The 2 is here because this is the second attempt at this.
     def get_orderedLineList2(self,contours,inIm):
         # check if contours were detected. If not, nothing can be done here, except for errors produced
