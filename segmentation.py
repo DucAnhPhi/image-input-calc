@@ -9,6 +9,13 @@ class Segmentation:
             return False
         return True
 
+    def not_outer_border(self, img, cnt):
+        x, y, width, height = cv.boundingRect(cnt)
+        if x == 0 and y == 0:
+            if width == img.shape[1] and height == img.shape[0]:
+                return False
+        return True
+
     def filter_small_contour(self, img, cnt, minThresh=100):
         if cv.contourArea(cnt) <= minThresh:
             return False
@@ -66,12 +73,12 @@ class Segmentation:
         for i in range(len(contours)):
             cnt = contours[i]
             valid = self.filter_big_contour(img, cnt)
-            valid = valid & self.filter_small_contour(img, cnt)
+            #valid = valid & self.filter_small_contour(img, cnt)
             valid = valid & self.filter_nested_contour(
                 img, contours, hierarchy, cnt, i)
             if valid:
                 filtered.append(cnt)
-        filtered = self.filter_far_away_contours(filtered)
+        # filtered = self.filter_far_away_contours(filtered)
         return filtered
 
     def resize_keep_ratio(self, img, size=75, interpolation=cv.INTER_AREA):
