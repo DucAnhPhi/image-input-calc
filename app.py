@@ -37,16 +37,22 @@ class App:
 
         print("Segmentation Done")
 
-        # get bounding boxes of contours and filter them
-        filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
 
 
-        print("Segmentation Filtering Done")
+
+
+
+
+        if (len(contours)>30): # get bounding boxes of contours and filter them
+            filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
+            contoursUsedForOrdering=filtered.copy()
+        else:
+            contoursUsedForOrdering=contours.copy()
 
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
-        contoursUsedForOrdering=filtered.copy()
+        print("Segmentation Filtering Done")
 
         if len(contoursUsedForOrdering)==0:
             print("ERROR NO CONTOURS DETECTED")

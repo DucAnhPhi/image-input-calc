@@ -52,22 +52,31 @@ class LineOrdering2:
 
     # normalise a vector. This gives an error if you try to normalise (0,0)
     def normalise_vector(self,v1):
-        if self.mag(v1)>0:
-            v1=self.scalarVectorMul(v1,(1/self.mag(v1)))
+        if np.linalg.norm(v1)>0:
+            v1=self.scalarVectorMul(v1,(1/np.linalg.norm(v1)))
         else:
             print("Trying to normalise (0,0)")
         return v1
 
     # get the average Vector out of a List of Vectors
     def get_meanVector(self, vectorList):
-        x = 0
-        y = 0
-        n = len(vectorList)
-        for i in range(n):
-            x = x + vectorList[i][0] / n
-            y = y + vectorList[i][1] / n
+        if(len(vectorList)==0):
+            return (0,0)
 
+        (x,y)=np.sum(vectorList, axis=0)/len(vectorList)
         return (x,y)
+
+    def get_medianVector(self, vectorList):
+        if (len(vectorList) == 0):
+            return (0, 0)
+        xList=[]
+        yList=[]
+        for i in range(len(vectorList)):
+            xList.append(vectorList[i][0])
+            yList.append(vectorList[i][1])
+        xMed=np.median(xList)
+        yMed=np.median(yList)
+        return (xMed,yMed)
 
     # reverse all Vectors in a List that point in the opposite direction as "direction"
     def directionalize(self, vectorList, direction):
@@ -90,6 +99,7 @@ class LineOrdering2:
         return reducedOrderedLineList
 
     # This returns a List of contours that are larger than the cutOffRadius
+    # Function Not Used
     def get_contoursLargerThanRadius(self,contours, cutOffRadius, rList=None):
         if rList==None:
             xList, yList, rList = Segmentation().get_properties_mincircle(contours)
@@ -104,7 +114,7 @@ class LineOrdering2:
 
 
     #sort the contours by position in horVec direction
-    def horVec_sorter2(self, contours, horVec):
+    def horVec_sorter(self, contours, horVec):
 
         xList, yList, rList = Segmentation().get_properties_mincircle(contours)
 
@@ -226,8 +236,8 @@ class LineOrdering2:
         maxVector=(0.1,0)
 
         for i in range(len(fullVectorList)):
-            if self.mag(fullVectorList[i])>maxLength:
-                maxLength=self.mag(fullVectorList[i])
+            if np.linalg.norm(fullVectorList[i])>maxLength:
+                maxLength=np.linalg.norm(fullVectorList[i])
                 maxLengthIndex=i
                 maxVector=fullVectorList[maxLengthIndex]
 
@@ -255,22 +265,23 @@ class LineOrdering2:
         points = self.get_coords_list(yList, xList)
 
         # we calculate here a radius that should be ideally larger than the points and smaller than the symbols.
-        cutOffRadius=np.mean(rList)
+        cutOffRadius=np.mean(rList)/2
 
         # We get the full Vector list here (and the one of Vectors between contours larger than cutOffRadius, which is actually a lot more usefull)
         fullVectorList,largeContourVectorList=self.get_fullVectorList_and_largeContourVectorList(rList,points,cutOffRadius)
 
         # We directionalise with the help of largest Vector. This Vector is not likely parallel to the horVec.
         # However, it will likely not be close to orthogonal to it, which is important in this case.
-        directionalisedVectorList=self.directionalize(largeContourVectorList,self.get_largestVector(contours,largeContourVectorList))#fullVectorList))
+        directionalisedVectorList=self.directionalize(fullVectorList,self.get_largestVector(contours,fullVectorList))#fullVectorList))
 
         # We normalise the Vectors, because far of contours produce large Vectors. By normalising all Vectors, we reduce this problem.
         # The process also works without. But this is an improvement
+        print("B: We found ",len(directionalisedVectorList), " vectors")
         for i in range(len(directionalisedVectorList)):
             directionalisedVectorList[i]=self.normalise_vector(directionalisedVectorList[i])
 
         # We calculate the mean Vector
-        horVec=self.get_meanVector(directionalisedVectorList)
+        horVec=self.get_medianVector(directionalisedVectorList)
 
 
         #to avoid it getting integerized out of existance
@@ -358,7 +369,7 @@ class LineOrdering2:
 
         # sort all lines along the horVec axis
         for i in range(len(reducedOrderedLineList)):
-            reducedOrderedLineList[i]=self.horVec_sorter2(reducedOrderedLineList[i],horVec)
+            reducedOrderedLineList[i]=self.horVec_sorter(reducedOrderedLineList[i],horVec)
 
 
         # not necessary, but nice to do.

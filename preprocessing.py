@@ -112,8 +112,8 @@ class PreProcessing:
         preprocessed = np.where(mask == 0, preprocessed, 255)
 
         # ??? remove if necessary
-        for i in range(5):
-            preprocessed=self.erode(preprocessed)
+        #for i in range(5):
+        #    preprocessed=self.erode(preprocessed)
 
 
         return preprocessed

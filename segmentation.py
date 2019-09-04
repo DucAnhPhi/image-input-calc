@@ -72,7 +72,7 @@ class Segmentation:
             if valid:
                 filtered.append(cnt)
         filtered = self.filter_far_away_contours(filtered)
-        filtered= self.filtered_to_contourlist(filtered)
+        filtered= list(filtered)
         return filtered
 
     def filter_contours2(self, img, contours, hierarchy):
@@ -85,7 +85,7 @@ class Segmentation:
                 filtered.append(cnt)
         filtered = self.filter_far_away_contours(filtered)
 
-        filtered= self.filtered_to_contourlist(filtered)
+        filtered= list(filtered)
         return filtered
 
 
@@ -95,13 +95,6 @@ class Segmentation:
         epsilon = precision * cv.arcLength(cnt, True)
         approx = cv.approxPolyDP(cnt, epsilon, True)
         return approx
-
-
-    def filtered_to_contourlist(self,filtered):
-        filteredContours=[]
-        for cnt in filtered:
-            filteredContours.append(cnt)
-        return filteredContours
 
 
     def get_properties_mincircle(self,filteredContours):
