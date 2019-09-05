@@ -50,6 +50,7 @@ class App:
         frame = cv.imread('sample.jpg', 1)
 
         preprocessed = self.process(frame)
+        print(preprocessed.shape)
 
         # Display the resulting frame
         cv.imshow('frame', frame)
@@ -76,12 +77,13 @@ class App:
                 if cv.waitKey(1) == 27:
                     break
 
-        # When everything done, release the capture
+        # When everything done,
+        print(preprocessed)
         cap.release()
         cv.destroyAllWindows()
 
 
 if __name__ == '__main__':
     # App().run_with_webcam()
-    # App().run_with_img()
-    App().run_with_video('sample.MOV')
+    App().run_with_img()
+    #App().run_with_video('sample.MOV')
