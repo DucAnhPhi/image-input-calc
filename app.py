@@ -1,20 +1,24 @@
 import numpy as np
 import cv2 as cv
-
 from preprocessing import PreProcessing
-
 from segmentation import Segmentation
-
 from ordering2 import LineOrdering2
-
 from drawing import Draw
-
-
-
-
+from iic import MathSymbolClassifier
 
 class App:
+    def __init__(self):
+        self.classifier = MathSymbolClassifier('hasy_model-02.ckpt')
 
+    def classification(self, line_list):
+        for line in line_list:
+            line_vector = np.ndarray((len(line), 1, 32, 32))
+            idx = 0
+            for symbol in line:
+                resized_symbol = cv.resize(symbol, (32,32))
+                line_vector[idx] = resized_symbol.reshape(1, 32, 32)
+            result = self.classifier.classify(line_vector)
+            print(''.join(result))
 
 
     def process(self, frame,name="TrainingSamples/Image_"):
@@ -36,12 +40,6 @@ class App:
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
         print("Segmentation Done")
-
-
-
-
-
-
 
         if (len(contours)>30): # get bounding boxes of contours and filter them
             filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
@@ -66,15 +64,13 @@ class App:
         # create ordered List of Contours
 
         orderedLineList, horVec, orderedImage = LineOrdering2().get_orderedLineList2(contoursUsedForOrdering, preprocessed.copy())
-
         orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
         print("Line Ordering Done")
 
-        #imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
-
+        imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
         #Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
 
-        return orderedImage
+        return orderedImage, imageLineList
 
     def show_results(self, frame, result):
 
@@ -93,7 +89,7 @@ class App:
             _, frame = cap.read()
 
             # Processing the frame
-            preprocessed = self.process(frame)
+            preprocessed, line_list = self.process(frame)
 
             # Display the resulting frame
             self.show_results(frame, preprocessed)
@@ -102,6 +98,9 @@ class App:
             if cv.waitKey(1) == 27:
                 break
 
+        # Perform classification
+        print("Recognized symbols:")
+        self.classification(line_list)
         # When everything done, release the capture
         cap.release()
         cv.destroyAllWindows()
@@ -109,12 +108,15 @@ class App:
     def run_with_img(self,source='sample.jpg',name="TrainingSamples/Image_"):
         frame = cv.imread(source, 1)
 
-        preprocessed = self.process(frame,name)
+        preprocessed, line_list = self.process(frame,name)
         # Display the resulting frame
         self.show_results(frame, preprocessed)
 
         cv.waitKey(0)
         cv.destroyAllWindows()
+        # Perform classification
+        print("Recognized symbols:")
+        self.classification(line_list)
 
     def run_with_video(self, file):
         cap = cv.VideoCapture(file)
@@ -126,7 +128,7 @@ class App:
                 _, frame = cap.read()
 
                 # Processing the frame
-                preprocessed = self.process(frame)
+                preprocessed, line_list = self.process(frame)
 
                 # Display the resulting frame
                 self.show_results(frame, preprocessed)
@@ -135,8 +137,11 @@ class App:
                 if cv.waitKey(1) == 27:
                     break
 
+        # Perform classification
+        print("Recognized symbols:")
+        self.classification(line_list)
+
         # When everything done,
-        print(preprocessed)
         cap.release()
         cv.destroyAllWindows()
 

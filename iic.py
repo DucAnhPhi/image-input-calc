@@ -2,7 +2,7 @@ import torch
 import re
 import cv2
 import os
-from network import CharacterClassifier, classify
+from network import CharacterClassifier
 import training_data as td
 
 
