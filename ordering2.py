@@ -110,8 +110,17 @@ class LineOrdering2:
 
         return contoursLargerThanRadius
 
-
-
+    def remove_lines_with_bordering_larger_lines(self,orderedLineList):
+        emptyLine=[]
+        n=len(orderedLineList)
+        for i in range(n-1):
+            if len(orderedLineList[i])<=len(orderedLineList[i+1]):
+                orderedLineList[i]=emptyLine
+        for i in range(n - 1):
+            j=n-i-1
+            if len(orderedLineList[j]) <= len(orderedLineList[j-1]):
+                orderedLineList[j] = emptyLine
+        return orderedLineList
 
     #sort the contours by position in horVec direction
     def horVec_sorter(self, contours, horVec):
@@ -309,7 +318,7 @@ class LineOrdering2:
 
         while currentPoint < maxOrthDist:
             linePositionList.append(currentPoint)
-            currentPoint=currentPoint+maxRad
+            currentPoint=currentPoint+maxRad*0.4
 
         return linePositionList,0
 
@@ -363,9 +372,11 @@ class LineOrdering2:
             # Line is checked. Time to add it.
             orderedLineList.append(toAddLine)
 
+        # remove Lines with neighbouring lines that are longer
+        maximumOrderedLineList=self.remove_lines_with_bordering_larger_lines(orderedLineList)
 
         # remove Lines with length less than 2
-        reducedOrderedLineList=self.remove_lines_with_length_less_than(orderedLineList)
+        reducedOrderedLineList=self.remove_lines_with_length_less_than(maximumOrderedLineList)
 
         # sort all lines along the horVec axis
         for i in range(len(reducedOrderedLineList)):
