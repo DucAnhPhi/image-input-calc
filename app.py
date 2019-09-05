@@ -5,21 +5,29 @@ from segmentation import Segmentation
 from ordering2 import LineOrdering2
 from drawing import Draw
 from iic import MathSymbolClassifier
+from solver import Solver
+from sympy.parsing.sympy_parser import TokenError
+
 
 class App:
     def __init__(self):
         self.classifier = MathSymbolClassifier('hasy_model-02.ckpt')
+        self.solver = Solver()
 
-    def classification(self, line_list):
+    def solve(self, line_list):
         for line in line_list:
             line_vector = np.ndarray((len(line), 1, 32, 32))
             idx = 0
             for symbol in line:
                 resized_symbol = cv.resize(symbol, (32,32))
                 line_vector[idx] = resized_symbol.reshape(1, 32, 32)
-            result = self.classifier.classify(line_vector)
-            print(''.join(result))
-
+            result = ''.join(self.classifier.classify(line_vector))
+            print("Input:", result)
+            try:
+                solved = self.solver.solve(result)
+                print("Solution:", solved)
+            except TokenError:
+                print("The given input was not recognized.")
 
     def process(self, frame,name="TrainingSamples/Image_"):
         preprocessed = PreProcessing().background_contour_removal(
@@ -100,7 +108,7 @@ class App:
 
         # Perform classification
         print("Recognized symbols:")
-        self.classification(line_list)
+        self.solve(line_list)
         # When everything done, release the capture
         cap.release()
         cv.destroyAllWindows()
@@ -116,7 +124,7 @@ class App:
         cv.destroyAllWindows()
         # Perform classification
         print("Recognized symbols:")
-        self.classification(line_list)
+        self.solve(line_list)
 
     def run_with_video(self, file):
         cap = cv.VideoCapture(file)
@@ -139,7 +147,7 @@ class App:
 
         # Perform classification
         print("Recognized symbols:")
-        self.classification(line_list)
+        self.solve(line_list)
 
         # When everything done,
         cap.release()
