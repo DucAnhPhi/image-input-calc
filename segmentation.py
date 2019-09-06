@@ -80,36 +80,3 @@ class Segmentation:
                 filtered.append(cnt)
         # filtered = self.filter_far_away_contours(filtered)
         return filtered
-
-    def resize_keep_ratio(self, img, size=75, interpolation=cv.INTER_AREA):
-        # get height and width of given image
-        h, w = img.shape[:2]
-        c = None if len(img.shape) < 3 else img.shape[2]
-        if h == w:
-            return cv.resize(img, (size, size), interpolation)
-        # get longest edge
-        dif = max(h, w)
-        # calculate offsets
-        xOffset = int((dif-w)/2.)
-        yOffset = int((dif-h)/2.)
-        # generate mask with longest edge and offsets
-        if c is None:
-            mask = np.zeros((dif, dif), dtype=img.dtype)
-            mask[yOffset:yOffset+h, xOffset:xOffset+w] = img[:h, :w]
-        else:
-            mask = np.zeros((dif, dif, c), dtype=img.dtype)
-            mask[yOffset:yOffset+h, xOffset:xOffset+w,
-                 :] = img[:h, :w, :] = img[:h, :w, :]
-        # return resized mask
-        return cv.resize(mask, (size, size), interpolation)
-
-    def get_subimage_from_contour(self, frame, cnt):
-        x, y, cntWidth, cntHeight = cv.boundingRect(cnt)
-        blankImg = np.zeros(
-            shape=frame.shape, dtype=np.uint8)
-        cv.drawContours(
-            blankImg, [cnt], -1, (255, 255, 255), 1)
-        cv.fillPoly(blankImg, pts=[cnt], color=(255, 255, 255))
-        subImg = blankImg[y:y+cntHeight, x:x+cntWidth]
-        subImg = self.resize_keep_ratio(subImg)
-        return subImg

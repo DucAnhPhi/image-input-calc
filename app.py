@@ -2,7 +2,7 @@ import numpy as np
 import cv2 as cv
 from preprocessing import PreProcessing
 from segmentation import Segmentation
-from ordering import OrderContours
+from contour import Contour
 
 
 class App:
@@ -16,12 +16,15 @@ class App:
 
         # get bounding boxes of contours and filter them
         filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
-        bars = OrderContours().get_bars(filtered)
-        for bar in bars:
-            bX, bY, bWidth, bHeight = cv.boundingRect(bar)
-            if OrderContours().is_fraction_bar(preprocessed, bar):
-                cv.rectangle(frame, (bX, bY), (bX+bWidth,
-                                               bY+bHeight), (0, 0, 255), 2)
+        contourList = []
+        for i in range(len(filtered)):
+            cnt = filtered[i]
+            contourList.append(
+                Contour(contour=cnt, contourId=i, imgShape=frame.shape))
+        for con in contourList:
+            if con.is_fraction_bar(contourList, frame):
+                cv.rectangle(frame, (con.x1, con.y1), (con.x2,
+                                                       con.y2), (0, 0, 255), 2)
 
         # rects = [cv.boundingRect(cnt) for cnt in filtered]
 
@@ -90,6 +93,6 @@ class App:
 
 
 if __name__ == '__main__':
-    # App().run_with_webcam()
-    App().run_with_img()
+    App().run_with_webcam()
+    # App().run_with_img()
     # App().run_with_video('sample.MOV')
