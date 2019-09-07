@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import string
 import random
+from preprocessing import PreProcessing
 
 
 class Contour:
@@ -76,7 +77,7 @@ class Contour:
                 below = True
         return above and below
 
-    def resize_keep_ratio(self, img, size=75, interpolation=cv.INTER_AREA):
+    def resize_keep_ratio(self, img, size=32, interpolation=cv.INTER_AREA):
         # get height and width of given image
         h, w = img.shape[:2]
         c = None if len(img.shape) < 3 else img.shape[2]
@@ -106,4 +107,5 @@ class Contour:
         cv.fillPoly(blankImg, pts=[self.contour], color=(255, 255, 255))
         subImg = blankImg[self.y1:self.y2, self.x1:self.x2]
         subImg = self.resize_keep_ratio(subImg)
+        subImg = PreProcessing().erode(subImg)
         return subImg
