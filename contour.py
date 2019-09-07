@@ -77,6 +77,28 @@ class Contour:
                 below = True
         return above and below
 
+    def unwrap(self):
+        # contour can contain nested contours
+        # recursively unwrap these contours
+        if self.fraction == None:
+            return
+
+        def unwrap_helper(contourList):
+            contours = []
+            for cnt in contourList:
+                if cnt.fraction == None:
+                    contours.append(cnt)
+                else:
+                    contours.extend(cnt.unwrap())
+            return contours
+
+        nominator = unwrap_helper(self.fraction.nominator)
+        denominator = unwrap_helper(self.fraction.denominator)
+
+        unwrapped = [*nominator,
+                     self.fraction.bar, *denominator]
+        return unwrapped
+
     def resize_keep_ratio(self, img, size=32, interpolation=cv.INTER_AREA):
         # get height and width of given image
         h, w = img.shape[:2]
