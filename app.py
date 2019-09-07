@@ -32,61 +32,15 @@ class App:
         # group contours to fractions starting with most narrow fraction bar
         for bar in fractionBars:
 
-            # define acceptance area
-            minX = bar.x1
-            maxX = bar.x2
-            minY = max(bar.y1-(bar.radius), 0)
-            maxY = bar.y2+(bar.radius)
-            center = (maxY-minY) // 2 + minY
-
-            nominator = []
-            denominator = []
-
-            # boundary coordinates of bounding box around fraction
-            newMinX = minX
-            newMaxX = maxX
-            newMinY = max(frame.shape)
-            newMaxY = 0
-
-            # look for contours inside acceptance area
-            for nb in contourList:
-                if nb.contourId == bar.contourId:
-                    continue
-                if nb.is_inside_area(minX, maxX, minY, center):
-                    nominator.append(nb)
-                    newMinX = min(newMinX, nb.x1)
-                    newMaxX = max(newMaxX, nb.x2)
-                    newMinY = min(newMinY, nb.y1)
-                    cv.circle(frame, (nb.center[0], nb.center[1]),
-                              nb.radius, (255, 0, 0), 2)
-                    continue
-                if nb.is_inside_area(minX, maxX, center, maxY):
-                    denominator.append(nb)
-                    newMinX = min(newMinX, nb.x1)
-                    newMaxX = max(newMaxX, nb.x2)
-                    newMaxY = max(newMaxY, nb.y2)
-                    cv.circle(frame, (nb.center[0], nb.center[1]),
-                              nb.radius, (255, 0, 255), 2)
-
-            def get_contour_from_rect(shape, x1, y1, x2, y2):
-                # a contour is a np.array with shape (#points, 1, 2)
-                # in which each entry represents (x,y) coordinates of boundary points
-                mask = np.ones(shape[:2], dtype="uint8") * 255
-                cv.rectangle(mask, (x1, y1),
-                             (x2, y2), (0, 0, 0), 1)
-                cnts, _ = cv.findContours(
-                    mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-                return cnts[1]
-
             # build fraction
-            fraction = Fraction(nominator, denominator, bar)
+            fraction = Fraction(bar, contourList, frame.shape)
 
             # build new contour
-            groupedContour = get_contour_from_rect(
-                frame.shape, newMinX, newMinY, newMaxX, newMaxY)
             groupedContour = Contour(
-                groupedContour, frame.shape, fraction=fraction)
-            groupedContours = [*nominator, *denominator, bar]
+                fraction.get_contour(), frame.shape, fraction=fraction)
+
+            groupedContours = [*fraction.nominator,
+                               *fraction.denominator, fraction.bar]
 
             # remove all grouped contours and add new contour to contourList
             contourList = [
