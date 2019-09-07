@@ -1,19 +1,28 @@
 import cv2 as cv
 import numpy as np
+import string
+import random
 
 
 class Contour:
-    def __init__(self, contour, contourId, imgShape, isFractionBar=False, isFraction=False, fraction=None):
+    def __init__(self, contour, imgShape, fraction=None):
         self.contour = contour
-        self.contourId = contourId
-        self.isFraction = isFraction
-        self.isFractionBar = isFractionBar
-        self.fraction = fraction
-        self.imgShape = imgShape
+
+        # generate random id
+        chars = string.ascii_lowercase + string.digits
+        self.contourId = ''.join(random.choices(chars, k=8))
+
+        self.fraction = fraction  # fraction object in fraction.py
+        self.imgShape = imgShape  # (height, width)
+
+        (x, y), radius = cv.minEnclosingCircle(contour)
+        self.center = np.array([int(x), int(y)])
+        self.radius = int(radius)
 
         boundingRect = cv.boundingRect(contour)
         self.width = int(boundingRect[2])
         self.height = int(boundingRect[3])
+
         self.x1 = int(boundingRect[0])
         self.x2 = self.x1 + self.width
         self.y1 = int(boundingRect[1])
@@ -42,14 +51,17 @@ class Contour:
                 return True
         return False
 
-    def is_fraction_bar(self, contourList, frame):
+    def is_fraction_bar(self, contourList):
+        # only consider bars
         if not self.is_bar():
             return False
+
         # define acceptance area of possible fraction
         minX = self.x1
         maxX = self.x2
-        minY = max(self.y1-(self.width//2), 0)
-        maxY = self.y2+(self.width//2)
+        minY = max(self.y1-(self.radius), 0)
+        maxY = self.y2+(self.radius)
+
         # check for contours above and below bar
         above = False
         below = False
