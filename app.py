@@ -108,6 +108,6 @@ class App:
 
 
 if __name__ == '__main__':
-    App().run_with_webcam()
-    # App().run_with_img()
+    # App().run_with_webcam()
+    App().run_with_img()
     # App().run_with_video('sample.MOV')
