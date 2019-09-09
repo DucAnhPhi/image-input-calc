@@ -25,7 +25,8 @@ class Solver:
         equation = [
             '/' if isinstance(el, Contour) and el.isFractionBar else el for el in equation]
 
-        equation = [MathSymbolClassifier().classify(
+        cl = MathSymbolClassifier()
+        equation = [cl.classify(
             [el.get_subimage()])[0] if isinstance(el, Contour) else el for el in equation]
 
         self.equation = "".join(equation)
