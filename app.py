@@ -4,6 +4,7 @@ from preprocessing import PreProcessing
 from segmentation import Segmentation
 from contour import Contour
 from fraction import Fraction
+from solver import Solver
 
 
 class App:
@@ -47,7 +48,18 @@ class App:
                 cnt for cnt in contourList if cnt not in groupedContours]
             contourList.append(groupedContour)
 
-            cv.drawContours(frame, [groupedContour.contour], 0, (0, 255, 0), 2)
+        cv.drawContours(
+            frame, [cnt.contour for cnt in contourList], -1, (0, 255, 0), 2)
+
+        # sort contours horizontally for now
+        # TODO: replace by more sophisticated ordering
+        contourList.sort(key=lambda cnt: cnt.x1)
+
+        # unwrap nested contours and pass contour list to solver object
+        unwrapped = [cnt.unwrap() for cnt in contourList]
+
+        # derive characters and compute solution using sympy
+        Solver(unwrapped)
 
         return preprocessed
 

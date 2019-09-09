@@ -8,6 +8,7 @@ from preprocessing import PreProcessing
 class Contour:
     def __init__(self, contour, imgShape, fraction=None):
         self.contour = contour
+        self.isFractionBar = False
 
         # generate random id
         chars = string.ascii_lowercase + string.digits
@@ -75,13 +76,14 @@ class Contour:
                 continue
             if cnt.is_inside_area(minX, maxX, center, maxY):
                 below = True
-        return above and below
+        self.isFractionBar = above and below
+        return self.isFractionBar
 
     def unwrap(self):
         # contour can contain nested contours
         # recursively unwrap these contours
         if self.fraction == None:
-            return
+            return self
 
         def unwrap_helper(contourList):
             contours = []
@@ -89,14 +91,14 @@ class Contour:
                 if cnt.fraction == None:
                     contours.append(cnt)
                 else:
-                    contours.extend(cnt.unwrap())
+                    contours.append(cnt.unwrap())
             return contours
 
         nominator = unwrap_helper(self.fraction.nominator)
         denominator = unwrap_helper(self.fraction.denominator)
 
-        unwrapped = [*nominator,
-                     self.fraction.bar, *denominator]
+        unwrapped = [nominator,
+                     self.fraction.bar, denominator]
         return unwrapped
 
     def resize_keep_ratio(self, img, size=32, interpolation=cv.INTER_AREA):
@@ -130,4 +132,6 @@ class Contour:
         subImg = blankImg[self.y1:self.y2, self.x1:self.x2]
         subImg = self.resize_keep_ratio(subImg)
         subImg = PreProcessing().erode(subImg)
+        subImg = PreProcessing().convert_gray(subImg)
+        subImg = np.asarray(subImg).reshape((1, 32, 32))
         return subImg

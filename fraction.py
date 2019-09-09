@@ -40,6 +40,11 @@ class Fraction:
                 self.x2 = max(self.x2, nb.x2)
                 self.y2 = max(self.y2, nb.y2)
 
+        # sort contours horizontally for now
+        # TODO: replace by more sophisticated ordering
+        self.nominator.sort(key=lambda cnt: cnt.x1)
+        self.denominator.sort(key=lambda cnt: cnt.x1)
+
     def get_contour(self):
         # a contour is a np.array with shape (#points, 1, 2)
         # in which each entry represents (x,y) coordinates of boundary points
