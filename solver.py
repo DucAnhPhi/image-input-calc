@@ -11,7 +11,7 @@ class Solver:
             else:
                 return ["(", *[add_brackets(c) for c in cnt], ")"]
 
-        equation = [add_brackets(el) for el in contourList]
+        temp = [add_brackets(el) for el in contourList]
 
         def flatten(nestedList):
             for el in nestedList:
@@ -20,14 +20,22 @@ class Solver:
                 else:
                     yield el
 
-        equation = flatten(equation)
-
-        equation = [
-            '/' if isinstance(el, Contour) and el.isFractionBar else el for el in equation]
-
+        temp = flatten(temp)
         cl = MathSymbolClassifier()
-        equation = [cl.classify(
-            [el.get_subimage()])[0] if isinstance(el, Contour) else el for el in equation]
+        equation = []
+
+        for el in temp:
+            if isinstance(el, str):
+                equation.append(el)
+            elif el.isFractionBar:
+                equation.append('/')
+            elif el.isEqualSign:
+                equation.append('=')
+            elif el.isMinusSign:
+                equation.append('-')
+            else:
+                symbol = cl.classify([el.get_subimage()])[0]
+                equation.append(symbol)
 
         self.equation = "".join(equation)
         print(self.equation)

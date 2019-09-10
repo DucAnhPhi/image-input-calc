@@ -6,9 +6,25 @@ from preprocessing import PreProcessing
 
 
 class Contour:
-    def __init__(self, contour, imgShape, fraction=None):
+    def __init__(self,
+                 contour,
+                 imgShape,
+                 fraction=None,
+                 isFractionBar=False,
+                 isMinusSign=False,
+                 isEqualBar=False,
+                 isEqualSign=False):
         self.contour = contour
-        self.isFractionBar = False
+
+        # Labels
+        self.isFractionBar = isFractionBar
+        self.isMinusSign = isMinusSign
+        self.isEqualBar = isEqualBar
+        self.isEqualSign = isEqualSign
+
+        self.remove = False
+
+        self.equalBar = None  # contour object
 
         # generate random id
         chars = string.ascii_lowercase + string.digits
@@ -85,6 +101,42 @@ class Contour:
                 below = True
         self.isFractionBar = above and below
         return self.isFractionBar
+
+    def check_bar_type(self, contourList):
+        # only consider bars
+        if not self.is_bar():
+            return False
+
+        # define acceptance area of possible fraction
+        minX = self.x1
+        maxX = self.x2
+        minY = max(self.y1-(self.radius), 0)
+        maxY = self.y2+(self.radius)
+
+        # check for contours above and below bar
+        above = False
+        below = False
+        # remember neighbour to compose possible equal sign later
+        equalBar = None
+        center = ((maxY - minY) // 2) + minY
+        for cnt in contourList:
+            if self.contourId == cnt.contourId:
+                continue
+            if cnt.is_inside_area(minX, maxX, minY, center):
+                above = True
+                equalBar = cnt
+                continue
+            if cnt.is_inside_area(minX, maxX, center, maxY):
+                below = True
+                equalBar = cnt
+
+        if not above and not below:
+            self.isMinusSign = True
+        elif above and below:
+            self.isFractionBar = True
+        else:
+            self.isEqualBar = True
+            self.equalBar = equalBar
 
     def unwrap(self):
         # contour can contain nested contours

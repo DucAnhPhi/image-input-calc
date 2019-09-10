@@ -23,9 +23,38 @@ class App:
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
                        for cnt in filtered]
 
-        # find fraction bars
-        fractionBars = [
-            cnt for cnt in contourList if cnt.is_fraction_bar(contourList)]
+        # find bar types
+        fractionBars = []
+        equalBars = []
+
+        for cnt in contourList:
+            # check and label bar types
+            cnt.check_bar_type(contourList)
+            if cnt.isFractionBar:
+                fractionBars.append(cnt)
+            elif cnt.isEqualBar:
+                equalBars.append(cnt)
+
+        # group equal bars to single contour object
+        for bar in equalBars:
+            if bar.remove:
+                continue
+            # build grouped contour object
+            bar2 = bar.equalBar
+            bX, bY, bWidth, bHeight = cv.boundingRect(bar.contour)
+            b2X, b2Y, b2Width, b2Height = cv.boundingRect(bar2.contour)
+            minX = min(bX, b2X)
+            maxX = max(bX+bWidth, b2X+b2Width)
+            minY = min(bY, b2Y)
+            maxY = max(bY+bHeight, b2Y+b2Height)
+            mask = np.ones(frame.shape[:2], dtype="uint8") * 255
+            cv.rectangle(mask, (minX, minY), (maxX, maxY), (0, 0, 0), 1)
+            cnts, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+            grouped = Contour(cnts[1], frame.shape, isEqualSign=True)
+            # mark grouped contours for removal and add new grouped contour
+            bar.remove = True
+            bar2.remove = True
+            contourList.append(grouped)
 
         # sort fraction bars ascending by width
         fractionBars.sort(key=lambda bar: bar.width)
@@ -43,10 +72,13 @@ class App:
             groupedContours = [*fraction.nominator,
                                *fraction.denominator, fraction.bar]
 
-            # remove all grouped contours and add new contour to contourList
-            contourList = [
-                cnt for cnt in contourList if cnt not in groupedContours]
+            # mark all grouped contours for removal and add new contour to contourList
+            for cnt in groupedContours:
+                cnt.remove = True
             contourList.append(groupedContour)
+
+        # remove contours which were marked for removal before
+        contourList = [cnt for cnt in contourList if not cnt.remove]
 
         cv.drawContours(
             frame, [cnt.contour for cnt in contourList], -1, (0, 255, 0), 2)
