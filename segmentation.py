@@ -72,7 +72,22 @@ class Segmentation:
             if valid:
                 filtered.append(cnt)
         filtered = self.filter_far_away_contours(filtered)
+        filtered= self.filtered_to_contourlist(filtered)
         return filtered
+
+    def filter_contours2(self, img, contours, hierarchy):
+        filtered = []
+        for i in range(len(contours)):
+            cnt = contours[i]
+            valid = self.filter_nested_contour(
+                img, contours, hierarchy, cnt, i)
+            if valid:
+                filtered.append(cnt)
+        filtered = self.filter_far_away_contours(filtered)
+
+        filtered= self.filtered_to_contourlist(filtered)
+        return filtered
+
 
     def approx_contour(self, cnt, precision=0.1):
         # approx contour shape to another shape with less # vertices depending on precision we specify - uses Douglas-Peucker algorithm.
@@ -80,3 +95,93 @@ class Segmentation:
         epsilon = precision * cv.arcLength(cnt, True)
         approx = cv.approxPolyDP(cnt, epsilon, True)
         return approx
+
+
+    def filtered_to_contourlist(self,filtered):
+        filteredContours=[]
+        for cnt in filtered:
+            filteredContours.append(cnt)
+        return filteredContours
+
+
+    def get_properties_mincircle(self,filteredContours):
+        xList = []
+        yList = []
+        rList = []
+
+        for i in range(len(filteredContours)):
+
+            (x, y), r = cv.minEnclosingCircle(filteredContours[i])
+
+            xList.append(x)
+            yList.append(y)
+            rList.append(r)
+
+        return xList,yList,rList
+
+    def resize_keep_ratio(self, img, size=75, interpolation=cv.INTER_AREA):
+        h, w = img.shape[:2]
+        c = None if len(img.shape) < 3 else img.shape[2]
+        if h == w:
+            return cv.resize(img, (size, size), interpolation)
+        if h > w:
+            dif = h
+        else:
+            dif = w
+        x_pos = int((dif-w)/2.)
+        y_pos = int((dif-h)/2.)
+        if c is None:
+            mask = np.zeros((dif, dif), dtype=img.dtype)
+            mask[y_pos:y_pos+h, x_pos:x_pos+w] = img[:h, :w]
+        else:
+            mask = np.zeros((dif, dif, c), dtype=img.dtype)
+            mask[y_pos:y_pos+h, x_pos:x_pos+w,
+                 :] = img[:h, :w, :] = img[:h, :w, :]
+        return cv.resize(mask, (size, size), interpolation)
+
+    def get_subimage_from_contour(self, frame, cnt):
+        x, y, cntWidth, cntHeight = cv.boundingRect(cnt)
+        blankImg = np.zeros(
+            shape=frame.shape, dtype=np.uint8)
+        cv.drawContours(
+            blankImg, [cnt], -1, (255, 255, 255), 1)
+        cv.fillPoly(blankImg, pts=[cnt], color=(255, 255, 255))
+        subImg = blankImg[y:y+cntHeight, x:x+cntWidth]
+        subImg = self.resize_keep_ratio(subImg)
+        return subImg
+
+    def get_subimage_list_from_contour_list(self, frame, contourList):
+        subimageList = []
+        for i in range(len(contourList)):
+            subimageList.append(self.get_subimage_from_contour(frame, contourList[i]))
+        return subimageList
+
+    def get_subimage_list_list_from_contour_list_list(self, frame, contourListList):
+        subimageList = []
+        for i in range(len(contourListList)):
+            subimageList.append(self.get_subimage_list_from_contour_list(frame, contourListList[i]))
+        return subimageList
+
+
+
+    def print_subimage_list_Images(self, frame, subimageList, name="Image_"):
+
+        for i in range(len(subimageList)):
+
+            cv.imwrite((name + str(i) + ".png"), self.get_subimage_from_contour(frame, subimageList[i][0]))
+            print("Saved the file")
+
+    def print_lineList_images(self, frame, lineList):
+
+        for i in range(len(lineList)):
+
+            name= str("Line_" + str(i) + "_Symbol_")
+            self.print_subimage_list_Images(frame, lineList[i], name)
+
+
+    def print_subimage_list_list_Images(self, frame, orderedLineList, name="TrainingSamples/Image_"):
+
+        for i in range(len(orderedLineList)):
+            for j in range(len(orderedLineList[i])):
+                cv.imwrite((name + str(i) + "_" + str(j) + ".png"), self.get_subimage_from_contour(frame, orderedLineList[i][j]))
+                print("Saved the file")
