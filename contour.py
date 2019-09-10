@@ -30,19 +30,26 @@ class Contour:
         self.y1 = int(boundingRect[1])
         self.y2 = self.y1 + self.height
 
-    def is_inside_area(self, minX, maxX, minY, maxY):
+    def is_inside_area(self, minX, maxX, minY, maxY, considerCenter=False):
         def is_inside_x_range(x):
             return x >= minX and x <= maxX
 
         def is_inside_y_range(y):
             return y >= minY and y <= maxY
 
-        inside_x_range = is_inside_x_range(
-            self.x1) or is_inside_x_range(self.x2)
-        inside_y_range = is_inside_y_range(
-            self.y1) or is_inside_y_range(self.y2)
+        is_inside = False
 
-        return inside_x_range and inside_y_range
+        if considerCenter:
+            cX = self.center[0]
+            cY = self.center[1]
+            is_inside = is_inside_x_range(cX) and is_inside_y_range(cY)
+        else:
+            inside_x_range = is_inside_x_range(
+                self.x1) or is_inside_x_range(self.x2)
+            inside_y_range = is_inside_y_range(
+                self.y1) or is_inside_y_range(self.y2)
+            is_inside = inside_x_range and inside_y_range
+        return is_inside
 
     def is_bar(self):
         if self.width > self.height:
