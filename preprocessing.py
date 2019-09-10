@@ -3,6 +3,8 @@ import numpy as np
 
 
 class PreProcessing:
+    def invert_grayscale_image(self, img):
+        return (255-img)
     def convert_gray(self, img):
         return cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
@@ -41,6 +43,12 @@ class PreProcessing:
     def medium_binarize(self, img):
         # We add a specialized threshold to binarize
         boundary = (np.amin(img) + np.amax(img)) / 2
+        _, medianbinarized = cv.threshold(
+            img, boundary, 255, cv.THRESH_BINARY)
+        return medianbinarized
+
+    def custom_binarize(self, img, boundary):
+        # We add a specialized threshold to binarize
         _, medianbinarized = cv.threshold(
             img, boundary, 255, cv.THRESH_BINARY)
         return medianbinarized
@@ -102,4 +110,15 @@ class PreProcessing:
         mask = self.get_background_removal_mask(frame)
         # apply mask on preprocessed image
         preprocessed = np.where(mask == 0, preprocessed, 255)
+
+        # ??? remove if necessary
+        #for i in range(5):
+        #    preprocessed=self.erode(preprocessed)
+
+
         return preprocessed
+
+    def preprocess3(self, img):
+         preprocessed = self.convert_gray(img)
+         preprocessed = self.medium_binarize(preprocessed)
+         return preprocessed
