@@ -2,28 +2,32 @@ import torch
 import re
 import cv2
 import os
-from network import CharacterClassifier, classify
+from network import CharacterClassifier
+from torchvision import models
 import training_data as td
+import numpy as np
+from PIL import Image
+import PIL.ImageOps
 
 
 class MathSymbolClassifier():
     def __init__(self, model_path):
-        self.classifier = CharacterClassifier(td.IMAGE_DIMS, [50], len(td.MATH_SYMBOLS))
+        self.classifier = models.densenet201(num_classes=len(td.MATH_SYMBOLS))
         self.classifier.load_state_dict(torch.load(model_path))
 
     def test_classification(self):
         file_path = "SubImages"
-        images = []
+        images = torch.zeros((20, 3, 32, 32))
         sym_idx = []
+        i = 0
         for file_name in sorted(os.listdir(file_path)):
             sym_idx.append([int(i) for i in re.findall(r'\d+', file_name)])
-            img = cv2.imread(file_path + '/' + file_name)
-            img = cv2.resize(img, (32, 32), interpolation=cv2.INTER_AREA)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            np_img = np.asarray(img).reshape((1, 32, 32))
-            images.append(np_img)
-        image_tensor = torch.Tensor(images)
-        prediction = self.classifier(image_tensor)
+            img = Image.open(file_path + '/' + file_name)
+            processed = td.MyDataSet.preprocess(img)
+            images[i] = processed
+            i += 1
+
+        prediction = self.classifier(images)
         labels = torch.argmax(prediction, dim=1)
 
         lines = []
@@ -45,7 +49,7 @@ class MathSymbolClassifier():
 
 
 if __name__ == '__main__':
-    cls = MathSymbolClassifier('hasy_model-02.ckpt')
+    cls = MathSymbolClassifier('hasy_model-trans.ckpt')
 
     recognized = cls.test_classification()
 
