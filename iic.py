@@ -2,13 +2,15 @@ import torch
 import re
 import cv2
 import os
-from network import CharacterClassifier, classify
+from network import CharacterClassifier
 import training_data as td
+import numpy as np
 
 
-class MathSymbolClassifier():
-    def __init__(self, model_path):
-        self.classifier = CharacterClassifier(td.IMAGE_DIMS, [50], len(td.MATH_SYMBOLS))
+class MathSymbolClassifier:
+    def __init__(self, model_path='hasy_model-02.ckpt'):
+        self.classifier = CharacterClassifier(
+            td.IMAGE_DIMS, [50], len(td.MATH_SYMBOLS))
         self.classifier.load_state_dict(torch.load(model_path))
 
     def test_classification(self):
@@ -40,12 +42,12 @@ class MathSymbolClassifier():
     def classify(self, imgs):
         img_tensor = torch.Tensor(imgs)
 
-        labels = torch.argmax(self.classifier(img_tensor), axis=1)
+        labels = torch.argmax(self.classifier(img_tensor), dim=1)
         return [td.MATH_SYMBOLS[label] for label in labels]
 
 
 if __name__ == '__main__':
-    cls = MathSymbolClassifier('hasy_model-02.ckpt')
+    cls = MathSymbolClassifier()
 
     recognized = cls.test_classification()
 
