@@ -3,8 +3,6 @@ import numpy as np
 
 
 class PreProcessing:
-    def invert_grayscale_image(self, img):
-        return (255-img)
     def convert_gray(self, img):
         return cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
@@ -110,30 +108,6 @@ class PreProcessing:
         mask = self.get_background_removal_mask(frame)
         # apply mask on preprocessed image
         preprocessed = np.where(mask == 0, preprocessed, 255)
-
-        # ??? remove if necessary
-        #for i in range(5):
-        #    preprocessed=self.erode(preprocessed)
-
-
         return preprocessed
 
-    def preprocess3(self, img):
-         preprocessed = self.convert_gray(img)
-         preprocessed = self.medium_binarize(preprocessed)
-         return preprocessed
 
-    def background_contour_removal2(self, frame):
-        # preprocessing for clearer image
-        preprocessed = self.preprocess3(frame)
-        # mask generation
-        mask = self.get_background_removal_mask(frame)
-        # apply mask on preprocessed image
-        preprocessed = np.where(mask == 0, preprocessed, 255)
-
-        # ??? remove if necessary
-        #for i in range(5):
-        #    preprocessed=self.erode(preprocessed)
-
-
-        return preprocessed
