@@ -148,7 +148,7 @@ class App:
 
         if (source=="TrainingSamples"):
             for i in range(0, 42):
-                name = ("TrainingSamples/Image_" + str(292 + i) + "_")
+                name = ("ToClassify2/Image_" + str(292 + i) + "_")
                 source=("SampleImages\IMG_0"+str(292+i)+".JPG")
                 print("Opening Image")
                 print(source)

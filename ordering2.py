@@ -290,6 +290,7 @@ class LineOrdering2:
             directionalisedVectorList[i]=self.normalise_vector(directionalisedVectorList[i])
 
         # We calculate the mean Vector
+        #horVec=(0,10)
         horVec=self.get_medianVector(directionalisedVectorList)
 
 
