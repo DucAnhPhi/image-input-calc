@@ -9,7 +9,7 @@ from ordering2 import LineOrdering2
 
 from drawing import Draw
 
-
+from contour import Contour
 
 
 

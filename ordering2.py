@@ -5,6 +5,9 @@ import numpy as np
 from segmentation import Segmentation
 from drawing import Draw
 
+from contour import Contour
+
+from fraction import Fraction
 
 
 class LineOrdering2:
@@ -396,3 +399,65 @@ class LineOrdering2:
 
 
 
+    def compressFractions(self,contourList):
+                # find bar types
+        fractionBars = []
+        equalBars = []
+
+        for cnt in contourList:
+            # check and label bar types
+            cnt.check_bar_type(contourList)
+            if cnt.isFractionBar:
+                fractionBars.append(cnt)
+            elif cnt.isEqualBar:
+                equalBars.append(cnt)
+
+        # group equal bars to single contour object
+        for bar in equalBars:
+            if bar.remove:
+                continue
+            # build grouped contour object
+            bar2 = bar.equalBar
+            bX, bY, bWidth, bHeight = cv.boundingRect(bar.contour)
+            b2X, b2Y, b2Width, b2Height = cv.boundingRect(bar2.contour)
+            minX = min(bX, b2X)
+            maxX = max(bX+bWidth, b2X+b2Width)
+            minY = min(bY, b2Y)
+            maxY = max(bY+bHeight, b2Y+b2Height)
+            mask = np.ones(frame.shape[:2], dtype="uint8") * 255
+            cv.rectangle(mask, (minX, minY), (maxX, maxY), (0, 0, 0), 1)
+            cnts, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+            grouped = Contour(cnts[1], frame.shape, isEqualSign=True)
+            # mark grouped contours for removal and add new grouped contour
+            bar.remove = True
+            bar2.remove = True
+            contourList.append(grouped)
+
+        # sort fraction bars ascending by width
+        fractionBars.sort(key=lambda bar: bar.width)
+
+        # group contours to fractions starting with most narrow fraction bar
+        for bar in fractionBars:
+
+            # build fraction
+            fraction = Fraction(bar, contourList, frame.shape)
+
+            # build new contour
+            groupedContour = Contour(
+                fraction.get_contour(), frame.shape, fraction=fraction)
+
+            groupedContours = [*fraction.nominator,
+                               *fraction.denominator, fraction.bar]
+
+            # mark all grouped contours for removal and add new contour to contourList
+            for cnt in groupedContours:
+                cnt.remove = True
+            contourList.append(groupedContour)
+
+        # remove contours which were marked for removal before
+        contourList = [cnt for cnt in contourList if not cnt.remove]
+
+        return contourList
+
+        #cv.drawContours(
+        #    frame, [cnt.contour for cnt in contourList], -1, (0, 255, 0), 2)
