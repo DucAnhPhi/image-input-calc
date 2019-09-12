@@ -34,7 +34,13 @@ class Contour:
         self.imgShape = imgShape  # (height, width)
 
         (x, y), radius = cv.minEnclosingCircle(contour)
+        
+        self.horDist=None
+        self.orthDist=None
+        
         self.center = np.array([int(x), int(y)])
+        self.x = int(x)
+        self.y = int(y)
         self.radius = int(radius)
 
         boundingRect = cv.boundingRect(contour)

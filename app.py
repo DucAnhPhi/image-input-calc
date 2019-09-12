@@ -5,12 +5,16 @@ from preprocessing import PreProcessing
 
 from segmentation import Segmentation
 
-from ordering2 import LineOrdering2
+#from ordering2 import LineOrdering2
+from ordering3 import LineOrdering3
 
 from drawing import Draw
 
 from contour import Contour
 
+from fraction import Fraction
+
+from solver import Solver
 
 
 class App:
@@ -18,16 +22,14 @@ class App:
 
 
     def process(self, frame,name="TrainingSamples/Image_"):
+        # preprocessing
+        print("Preprocessing")
         preprocessed = PreProcessing().background_contour_removal(
             frame)
-
 
         #preprocessed=PreProcessing().preprocess3(frame)
         #preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
         #preprocessed = PreProcessing().background_contour_removal(preprocessed)
-
-
-        preprocessedForImages=preprocessed.copy()
 
         print("Preprocessing Done")
 
@@ -36,18 +38,21 @@ class App:
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
         print("Segmentation Done")
-
-
-
-
-
-
-
+        
+        # filtering contours
         if (len(contours)>30): # get bounding boxes of contours and filter them
             filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
             contoursUsedForOrdering=filtered.copy()
         else:
             contoursUsedForOrdering=contours.copy()
+        print("Filtering Done")
+        
+
+        # initialize contour object from each contour in contour list
+        contourList = [Contour(contour=cnt, imgShape=frame.shape)
+                       for cnt in contoursUsedForOrdering]
+
+        contourListWithFractionsAsSingleContours=LineOrdering3().compressFractions(contourList,frame)
 
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
@@ -59,22 +64,23 @@ class App:
             cv.waitKey()
             return preprocessed
 
+        
 
         # draw each bounding box
         #boundingBoxFrame, orderedImage = Draw().draw_bounding_boxes_around_contours(preprocessed, filteredContours)
         print("Starting Line Ordering Done")
         # create ordered List of Contours
 
-        orderedLineList, horVec, orderedImage = LineOrdering2().get_orderedLineList2(contoursUsedForOrdering, preprocessed.copy())
+        orderedLineList, horVec, orderedImage = LineOrdering3().get_orderedLineList3(contourList, preprocessed.copy())
 
-        orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
+        #orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
         print("Line Ordering Done")
 
         #imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
 
         #Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
 
-        return orderedImage
+        return preprocessed #orderedImage
 
     def show_results(self, frame, result):
 

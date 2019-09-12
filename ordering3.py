@@ -10,7 +10,7 @@ from contour import Contour
 from fraction import Fraction
 
 
-class LineOrdering2:
+class LineOrdering3:
 
     # returns the magnitude of a vector
     def mag(self,vectorIn):
@@ -101,17 +101,6 @@ class LineOrdering2:
                 reducedOrderedLineList.append(orderedLineList[i])
         return reducedOrderedLineList
 
-    # This returns a List of contours that are larger than the cutOffRadius
-    # Function Not Used
-    def get_contoursLargerThanRadius(self,contours, cutOffRadius, rList=None):
-        if rList==None:
-            xList, yList, rList = Segmentation().get_properties_mincircle(contours)
-        contoursLargerThanRadius=[]
-        for i in range(len(contours)):
-            if rList[i] >cutOffRadius:
-                contoursLargerThanRadius.append(contours[i])
-
-        return contoursLargerThanRadius
 
     def remove_lines_with_bordering_larger_lines(self,orderedLineList):
         emptyLine=[]
@@ -126,45 +115,13 @@ class LineOrdering2:
         return orderedLineList
 
     #sort the contours by position in horVec direction
-    def horVec_sorter(self, contours, horVec):
-
-        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
-
-        yh = horVec[0]
-        xh = horVec[1]
-
-        sortHelperTuple=[]
-
-        for i in range(len(contours)):
-            sortHelperTuple.append((contours[i],(yh*yList[i]+xh*xList[i])))
-
-        sortHelperTuple.sort(key=lambda tup: tup[1],reverse=True)
-
-        sortedLine = []
-        for i in range(len(sortHelperTuple)):
-            sortedLine.append(sortHelperTuple[i][0])
+    def horVec_sorter(self, contourList, horVec):
+        
+        sortedLine = sorted(contourList,key = lambda cnt: cnt.horDist)
 
         return sortedLine
 
-    #sort contours by size
-    def size_sorter(self, contours):
 
-        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
-
-
-
-        sortHelperTuple=[]
-
-        for i in range(len(p)):
-            sortHelperTuple.append((contours[i],rList[i]))
-
-        sortHelperTuple.sort(key=lambda tup: tup[1],reverse=True)
-
-        sortedLine = []
-        for i in range(len(sortHelperTuple)):
-            sortedLine.append(sortHelperTuple[i][0])
-
-        return sortedLine
 
     # get the index of the maximum value in a list
     def get_index_with_max_value(self,anyList):
@@ -182,8 +139,12 @@ class LineOrdering2:
 
 
     # get the orthogonal distance to (0,0) of every contour
-    def get_OrthDistList(self,contours, horVec):
-        xList, yList, rList = Segmentation().get_properties_mincircle(contours)
+    def get_OrthDistList(self,contourList, horVec):
+        #determining some variables to be used later
+        xList = list(cnt.x for cnt in contourList)
+        yList = list(cnt.y for cnt in contourList)
+        rList = list(cnt.radius for cnt in contourList)
+
         orthDistList=[]
         normHorVec=self.normalise_vector(horVec)
 
@@ -195,8 +156,11 @@ class LineOrdering2:
         for i in range(len(xList)):
             yOrth=yO*yList[i]
             xOrth=xO*xList[i]
-            orthDistList.append(np.sqrt(xOrth**2+yOrth**2))
-        return orthDistList
+            contourList[i].orthDist=(np.sqrt(xOrth**2+yOrth**2))
+
+            yHor=yH*yList[i]
+            xHor=xH*xList[i]
+            contourList[i].horDist=(np.sqrt(xHor**2+yHor**2))
 
 
 
@@ -267,9 +231,9 @@ class LineOrdering2:
 
 
         #Getting some general variables for latter usage
-        xList = (cnt.x for cnt in contourList)
-        yList = (cnt.y for cnt in contourList)
-        rList = (cnt.r for cnt in contourList)
+        xList = list(cnt.x for cnt in contourList)
+        yList = list(cnt.y for cnt in contourList)
+        rList = list(cnt.radius for cnt in contourList)
         points = self.get_coords_list(yList, xList)
 
         # we calculate here a radius that should be ideally larger than the points and smaller than the symbols.
@@ -308,7 +272,9 @@ class LineOrdering2:
 
 
     # get a list of the position of all lines in orthogonal Distance.
-    def get_linePositionList(self,contours, orthDistList,maxRad):
+    def get_linePositionList(self,contourList,maxRad):
+        
+        orthDistList = list(cnt.orthDist for cnt in contourList)
         minOrthDist=np.min(orthDistList)
         maxOrthDist=np.max(orthDistList)
 
@@ -320,7 +286,7 @@ class LineOrdering2:
             linePositionList.append(currentPoint)
             currentPoint=currentPoint+maxRad*0.4
 
-        return linePositionList,0
+        return linePositionList
 
 
 
@@ -328,31 +294,31 @@ class LineOrdering2:
 
     def get_orderedLineList3(self,contourList,inIm):
         # check if contours were detected. If not, nothing can be done here, except for errors produced
-        if len(contours)==0:
+        if len(contourList)==0:
             print("ERROR NO CONTOURS DETECTED")
             cv.waitKey()
             return None, (0,0), inIm
 
         #determining some variables to be used later
-        xList = (cnt.x for cnt in contourList)
-        yList = (cnt.y for cnt in contourList)
-        rList = (cnt.r for cnt in contourList)
+        xList = list(cnt.x for cnt in contourList)
+        yList = list(cnt.y for cnt in contourList)
+        rList = list(cnt.radius for cnt in contourList)
 
         maxRad = max(rList)
         cutOffRadius = np.mean(rList)
         lineAcceptanceRadius=0.5*maxRad
 
         # get the direction in which the line is written
-        horVec= self.get_horVec2(contours)
+        horVec= self.get_horVec2(contourList)
 
         # determine the distance from (0,0) have along the orthogonal axis to the writing direction
-        orthDistList=self.get_OrthDistList(contours, horVec)
+        self.get_OrthDistList(contourList, horVec)
 
         # determine the position of all the lines in the image
-        linePositionList,nearestContourIndex= self.get_linePositionList(contours,orthDistList,maxRad)
+        linePositionList= self.get_linePositionList(contourList,maxRad)
 
         # Just feedback
-        inIm = Draw().LineFeedBack(inIm,contours,contours[nearestContourIndex],orthDistList,horVec,maxRad)
+        #inIm = Draw().LineFeedBack(inIm,contourList,contourList[0],orthDistList,horVec,maxRad)
 
 
 
@@ -422,7 +388,7 @@ class LineOrdering2:
 
 
 
-    def compressFractions(self,contourList):
+    def compressFractions(self,contourList, frame):
                 # find bar types
         fractionBars = []
         equalBars = []
