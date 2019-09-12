@@ -56,7 +56,8 @@ class MyDataSet(Dataset):
                         labels.append(label_idx)
         return imgs, labels
 
-    def __preprocess(self, img):
+    @staticmethod
+    def __preprocess(img):
         normalize = transforms.Normalize(
             mean=[0.5],
             std=[0.5]
@@ -94,3 +95,33 @@ class SegmentedImgs(MyDataSet):
 
     def __init__(self, data_root, train=True):
         super(SegmentedImgs, self).__init__(data_root, train_file='labels.csv', test_file='labels.csv', train=train)
+
+
+class OwnImgs(MyDataSet):
+
+    def __init__(self, path='ToClassify'):
+        super(OwnImgs, self).__init__(path)
+
+    def __get_data_from_file(self, file):
+        imgs, labels = [], []
+        label_idx = 0
+        for symbol in MATH_SYMBOLS:
+            try:
+                images = os.listdir(os.path.join(self.data_root, symbol))
+                for image_file in images:
+                    rotation = transforms.RandomRotation(45)
+                    color_jitter = transforms.ColorJitter(0.5, 0.5, 0.5, 0.5)
+                    img = Image.open(os.path.join(self.data_root, symbol, image_file))
+                    imgs.append(self.__preprocess(img))
+                    imgs.append(self.__preprocess(rotation(img)))
+                    imgs.append(self.__preprocess(color_jitter(img)))
+                    imgs.append(self.__preprocess(color_jitter(rotation(img))))
+                    labels.append(label_idx)
+                    labels.append(label_idx)
+                    labels.append(label_idx)
+                    labels.append(label_idx)
+            except FileNotFoundError:
+                print("No training data for {0}. Skipping".format(symbol))
+            label_idx += 1
+
+
