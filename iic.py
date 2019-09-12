@@ -1,23 +1,22 @@
 import torch
 import re
-import cv2
 import os
-from network import CharacterClassifier
 from torchvision import models
 import training_data as td
+from torch.nn import Conv2d
 import numpy as np
 from PIL import Image
-import PIL.ImageOps
 
 
 class MathSymbolClassifier():
     def __init__(self, model_path):
         self.classifier = models.densenet201(num_classes=len(td.MATH_SYMBOLS))
+        self.classifier.features.conv0 = Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.classifier.load_state_dict(torch.load(model_path))
 
     def test_classification(self):
         file_path = "SubImages"
-        images = torch.zeros((20, 3, 32, 32))
+        images = torch.zeros((20, 1, 28, 28))
         sym_idx = []
         i = 0
         for file_name in sorted(os.listdir(file_path)):

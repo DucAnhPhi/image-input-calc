@@ -18,7 +18,7 @@ SYMBOL_CODES = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
                 113, 114,
                 196, 923, 924]
 
-IMAGE_DIMS = (3, 224, 224)
+IMAGE_DIMS = (1, 28, 28)
 
 
 class MyDataSet(Dataset):
@@ -45,8 +45,8 @@ class MyDataSet(Dataset):
                 for label_idx, symbol in enumerate(SYMBOL_CODES):
                     if symbol == label_id:
                         img = cv2.imread(os.path.join(self.data_subfolder, label['path']))
-                        #img = custom_preprocessing.preprocess3(img)
-                        #img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+                        img = custom_preprocessing.preprocess3(img)
+                        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
                         img = Image.fromarray(img)
                         img = PIL.ImageOps.invert(img)
                         imgs.append(self.preprocess(img))
@@ -55,14 +55,14 @@ class MyDataSet(Dataset):
 
     @staticmethod
     def preprocess(img):
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+        normalize = transforms.Normalize(mean=[0.485],
+                                 std=[0.229])
         preprocess = transforms.Compose([
-            transforms.Grayscale(num_output_channels=3),
-            transforms.Pad(4),
-            transforms.Resize(224),
+            transforms.Grayscale(num_output_channels=1),
+            transforms.Pad(2),
+            transforms.Resize(28),
             transforms.ToTensor(),
-            normalize
+            #normalize
         ])
         return preprocess(img)
 
@@ -153,10 +153,10 @@ class CombinedData(MyDataSet):
             path = 'mnist_test'
         mnist_data = MNIST(path, train=train, download=True)
         for img in tqdm(mnist_data.data):
-            pil_img = Image.fromarray(img.numpy())
+            pil_img = transforms.ToPILImage()(img)
             pil_img = PIL.ImageOps.invert(pil_img)
             imgs.append(super().preprocess(pil_img))
         for label in tqdm(mnist_data.targets):
-            labels.append(label)
+            labels.append(label.item())
 
 
