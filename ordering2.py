@@ -386,6 +386,83 @@ class LineOrdering2:
         for i in range(len(reducedOrderedLineList)):
             reducedOrderedLineList[i]=self.horVec_sorter(reducedOrderedLineList[i],horVec)
 
+        # not necessary, but nice to do.
+        horVec = self.normalise_vector(horVec)
+
+
+        print("We have ", len(reducedOrderedLineList), " lines")
+
+        for i in range(len(reducedOrderedLineList)):
+            print("   Line: ", i, " has ", len(reducedOrderedLineList[i]), " symbols")
+        return reducedOrderedLineList, horVec, inIm
+
+        
+
+
+
+
+
+
+    def get_orderedLineList3(self,contourList,inIm):
+        # check if contours were detected. If not, nothing can be done here, except for errors produced
+        if len(contours)==0:
+            print("ERROR NO CONTOURS DETECTED")
+            cv.waitKey()
+            return None, (0,0), inIm
+
+        #determining some variables to be used later
+        xList = (cnt.x for cnt in contourList)
+        yList = (cnt.y for cnt in contourList)
+        rList = (cnt.r for cnt in contourList)
+
+        maxRad = max(rList)
+        cutOffRadius = np.mean(rList)
+        lineAcceptanceRadius=0.5*maxRad
+
+        # get the direction in which the line is written
+        horVec= self.get_horVec2(contours)
+
+        # determine the distance from (0,0) have along the orthogonal axis to the writing direction
+        orthDistList=self.get_OrthDistList(contours, horVec)
+
+        # determine the position of all the lines in the image
+        linePositionList,nearestContourIndex= self.get_linePositionList(contours,orthDistList,maxRad)
+
+        # Just feedback
+        inIm = Draw().LineFeedBack(inIm,contours,contours[nearestContourIndex],orthDistList,horVec,maxRad)
+
+
+
+        # We will return this. Time to fill it
+        orderedLineList = []
+        # We add the lines separately
+        toAddLine = []
+
+        # print("maxRad = ", maxRad)
+        # print("Area of Acceptance: ", str(linePositionList[0] + lineAcceptanceRadius) , " to ", str(linePositionList[0] - lineAcceptanceRadius))
+
+        # In case you want to change it
+        contoursUsed = contourList.copy()
+
+        # For every line we check every contour if it fits.
+        for i in range(len(linePositionList)):
+            toAddLine=[]
+            for j in range(len(contoursUsed)):
+                if contoursUsed[j].orthDist< (linePositionList[i] + lineAcceptanceRadius) and contoursUsed[j].orthDist > (linePositionList[i] - lineAcceptanceRadius):
+                    toAddLine.append(contoursUsed[j])
+            # Line is checked. Time to add it.
+            orderedLineList.append(toAddLine)
+
+        # remove Lines with neighbouring lines that are longer
+        maximumOrderedLineList=self.remove_lines_with_bordering_larger_lines(orderedLineList)
+
+        # remove Lines with length less than 2
+        reducedOrderedLineList=self.remove_lines_with_length_less_than(maximumOrderedLineList)
+
+        # sort all lines along the horVec axis
+        for i in range(len(reducedOrderedLineList)):
+            reducedOrderedLineList[i]=self.horVec_sorter(reducedOrderedLineList[i],horVec)
+
 
         # not necessary, but nice to do.
         horVec = self.normalise_vector(horVec)
@@ -396,6 +473,29 @@ class LineOrdering2:
         for i in range(len(reducedOrderedLineList)):
             print("   Line: ", i, " has ", len(reducedOrderedLineList[i]), " symbols")
         return reducedOrderedLineList, horVec, inIm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
