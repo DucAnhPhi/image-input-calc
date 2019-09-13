@@ -4,6 +4,7 @@ import os
 from torchvision import models
 import training_data as td
 from torch.nn import Conv2d
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -21,7 +22,7 @@ class MathSymbolClassifier():
         i = 0
         for file_name in sorted(os.listdir(file_path)):
             sym_idx.append([int(i) for i in re.findall(r'\d+', file_name)])
-            img = Image.open(file_path + '/' + file_name)
+            img = cv2.imread(file_path + '/' + file_name)
             processed = td.MyDataSet.preprocess(img)
             images[i] = processed
             i += 1
@@ -48,7 +49,7 @@ class MathSymbolClassifier():
 
 
 if __name__ == '__main__':
-    cls = MathSymbolClassifier('hasy_model-trans.ckpt')
+    cls = MathSymbolClassifier('model-all_data.ckpt')
 
     recognized = cls.test_classification()
 

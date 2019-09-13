@@ -39,22 +39,37 @@ class MyDataSet(Dataset):
             rows = list(label_reader)
             imgs = []
             labels = []
-            custom_preprocessing = preprocessing.PreProcessing()
             for i, label in enumerate(tqdm(rows)):
                 label_id = int(label['symbol_id'])
                 for label_idx, symbol in enumerate(SYMBOL_CODES):
                     if symbol == label_id:
                         img = cv2.imread(os.path.join(self.data_subfolder, label['path']))
-                        img = custom_preprocessing.preprocess3(img)
-                        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-                        img = Image.fromarray(img)
-                        img = PIL.ImageOps.invert(img)
                         imgs.append(self.preprocess(img))
                         labels.append(label_idx)
+                        if label_idx >= 12:
+                            img = self.custom_preprocessing(img)
+                            rotation = transforms.RandomRotation(20)
+                            flip = transforms.RandomHorizontalFlip()
+                            rot_img = rotation(img)
+                            flip_img = flip(img)
+                            rot_flip = rotation(flip(img))
+                            flip_rot = flip(rotation(img))
+                            imgs.append(self.torch_preprocess(rot_img))
+                            imgs.append(self.torch_preprocess(flip_img))
+                            imgs.append(self.torch_preprocess(rot_flip))
+                            imgs.append(self.torch_preprocess(flip_rot))
+                            labels.append(label_idx)
+                            labels.append(label_idx)
+                            labels.append(label_idx)
+                            labels.append(label_idx)
         return imgs, labels
 
     @staticmethod
     def preprocess(img):
+        return MyDataSet.torch_preprocess(MyDataSet.custom_preprocessing(img))
+
+    @staticmethod
+    def torch_preprocess(img):
         normalize = transforms.Normalize(mean=[0.485],
                                  std=[0.229])
         preprocess = transforms.Compose([
@@ -65,6 +80,15 @@ class MyDataSet(Dataset):
             #normalize
         ])
         return preprocess(img)
+
+    @staticmethod
+    def custom_preprocessing(img):
+        custom_preprocessing = preprocessing.PreProcessing()
+        img = custom_preprocessing.preprocess3(img)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        img = Image.fromarray(img)
+        img = PIL.ImageOps.invert(img)
+        return img
 
     def __len__(self):
         return self.size
@@ -124,7 +148,7 @@ class OwnImgs(MyDataSet):
             try:
                 images = os.listdir(os.path.join(self.data_root, symbol))
                 for image_file in images:
-                    img = Image.open(os.path.join(self.data_root, symbol, image_file))
+                    img = cv2.imread(os.path.join(self.data_root, symbol, image_file))
                     imgs.append(self.preprocess(img))
                     labels.append(label_idx)
             except FileNotFoundError:
@@ -155,7 +179,7 @@ class CombinedData(MyDataSet):
         for img in tqdm(mnist_data.data):
             pil_img = transforms.ToPILImage()(img)
             pil_img = PIL.ImageOps.invert(pil_img)
-            imgs.append(super().preprocess(pil_img))
+            imgs.append(super().torch_preprocess(pil_img))
         for label in tqdm(mnist_data.targets):
             labels.append(label.item())
 
