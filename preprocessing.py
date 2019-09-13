@@ -109,5 +109,3 @@ class PreProcessing:
         # apply mask on preprocessed image
         preprocessed = np.where(mask == 0, preprocessed, 255)
         return preprocessed
-
-

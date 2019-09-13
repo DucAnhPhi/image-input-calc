@@ -2,94 +2,84 @@ import numpy as np
 import cv2 as cv
 
 from preprocessing import PreProcessing
-
 from segmentation import Segmentation
-
+from contour import Contour
+from fraction import Fraction
+from solver import Solver
 #from ordering2 import LineOrdering2
 from ordering3 import LineOrdering3
-
 from drawing import Draw
-
 from contour import Contour
-
 from fraction import Fraction
-
 from solver import Solver
 
 
 class App:
 
-
-
-    def process(self, frame,name="TrainingSamples/Image_"):
+    def process(self, frame, name="TrainingSamples/Image_"):
         # preprocessing
-        print("Preprocessing")
         preprocessed = PreProcessing().background_contour_removal(
             frame)
-
-        #preprocessed=PreProcessing().preprocess3(frame)
-        #preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
-        #preprocessed = PreProcessing().background_contour_removal(preprocessed)
-
         print("Preprocessing Done")
 
         # find contours using algorithm by Suzuki et al. (1985)
         contours, hierarchy = cv.findContours(
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-
         print("Segmentation Done")
-        
+
         # filtering contours
-        if (len(contours)>30): # get bounding boxes of contours and filter them
+        if (len(contours) > 30):  # get bounding boxes of contours and filter them
             filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
-            contoursUsedForOrdering=filtered.copy()
+            contoursUsedForOrdering = filtered.copy()
         else:
-            contoursUsedForOrdering=contours.copy()
+            contoursUsedForOrdering = contours.copy()
         print("Filtering Done")
-        
 
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
                        for cnt in contoursUsedForOrdering]
 
-        contourListWithFractionsAsSingleContours=LineOrdering3().compressFractions(contourList,frame)
+        contourListWithFractionsAsSingleContours = LineOrdering3(
+        ).compressFractions(contourList, frame)
 
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
-
         print("Segmentation Filtering Done")
 
-        if len(contoursUsedForOrdering)==0:
+        if len(contoursUsedForOrdering) == 0:
             print("ERROR NO CONTOURS DETECTED")
             cv.waitKey()
             return preprocessed
-
-        
 
         # draw each bounding box
         #boundingBoxFrame, orderedImage = Draw().draw_bounding_boxes_around_contours(preprocessed, filteredContours)
         print("Starting Line Ordering Done")
         # create ordered List of Contours
 
-        orderedLineList, horVec, orderedImage = LineOrdering3().get_orderedLineList3(contourList, preprocessed.copy())
+        orderedLineList, horVec, orderedImage = LineOrdering3(
+        ).get_orderedLineList3(contourList, preprocessed.copy())
 
         #orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
         print("Line Ordering Done")
 
-        #imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
+        # imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
 
-        #Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
+        # Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
 
-        return preprocessed #orderedImage
+        # unwrap nested contours and pass contour list to solver object
+        unwrapped = [cnt.unwrap() for cnt in contourList]
+
+        # derive characters and compute solution using sympy
+        Solver(unwrapped)
+        return preprocessed  # orderedImage
 
     def show_results(self, frame, result):
 
         frame = Draw().scale_image(frame, 0.25)
-        result = Draw().scale_image(result , 0.25)
+        result = Draw().scale_image(result, 0.25)
         cv.imshow('frame', frame)
         cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
-
 
     def run_with_webcam(self):
         cap = cv.VideoCapture(0)
@@ -112,10 +102,10 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    def run_with_img(self,source='sample.jpg',name="TrainingSamples/Image_"):
+    def run_with_img(self, source='sample.jpg', name="TrainingSamples/Image_"):
         frame = cv.imread(source, 1)
 
-        preprocessed = self.process(frame,name)
+        preprocessed = self.process(frame, name)
 
         # Display the resulting frame
         self.show_results(frame, preprocessed)
@@ -146,19 +136,18 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-
     def run(self, source):
         if (source == "" or source == "webcam" or source == "Webcam"):
             print("Using Webcam")
             App().run_with_webcam()
 
-        if (source=="TrainingSamples"):
+        if (source == "TrainingSamples"):
             for i in range(0, 42):
                 name = ("ToClassify2/Image_" + str(292 + i) + "_")
-                source=("SampleImages\IMG_0"+str(292+i)+".JPG")
+                source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
                 print("Opening Image")
                 print(source)
-                App().run_with_img(source,name)
+                App().run_with_img(source, name)
         sourceEnding = source.split(".", 1)[1]
 
         if sourceEnding == "MOV":
@@ -172,7 +161,7 @@ class App:
 
 
 if __name__ == '__main__':
-    #App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
+    # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     App().run("sample.MOV")
 
     # App().run_with_webcam()
