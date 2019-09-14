@@ -3,33 +3,17 @@ import numpy as np
 
 
 class Segmentation:
-    def filter_outer_border(self, img, cnt):
-        if cnt.x1 == 0 and cnt.y1 == 0:
-            if cnt.width == img.shape[1] and cnt.height == img.shape[0]:
-                return False
-        return True
-
-    def filter_nested_contour(self, img, contours, hierarchy, cnt, index, maxThresh=0.3):
+    def check_holes(self, img, contourList, hierarchy, cnt, index, maxThresh=0.3):
         parentIndex = hierarchy[0][index][-1]
         if parentIndex == -1:
             return True
         else:
-            pX, pY, pWidth, pHeight = cv.boundingRect(contours[parentIndex])
-            cX, cY, cWidth, cHeight = cv.boundingRect(cnt)
+            parent = contourList[parentIndex]
             maxArea = len(img) * len(img[0]) * maxThresh
-            if pWidth * pHeight < maxArea:
-                if cX >= pX and cY >= pY:
-                    if (cX + cWidth) <= (pX+pWidth) and (cY+cHeight) <= (pY+pHeight):
-                        return False
-            return True
-
-    def filter_contours(self, img, contourList, hierarchy):
-        filtered = []
-        for i in range(len(contourList)):
-            cnt = contourList[i]
-            valid = self.filter_outer_border(img, cnt)
-            valid = valid & self.filter_nested_contour(
-                img, contourList, hierarchy, cnt, i)
-            if valid:
-                filtered.append(cnt)
-        return filtered
+            parentArea = parent.width * parent.height
+            if parentArea < maxArea:
+                if cnt.is_inside_area(parent.x1, parent.x2, parent.y1, parent.y2):
+                    child_area = cnt.width * cnt.height
+                    if child_area > parentArea * 0.1:
+                        parent.holes.append(cnt.contour)
+                        cnt.remove = True

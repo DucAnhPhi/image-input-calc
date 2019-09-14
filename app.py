@@ -21,14 +21,17 @@ class App:
                        for cnt in contours]
 
         # filter and group segmented contours
-        contourList = Segmentation().filter_contours(
-            preprocessed, contourList, hierarchy)
 
         # find bar types
         fractionBars = []
         equalBars = []
 
-        for cnt in contourList:
+        for i in range(len(contourList)):
+            cnt = contourList[i]
+            # handle nested contours
+            Segmentation().check_holes(preprocessed, contourList, hierarchy, cnt, i)
+            # handle outer border
+            cnt.check_outer_border()
             # check and label bar types
             cnt.check_bar_type(contourList)
             if cnt.isFractionBar:
