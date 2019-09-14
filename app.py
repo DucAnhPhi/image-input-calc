@@ -16,12 +16,13 @@ class App:
         contours, hierarchy = cv.findContours(
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
-        # get bounding boxes of contours and filter them
-        filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
-
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
-                       for cnt in filtered]
+                       for cnt in contours]
+
+        # filter and group segmented contours
+        contourList = Segmentation().filter_contours(
+            preprocessed, contourList, hierarchy)
 
         # find bar types
         fractionBars = []

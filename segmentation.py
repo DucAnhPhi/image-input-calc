@@ -4,9 +4,8 @@ import numpy as np
 
 class Segmentation:
     def filter_outer_border(self, img, cnt):
-        x, y, width, height = cv.boundingRect(cnt)
-        if x == 0 and y == 0:
-            if width == img.shape[1] and height == img.shape[0]:
+        if cnt.x1 == 0 and cnt.y1 == 0:
+            if cnt.width == img.shape[1] and cnt.height == img.shape[0]:
                 return False
         return True
 
@@ -24,13 +23,13 @@ class Segmentation:
                         return False
             return True
 
-    def filter_contours(self, img, contours, hierarchy):
+    def filter_contours(self, img, contourList, hierarchy):
         filtered = []
-        for i in range(len(contours)):
-            cnt = contours[i]
+        for i in range(len(contourList)):
+            cnt = contourList[i]
             valid = self.filter_outer_border(img, cnt)
             valid = valid & self.filter_nested_contour(
-                img, contours, hierarchy, cnt, i)
+                img, contourList, hierarchy, cnt, i)
             if valid:
                 filtered.append(cnt)
         return filtered
