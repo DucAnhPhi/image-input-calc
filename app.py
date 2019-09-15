@@ -6,8 +6,7 @@ from segmentation import Segmentation
 from contour import Contour
 from fraction import Fraction
 from solver import Solver
-#from ordering2 import LineOrdering2
-from ordering3 import LineOrdering3
+from ordering import LineOrdering
 from drawing import Draw
 from contour import Contour
 from fraction import Fraction
@@ -40,6 +39,9 @@ class App:
         sg.filter()
 
         filtered = sg.get_contours()
+
+        orthVec = LineOrdering().get_orth_vec(filtered)
+        print(orthVec)
 
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
