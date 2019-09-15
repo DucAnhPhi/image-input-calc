@@ -8,6 +8,12 @@ from fraction import Fraction
 
 
 class LineOrdering:
+    def __init__(self, contourList):
+        self.contourList = contourList
+        # self.horVec = self.get_hor_vec()
+        self.horVec = (10, 0)
+        self.orthVec = self.get_orth_vec(self.horVec)
+
     def get_max_vec(self, vectors):
         maxDist = 0
         maxVec = None
@@ -37,7 +43,7 @@ class LineOrdering:
                 redirectedVectors.append(normalized * (-1))
         return redirectedVectors
 
-    def get_hor_vec(self, contourList):
+    def get_hor_vec(self):
         # Concept:
         # We want to determine the direction in which the line is written.
         # The Problem is that our Input is likely to not be perfect.
@@ -49,10 +55,10 @@ class LineOrdering:
 
         # get distance vectors
         distVectors = []
-        for i in range(len(contourList)):
-            currCnt = contourList[i]
-            for j in range(i+1, len(contourList)):
-                nextCnt = contourList[j]
+        for i in range(len(self.contourList)):
+            currCnt = self.contourList[i]
+            for j in range(i+1, len(self.contourList)):
+                nextCnt = self.contourList[j]
                 distVec = nextCnt.center - currCnt.center
                 distVectors.append(distVec)
 
@@ -65,8 +71,7 @@ class LineOrdering:
         horVec = self.normalize_vec(horVec)
         return horVec
 
-    def get_orth_vec(self, contourList):
-        horVec = self.get_hor_vec(contourList)
+    def get_orth_vec(self, horVec):
         # We want to find a vector (xO,yO) which is orthogonal to (xH,yH).
         # This is equivalent (assuming we have non-vanishing vectors) to:
         #   xHxO+yOyH=0
@@ -77,3 +82,51 @@ class LineOrdering:
         # 'a' can be 1 or -1
         orthVec = np.array([-horVec[1], horVec[0]])
         return orthVec
+
+    def get_lines(self, frame):
+        tempContours = self.contourList.copy()
+
+        def get_orth_dist(vec):
+            return np.linalg.norm(np.multiply(vec, self.orthVec))
+
+        tempContours.sort(key=lambda cnt: get_orth_dist(cnt.center))
+
+        avgOrthDev = 0
+        for i in range(len(tempContours)):
+            if i == 0:
+                continue
+            currDist = get_orth_dist(tempContours[i].center)
+            preDist = get_orth_dist(tempContours[i-1].center)
+            avgOrthDev += abs(currDist-preDist)
+        avgOrthDev = avgOrthDev / len(tempContours)
+
+        lines = []
+        tmpLine = []
+        for i in range(len(tempContours)):
+            curr = tempContours[i]
+            if i == 0:
+                tmpLine.append(curr)
+                continue
+            pre = tempContours[i-1]
+            currDist = get_orth_dist(curr.center)
+            preDist = get_orth_dist(pre.center)
+            orthDev = abs(currDist-preDist)
+            if orthDev <= avgOrthDev:
+                tmpLine.append(curr)
+            else:
+                if len(tmpLine) > 2:
+                    lines.append(tmpLine)
+                tmpLine = []
+
+        print(self.horVec, self.orthVec)
+
+        def get_hor_dist(vec):
+            return np.linalg.norm(np.multiply(vec, self.horVec))
+
+        for l in range(len(lines)):
+            line = lines[l]
+            line.sort(key=lambda cnt: get_hor_dist(cnt.center[0]))
+            for i in range(len(line)):
+                cnt = line[i]
+                cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
+                           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)

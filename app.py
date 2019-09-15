@@ -40,14 +40,13 @@ class App:
 
         filtered = sg.get_contours()
 
-        orthVec = LineOrdering().get_orth_vec(filtered)
-        print(orthVec)
-
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
         cv.drawContours(
             frame, [cnt.contour for cnt in filtered], -1, (0, 255, 0), 2)
+
+        LineOrdering(filtered).get_lines(frame)
 
         # print("Segmentation Filtering Done")
 
