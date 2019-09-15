@@ -10,6 +10,7 @@ class Contour:
                  contour,
                  imgShape,
                  fraction=None,
+                 holes=[],
                  isFractionBar=False,
                  isMinusSign=False,
                  isEqualBar=False,
@@ -31,6 +32,7 @@ class Contour:
         self.contourId = ''.join(random.choices(chars, k=8))
 
         self.fraction = fraction  # fraction object in fraction.py
+        self.holes = holes  # list of contours (not contour objects!)
         self.imgShape = imgShape  # (height, width)
 
         (x, y), radius = cv.minEnclosingCircle(contour)
@@ -109,6 +111,9 @@ class Contour:
         return self.isFractionBar
 
     def check_bar_type(self, contourList):
+        # don't consider contours which are about to be removed
+        if self.remove:
+            return False
         # only consider bars
         if not self.is_bar():
             return False
@@ -143,6 +148,26 @@ class Contour:
         else:
             self.isEqualBar = True
             self.equalBar = equalBar
+
+    def check_outer_border(self):
+        if self.x1 == 0 and self.y1 == 0:
+            if self.height == self.imgShape[0] and self.width == self.imgShape[1]:
+                self.remove = True
+
+    def check_holes(self, contourList, hierarchy, cnt, index):
+        if cnt.remove:
+            return
+        parentIndex = hierarchy[0][index][-1]
+        if parentIndex == -1:
+            return
+        else:
+            parent = contourList[parentIndex]
+            parentArea = parent.width * parent.height
+            if cnt.is_inside_area(parent.x1, parent.x2, parent.y1, parent.y2):
+                child_area = cnt.width * cnt.height
+                if child_area > parentArea * 0.1:
+                    parent.holes.append(cnt.contour)
+                    cnt.remove = True
 
     def unwrap(self):
         # contour can contain nested contours
@@ -191,12 +216,10 @@ class Contour:
     def get_subimage(self):
         blankImg = np.zeros(
             shape=self.imgShape, dtype=np.uint8)
-        cv.drawContours(
-            blankImg, [self.contour], -1, (255, 255, 255), 1)
-        cv.fillPoly(blankImg, pts=[self.contour], color=(255, 255, 255))
+        cv.fillPoly(blankImg, pts=[self.contour, *
+                                   self.holes], color=(255, 255, 255))
         subImg = blankImg[self.y1:self.y2, self.x1:self.x2]
         subImg = self.resize_keep_ratio(subImg)
-        subImg = PreProcessing().erode(subImg)
         subImg = PreProcessing().convert_gray(subImg)
         subImg = np.asarray(subImg).reshape((1, 32, 32))
         return subImg

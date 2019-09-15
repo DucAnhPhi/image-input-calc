@@ -20,6 +20,7 @@ class App:
         # preprocessing
         preprocessed = PreProcessing().background_contour_removal(
             frame)
+
         print("Preprocessing Done")
 
         # find contours using algorithm by Suzuki et al. (1985)
@@ -27,58 +28,60 @@ class App:
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
         print("Segmentation Done")
 
-        # filtering contours
-        if (len(contours) > 30):  # get bounding boxes of contours and filter them
-            filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
-            contoursUsedForOrdering = filtered.copy()
-        else:
-            contoursUsedForOrdering = contours.copy()
-        print("Filtering Done")
+        # TODO: Handle too many contours appropriately
 
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
-                       for cnt in contoursUsedForOrdering]
+                       for cnt in contours]
 
-        contourListWithFractionsAsSingleContours = LineOrdering3(
-        ).compressFractions(contourList, frame)
+        # filter, classify and group segmented contours
+        sg = Segmentation(contourList, hierarchy, frame.shape)
+        sg.group_and_classify()
+        sg.filter()
+
+        filtered = sg.get_contours()
 
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
-        print("Segmentation Filtering Done")
 
-        if len(contoursUsedForOrdering) == 0:
-            print("ERROR NO CONTOURS DETECTED")
-            cv.waitKey()
-            return preprocessed
+        cv.drawContours(
+            frame, [cnt.contour for cnt in filtered], -1, (0, 255, 0), 2)
+
+        # print("Segmentation Filtering Done")
+
+        # if len(contoursUsedForOrdering) == 0:
+        #     print("ERROR NO CONTOURS DETECTED")
+        #     cv.waitKey()
+        #     return preprocessed
 
         # draw each bounding box
         #boundingBoxFrame, orderedImage = Draw().draw_bounding_boxes_around_contours(preprocessed, filteredContours)
-        print("Starting Line Ordering Done")
+        #print("Starting Line Ordering Done")
         # create ordered List of Contours
 
-        orderedLineList, horVec, orderedImage = LineOrdering3(
-        ).get_orderedLineList3(contourList, preprocessed.copy())
+        # orderedLineList, horVec, orderedImage = LineOrdering3(
+        # ).get_orderedLineList3(contourList, preprocessed.copy())
 
         #orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
-        print("Line Ordering Done")
+        #print("Line Ordering Done")
 
         # imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
 
         # Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
 
         # unwrap nested contours and pass contour list to solver object
-        unwrapped = [cnt.unwrap() for cnt in contourList]
+        #unwrapped = [cnt.unwrap() for cnt in contourList]
 
         # derive characters and compute solution using sympy
-        Solver(unwrapped)
+        # Solver(unwrapped)
         return preprocessed  # orderedImage
 
     def show_results(self, frame, result):
 
-        frame = Draw().scale_image(frame, 0.25)
-        result = Draw().scale_image(result, 0.25)
+        #frame = Draw().scale_image(frame, 0.25)
+        #result = Draw().scale_image(result, 0.25)
         cv.imshow('frame', frame)
-        cv.imshow('preprocessed', result)
+        #cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
 
     def run_with_webcam(self):
@@ -102,7 +105,7 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    def run_with_img(self, source='sample.jpg', name="TrainingSamples/Image_"):
+    def run_with_img(self, source='sample2.jpg', name="TrainingSamples/Image_"):
         frame = cv.imread(source, 1)
 
         preprocessed = self.process(frame, name)
@@ -162,8 +165,8 @@ class App:
 
 if __name__ == '__main__':
     # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
-    App().run("sample.MOV")
+    # App().run("sample.MOV")
 
     # App().run_with_webcam()
-    # App().run_with_img()
+    App().run_with_img()
     # App().run_with_video('sample.MOV')
