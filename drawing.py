@@ -91,6 +91,29 @@ class Draw:
             inIm=self.draw_orderedLine2(inIm,orderedLineList[i],self.color(i),horVec)
 
         return inIm
+    
+    def draw_orderedImage3(self,orderedContourLineList,horVec,inIm):
+        
+        yh=int(100*horVec[0])
+        xh=int(100*horVec[1])
+
+        for i in range(len(orderedContourLineList)):
+            x=orderedContourLineList[i][0].x
+            y=orderedContourLineList[i][0].y
+            
+            cv.line(inIm, (x, y), (x+xh, y+yh), (200,100,150), 10)
+
+            for j in range(len(orderedContourLineList[i])):
+                x=orderedContourLineList[i][j].x
+                y=orderedContourLineList[i][j].y
+                radius=orderedContourLineList[i][j].radius
+
+                d= int( radius/20)
+
+                cv.circle(inIm,(x,y), radius,self.color(i),d)
+
+
+        return inIm
 
 
 
@@ -154,3 +177,7 @@ class Draw:
 
 
         return inIm
+
+
+
+        

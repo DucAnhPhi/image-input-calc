@@ -69,14 +69,21 @@ class LineOrdering3:
         (x,y)=np.sum(vectorList, axis=0)/len(vectorList)
         return (x,y)
 
-    def get_medianVector(self, vectorList):
+    def get_medianVector(self, vectorList,largestVector,acceptanceAngle=360):
+        largestVectorAngle=np.arccos((largestVector[1])/np.sqrt((largestVector[1])**2+(largestVector[0])**2+1e-6))
         if (len(vectorList) == 0):
             return (0, 0)
         xList=[]
         yList=[]
         for i in range(len(vectorList)):
-            xList.append(vectorList[i][0])
-            yList.append(vectorList[i][1])
+            x=vectorList[i][0]
+            y=vectorList[i][1]
+            angle= np.arccos((y)/np.sqrt(y*y+x*x+1e-6))
+
+            if np.abs(angle-largestVectorAngle) < acceptanceAngle * np.pi/180:
+                xList.append(x)
+                yList.append(y)
+
         xMed=np.median(xList)
         yMed=np.median(yList)
         return (xMed,yMed)
@@ -211,6 +218,14 @@ class LineOrdering3:
                 maxLengthIndex=i
                 maxVector=fullVectorList[maxLengthIndex]
 
+        print(maxVector)
+
+        maxVector=list(maxVector)
+
+        if maxVector[1]<0:
+            maxVector[0]=-maxVector[0]
+            maxVector[1]=-maxVector[1]
+        
 
         return maxVector
 
@@ -242,9 +257,12 @@ class LineOrdering3:
         # We get the full Vector list here (and the one of Vectors between contours larger than cutOffRadius, which is actually a lot more usefull)
         fullVectorList,largeContourVectorList=self.get_fullVectorList_and_largeContourVectorList(rList,points,cutOffRadius)
 
+
+
         # We directionalise with the help of largest Vector. This Vector is not likely parallel to the horVec.
         # However, it will likely not be close to orthogonal to it, which is important in this case.
-        directionalisedVectorList=self.directionalize(fullVectorList,self.get_largestVector(fullVectorList))#fullVectorList))
+        largestVector=self.get_largestVector(largeContourVectorList)
+        directionalisedVectorList=self.directionalize(fullVectorList,largestVector) #fullVectorList))
 
         # We normalise the Vectors, because far of contours produce large Vectors. By normalising all Vectors, we reduce this problem.
         # The process also works without. But this is an improvement
@@ -252,15 +270,20 @@ class LineOrdering3:
         for i in range(len(directionalisedVectorList)):
             directionalisedVectorList[i]=self.normalise_vector(directionalisedVectorList[i])
 
-        # We calculate the mean Vector
-        #horVec=(0,10)
-        horVec=self.get_medianVector(directionalisedVectorList)
+        # We calculate the median Vector
+        horVec=self.get_medianVector(directionalisedVectorList,largestVector, acceptanceAngle=45)
 
 
         #to avoid it getting integerized out of existance
         horVec=self.scalarVectorMul(horVec,100)
 
+
+
         print("horVec = ", horVec)
+
+        horAngle= np.arccos((horVec[1])/np.sqrt(horVec[1]**2+horVec[0]**2+1e-6)) *180/np.pi
+
+        print("TextAngle = ", horAngle, " degrees")
 
         return horVec
 
@@ -272,7 +295,7 @@ class LineOrdering3:
 
 
     # get a list of the position of all lines in orthogonal Distance.
-    def get_linePositionList(self,contourList,maxRad):
+    def get_linePositionList(self,contourList,lineAcceptanceRadius):
         
         orthDistList = list(cnt.orthDist for cnt in contourList)
         minOrthDist=np.min(orthDistList)
@@ -284,11 +307,21 @@ class LineOrdering3:
 
         while currentPoint < maxOrthDist:
             linePositionList.append(currentPoint)
-            currentPoint=currentPoint+maxRad*0.4
+            currentPoint=currentPoint+lineAcceptanceRadius*0.4
 
         return linePositionList
 
 
+    def get_lineRad(self,rList):
+        rListCopy=rList.copy()
+
+        rListCopy.sort(reverse=True)
+
+        for i in range(len(rListCopy)-1):
+            if rListCopy[i]<2*rListCopy[i+1]:
+                return 0.5*rListCopy[i]
+
+        return 0.5*rListCopy[0]
 
 
 
@@ -304,9 +337,11 @@ class LineOrdering3:
         yList = list(cnt.y for cnt in contourList)
         rList = list(cnt.radius for cnt in contourList)
 
+
         maxRad = max(rList)
+
         cutOffRadius = np.mean(rList)
-        lineAcceptanceRadius=0.5*maxRad
+        lineAcceptanceRadius=self.get_lineRad(rList)
 
         # get the direction in which the line is written
         horVec= self.get_horVec2(contourList)
@@ -315,7 +350,7 @@ class LineOrdering3:
         self.get_OrthDistList(contourList, horVec)
 
         # determine the position of all the lines in the image
-        linePositionList= self.get_linePositionList(contourList,maxRad)
+        linePositionList= self.get_linePositionList(contourList,lineAcceptanceRadius)
 
         # Just feedback
         #inIm = Draw().LineFeedBack(inIm,contourList,contourList[0],orthDistList,horVec,maxRad)
