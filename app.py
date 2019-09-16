@@ -22,6 +22,7 @@ class App:
 
 
     def process(self, frame,name="TrainingSamples/Image_"):
+
         # preprocessing
         print("Preprocessing")
         preprocessed = PreProcessing().background_contour_removal(
@@ -73,19 +74,20 @@ class App:
 
         orderedLineList, horVec, orderedImage = LineOrdering3().get_orderedLineList3(contourList, preprocessed.copy())
 
-        #orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
+        orderedImage = Draw().draw_orderedImage3(orderedLineList, horVec, orderedImage)
         print("Line Ordering Done")
 
         #imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
 
         #Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
 
-        return preprocessed #orderedImage
+        return orderedImage
 
     def show_results(self, frame, result):
 
-        frame = Draw().scale_image(frame, 0.25)
-        result = Draw().scale_image(result , 0.25)
+        #frame = Draw().scale_image(frame, 0.25)
+        #result = Draw().scale_image(result , 0.25)
+
         cv.imshow('frame', frame)
         cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
@@ -165,7 +167,7 @@ class App:
             print("Opening Video Clip")
             App().run_with_video(source)
 
-        if (sourceEnding == "jpg" or sourceEnding == "JPG"):
+        if (sourceEnding == "jpg" or sourceEnding == "JPG" or sourceEnding == "jpeg" or sourceEnding == "JPEG"):
             print("Opening Image")
             print(source)
             App().run_with_img(source)
@@ -174,7 +176,9 @@ class App:
 if __name__ == '__main__':
     #App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     App().run("sample.MOV")
-
+    #App().run("SampleImages\Multiline.jpeg")
+    #App().run("webcam")
+    
     # App().run_with_webcam()
     # App().run_with_img()
     # App().run_with_video('sample.MOV')

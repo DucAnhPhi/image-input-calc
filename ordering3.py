@@ -69,7 +69,7 @@ class LineOrdering3:
         (x,y)=np.sum(vectorList, axis=0)/len(vectorList)
         return (x,y)
 
-    def get_medianVector(self, vectorList,largestVector,acceptanceAngle=360):
+    def get_medianVector_with_acceptanceAngle(self, vectorList,largestVector,acceptanceAngle=360):
         largestVectorAngle=np.arccos((largestVector[1])/np.sqrt((largestVector[1])**2+(largestVector[0])**2+1e-6))
         if (len(vectorList) == 0):
             return (0, 0)
@@ -80,12 +80,17 @@ class LineOrdering3:
             y=vectorList[i][1]
             angle= np.arccos((y)/np.sqrt(y*y+x*x+1e-6))
 
-            if np.abs(angle-largestVectorAngle) < acceptanceAngle * np.pi/180:
+            #if np.abs(angle-largestVectorAngle) < acceptanceAngle * np.pi/180:
+            if np.abs(angle) < acceptanceAngle * np.pi/180:
                 xList.append(x)
                 yList.append(y)
 
+        if (len(xList)==0):
+            print("No Vectors Found")
         xMed=np.median(xList)
         yMed=np.median(yList)
+
+
         return (xMed,yMed)
 
     # reverse all Vectors in a List that point in the opposite direction as "direction"
@@ -261,7 +266,7 @@ class LineOrdering3:
 
         # We directionalise with the help of largest Vector. This Vector is not likely parallel to the horVec.
         # However, it will likely not be close to orthogonal to it, which is important in this case.
-        largestVector=self.get_largestVector(largeContourVectorList)
+        largestVector=self.get_largestVector(fullVectorList)
         directionalisedVectorList=self.directionalize(fullVectorList,largestVector) #fullVectorList))
 
         # We normalise the Vectors, because far of contours produce large Vectors. By normalising all Vectors, we reduce this problem.
@@ -271,7 +276,7 @@ class LineOrdering3:
             directionalisedVectorList[i]=self.normalise_vector(directionalisedVectorList[i])
 
         # We calculate the median Vector
-        horVec=self.get_medianVector(directionalisedVectorList,largestVector, acceptanceAngle=45)
+        horVec=self.get_medianVector_with_acceptanceAngle(directionalisedVectorList,largestVector, acceptanceAngle=45)
 
 
         #to avoid it getting integerized out of existance
@@ -284,6 +289,10 @@ class LineOrdering3:
         horAngle= np.arccos((horVec[1])/np.sqrt(horVec[1]**2+horVec[0]**2+1e-6)) *180/np.pi
 
         print("TextAngle = ", horAngle, " degrees")
+
+        if np.isnan(horVec[0]) or np.isnan(horVec[1]):
+            print("ERROR: horVec could not be determined")
+            horVec=(0,100)
 
         return horVec
 
@@ -320,6 +329,8 @@ class LineOrdering3:
         for i in range(len(rListCopy)-1):
             if rListCopy[i]<2*rListCopy[i+1]:
                 return 0.5*rListCopy[i]
+            else:
+                print("rList value relation to high: ", rListCopy[i], " / ", rListCopy[i+1])
 
         return 0.5*rListCopy[0]
 
@@ -331,6 +342,8 @@ class LineOrdering3:
             print("ERROR NO CONTOURS DETECTED")
             cv.waitKey()
             return None, (0,0), inIm
+
+        
 
         #determining some variables to be used later
         xList = list(cnt.x for cnt in contourList)
