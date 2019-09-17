@@ -83,26 +83,3 @@ class Segmentation:
     def filter(self):
         # remove contours which were marked for removal before
         self.contourList = [cnt for cnt in self.contourList if not cnt.remove]
-
-    # def print_subimage_list_Images(self, frame, subimageList, name="Image_"):
-
-    #     for i in range(len(subimageList)):
-
-    #         cv.imwrite((name + str(i) + ".png"),
-    #                    self.get_subimage_from_contour(frame, subimageList[i][0]))
-    #         print("Saved the file")
-
-    # def print_lineList_images(self, frame, lineList):
-
-    #     for i in range(len(lineList)):
-
-    #         name = str("Line_" + str(i) + "_Symbol_")
-    #         self.print_subimage_list_Images(frame, lineList[i], name)
-
-    # def print_subimage_list_list_Images(self, frame, orderedLineList, name="TrainingSamples/Image_"):
-
-    #     for i in range(len(orderedLineList)):
-    #         for j in range(len(orderedLineList[i])):
-    #             cv.imwrite((name + str(i) + "_" + str(j) + ".png"),
-    #                        self.get_subimage_from_contour(frame, orderedLineList[i][j]))
-    #             print("Saved the file")
