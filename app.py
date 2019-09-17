@@ -46,29 +46,7 @@ class App:
         cv.drawContours(
             frame, [cnt.contour for cnt in filtered], -1, (0, 255, 0), 2)
 
-        LineOrdering(filtered).get_lines(frame)
-
-        # print("Segmentation Filtering Done")
-
-        # if len(contoursUsedForOrdering) == 0:
-        #     print("ERROR NO CONTOURS DETECTED")
-        #     cv.waitKey()
-        #     return preprocessed
-
-        # draw each bounding box
-        #boundingBoxFrame, orderedImage = Draw().draw_bounding_boxes_around_contours(preprocessed, filteredContours)
-        #print("Starting Line Ordering Done")
-        # create ordered List of Contours
-
-        # orderedLineList, horVec, orderedImage = LineOrdering3(
-        # ).get_orderedLineList3(contourList, preprocessed.copy())
-
-        #orderedImage = Draw().draw_orderedImage2(orderedLineList, horVec, orderedImage)
-        #print("Line Ordering Done")
-
-        # imageLineList=Segmentation().get_subimage_list_list_from_contour_list_list(preprocessedForImages,orderedLineList)
-
-        # Segmentation().print_subimage_list_list_Images(preprocessedForImages,orderedLineList,name)
+        lines = LineOrdering(filtered).get_lines(frame)
 
         # unwrap nested contours and pass contour list to solver object
         #unwrapped = [cnt.unwrap() for cnt in contourList]

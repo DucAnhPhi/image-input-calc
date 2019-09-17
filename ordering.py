@@ -138,6 +138,8 @@ class LineOrdering:
                 cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
                            cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
 
+        return lines
+
     def get_lines_with_hor_vec(self, frame):
         tempContours = self.contourList.copy()
 
