@@ -48,9 +48,20 @@ class Fraction:
     def get_contour(self):
         # a contour is a np.array with shape (#points, 1, 2)
         # in which each entry represents (x,y) coordinates of boundary points
-        mask = np.ones(self.frameShape[:2], dtype="uint8") * 255
-        cv.rectangle(mask, (self.x1, self.y1),
-                     (self.x2, self.y2), (0, 0, 0), 1)
-        cnts, _ = cv.findContours(
-            mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-        return cnts[1]
+        top = []
+        bottom = []
+        left = []
+        right = []
+        for i in range(self.x2-self.x1-1):
+            if i == 0:
+                continue
+            top.append([self.x1 + i, self.y1])
+            bottom.append([self.x2 - i, self.y2])
+        for i in range(self.y2-self.y1-1):
+            if i == 0:
+                continue
+            right.append([self.x2, self.y1 + i])
+            left.append([self.x1, self.y2 - i])
+        contour = [*top, *right, *bottom, *left]
+        contour = np.array(contour).astype(np.int32)
+        return contour

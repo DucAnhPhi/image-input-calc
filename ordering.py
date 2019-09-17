@@ -111,7 +111,6 @@ class LineOrdering:
             if yDev <= avgYDev:
                 tmpLine.append(current)
             else:
-                print(i)
                 lines.append(tmpLine)
                 tmpLine = [current]
             if i == n-1:
