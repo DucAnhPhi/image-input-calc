@@ -1,7 +1,13 @@
 import numpy as np
 import cv2 as cv
+
 from preprocessing import PreProcessing
 from segmentation import Segmentation
+from contour import Contour
+from fraction import Fraction
+from solver import Solver
+from ordering import LineOrdering
+from drawing import Draw
 from contour import Contour
 from fraction import Fraction
 from solver import Solver
@@ -9,91 +15,53 @@ from solver import Solver
 
 class App:
 
-    def process(self, frame):
+    def process(self, frame, name="TrainingSamples/Image_"):
+        # preprocessing
         preprocessed = PreProcessing().background_contour_removal(
             frame)
+
+        print("Preprocessing Done")
+
         # find contours using algorithm by Suzuki et al. (1985)
         contours, hierarchy = cv.findContours(
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+        print("Segmentation Done")
 
-        # get bounding boxes of contours and filter them
-        filtered = Segmentation().filter_contours(preprocessed, contours, hierarchy)
+        # TODO: Handle too many contours appropriately
 
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
-                       for cnt in filtered]
+                       for cnt in contours]
 
-        # find bar types
-        fractionBars = []
-        equalBars = []
+        # filter, classify and group segmented contours
+        sg = Segmentation(contourList, hierarchy, frame.shape)
+        sg.group_and_classify()
+        sg.filter()
 
-        for cnt in contourList:
-            # check and label bar types
-            cnt.check_bar_type(contourList)
-            if cnt.isFractionBar:
-                fractionBars.append(cnt)
-            elif cnt.isEqualBar:
-                equalBars.append(cnt)
+        filtered = sg.get_contours()
 
-        # group equal bars to single contour object
-        for bar in equalBars:
-            if bar.remove:
-                continue
-            # build grouped contour object
-            bar2 = bar.equalBar
-            bX, bY, bWidth, bHeight = cv.boundingRect(bar.contour)
-            b2X, b2Y, b2Width, b2Height = cv.boundingRect(bar2.contour)
-            minX = min(bX, b2X)
-            maxX = max(bX+bWidth, b2X+b2Width)
-            minY = min(bY, b2Y)
-            maxY = max(bY+bHeight, b2Y+b2Height)
-            mask = np.ones(frame.shape[:2], dtype="uint8") * 255
-            cv.rectangle(mask, (minX, minY), (maxX, maxY), (0, 0, 0), 1)
-            cnts, _ = cv.findContours(mask, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-            grouped = Contour(cnts[1], frame.shape, isEqualSign=True)
-            # mark grouped contours for removal and add new grouped contour
-            bar.remove = True
-            bar2.remove = True
-            contourList.append(grouped)
-
-        # sort fraction bars ascending by width
-        fractionBars.sort(key=lambda bar: bar.width)
-
-        # group contours to fractions starting with most narrow fraction bar
-        for bar in fractionBars:
-
-            # build fraction
-            fraction = Fraction(bar, contourList, frame.shape)
-
-            # build new contour
-            groupedContour = Contour(
-                fraction.get_contour(), frame.shape, fraction=fraction)
-
-            groupedContours = [*fraction.nominator,
-                               *fraction.denominator, fraction.bar]
-
-            # mark all grouped contours for removal and add new contour to contourList
-            for cnt in groupedContours:
-                cnt.remove = True
-            contourList.append(groupedContour)
-
-        # remove contours which were marked for removal before
-        contourList = [cnt for cnt in contourList if not cnt.remove]
+        # colouring preprocessing for ease in debugging
+        preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
         cv.drawContours(
-            frame, [cnt.contour for cnt in contourList], -1, (0, 255, 0), 2)
+            frame, [cnt.contour for cnt in filtered], -1, (0, 255, 0), 2)
 
-        # sort contours horizontally for now
-        # TODO: replace by more sophisticated ordering
-        contourList.sort(key=lambda cnt: cnt.x1)
+        lines = LineOrdering(filtered).get_lines(frame)
 
         # unwrap nested contours and pass contour list to solver object
-        unwrapped = [cnt.unwrap() for cnt in contourList]
+        #unwrapped = [cnt.unwrap() for cnt in contourList]
 
         # derive characters and compute solution using sympy
-        Solver(unwrapped)
+        # Solver(unwrapped)
+        return preprocessed  # orderedImage
 
-        return preprocessed
+    def show_results(self, frame, result):
+
+        #frame = Draw().scale_image(frame, 0.25)
+        #result = Draw().scale_image(result, 0.25)
+        cv.imshow('frame', frame)
+        #cv.imshow('preprocessed', result)
+        # Segmentation().print_lineList_images(preprocessed,orderedLineList)
 
     def run_with_webcam(self):
         cap = cv.VideoCapture(0)
@@ -106,7 +74,7 @@ class App:
             preprocessed = self.process(frame)
 
             # Display the resulting frame
-            cv.imshow('frame', frame)
+            self.show_results(frame, preprocessed)
 
             # Press ESC to quit
             if cv.waitKey(1) == 27:
@@ -116,13 +84,14 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    def run_with_img(self):
-        frame = cv.imread('sample.jpg', 1)
+    def run_with_img(self, source='sample2.jpg', name="TrainingSamples/Image_"):
+        frame = cv.imread(source, 1)
 
-        preprocessed = self.process(frame)
+        preprocessed = self.process(frame, name)
 
         # Display the resulting frame
-        cv.imshow('frame', frame)
+        self.show_results(frame, preprocessed)
+
         cv.waitKey(0)
         cv.destroyAllWindows()
 
@@ -139,8 +108,7 @@ class App:
                 preprocessed = self.process(frame)
 
                 # Display the resulting frame
-                # cv.imshow('frame', frame)
-                cv.imshow('frame', frame)
+                self.show_results(frame, preprocessed)
 
                 # Press ESC to quit
                 if cv.waitKey(1) == 27:
@@ -150,8 +118,34 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
+    def run(self, source):
+        if (source == "" or source == "webcam" or source == "Webcam"):
+            print("Using Webcam")
+            App().run_with_webcam()
+
+        if (source == "TrainingSamples"):
+            for i in range(0, 42):
+                name = ("ToClassify2/Image_" + str(292 + i) + "_")
+                source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
+                print("Opening Image")
+                print(source)
+                App().run_with_img(source, name)
+        sourceEnding = source.split(".", 1)[1]
+
+        if sourceEnding == "MOV":
+            print("Opening Video Clip")
+            App().run_with_video(source)
+
+        if (sourceEnding == "jpg" or sourceEnding == "JPG"):
+            print("Opening Image")
+            print(source)
+            App().run_with_img(source)
+
 
 if __name__ == '__main__':
+    # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
+    # App().run("sample.MOV")
+
     # App().run_with_webcam()
     App().run_with_img()
     # App().run_with_video('sample.MOV')

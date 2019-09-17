@@ -45,6 +45,12 @@ class PreProcessing:
             img, boundary, 255, cv.THRESH_BINARY)
         return medianbinarized
 
+    def custom_binarize(self, img, boundary):
+        # We add a specialized threshold to binarize
+        _, medianbinarized = cv.threshold(
+            img, boundary, 255, cv.THRESH_BINARY)
+        return medianbinarized
+
     def preprocess(self, img):
         preprocessed = self.convert_gray(img)
         preprocessed = self.gaussian_blur(preprocessed)
