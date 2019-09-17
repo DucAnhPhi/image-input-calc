@@ -83,7 +83,62 @@ class LineOrdering:
         orthVec = np.array([-horVec[1], horVec[0]])
         return orthVec
 
+    def get_avg_y_dev(self):
+        avgYDev = 0
+        n = len(self.contourList)
+        for i in range(n):
+            if i == 0:
+                continue
+            currentY = self.contourList[i].center[1]
+            preY = self.contourList[i-1].center[1]
+            avgYDev += abs(currentY-preY)
+        return avgYDev / n
+
+    def separate_into_lines(self, avgYDev):
+        lines = []
+        tmpLine = []
+        cnts = self.contourList
+        n = len(cnts)
+        for i in range(n):
+            current = cnts[i]
+            if i == 0:
+                tmpLine.append(current)
+                continue
+            pre = cnts[i-1]
+            currentY = current.center[1]
+            preY = pre.center[1]
+            yDev = abs(currentY-preY)
+            if yDev <= avgYDev:
+                tmpLine.append(current)
+            else:
+                print(i)
+                lines.append(tmpLine)
+                tmpLine = [current]
+            if i == n-1:
+                lines.append(tmpLine)
+        return lines
+
     def get_lines(self, frame):
+        cnts = self.contourList
+        # sort contours by Y coordinate of their centroids
+        cnts.sort(key=lambda cnt: cnt.center[1])
+
+        # compute average Y deviation from neighbouring contour
+        avgYDev = self.get_avg_y_dev()
+
+        # separate ordered list to lines where y deviation is above average
+        lines = self.separate_into_lines(avgYDev)
+
+        # order contours in a line by x coordinate of their centroids
+        for l in range(len(lines)):
+            line = lines[l]
+            line.sort(key=lambda cnt: cnt.center[0])
+            for i in range(len(line)):
+                cnt = line[i]
+                cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
+                           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+
+    def get_lines_with_hor_vec(self, frame):
         tempContours = self.contourList.copy()
 
         def get_orth_dist(vec):
