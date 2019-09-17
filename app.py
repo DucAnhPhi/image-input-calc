@@ -49,10 +49,9 @@ class App:
         lines = LineOrdering(filtered).get_lines(frame)
 
         # unwrap nested contours and pass contour list to solver object
-        #unwrapped = [cnt.unwrap() for cnt in contourList]
-
         # derive characters and compute solution using sympy
-        # Solver(unwrapped)
+        solutions = [Solver([cnt.unwrap() for cnt in line]) for line in lines]
+
         return preprocessed  # orderedImage
 
     def show_results(self, frame, result):
