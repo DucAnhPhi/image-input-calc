@@ -25,8 +25,8 @@ class App:
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
         # limit observed contours
-        if len(contours) > 500:
-            contours = contours[:500]
+        if len(contours) > 250:
+            contours = contours[:250]
 
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
