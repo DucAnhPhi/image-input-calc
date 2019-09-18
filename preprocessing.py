@@ -20,12 +20,12 @@ class PreProcessing:
         kernel = np.ones((3, 3), np.uint8)
         return cv.dilate(img, kernel, iterations=1)
 
-    def morph_open(self, img):
-        kernel = np.ones((3, 3), np.uint8)
+    def morph_open(self, img,kernelsize=3):
+        kernel = np.ones((kernelsize, kernelsize), np.uint8)
         return cv.morphologyEx(img, cv.MORPH_OPEN, kernel, iterations=1)
 
-    def morph_close(self, img):
-        kernel = np.ones((3, 3), np.uint8)
+    def morph_close(self, img,kernelsize=3):
+        kernel = np.ones((kernelsize, kernelsize), np.uint8)
         return cv.morphologyEx(img, cv.MORPH_CLOSE, kernel, iterations=1)
 
     def morph_gradient(self, img):
@@ -63,7 +63,7 @@ class PreProcessing:
         preprocessed = self.convert_gray(img)
         preprocessed = self.gaussian_blur(preprocessed)
         preprocessed = self.morph_open(preprocessed)
-        #preprocessed = self.morph_gradient(preprocessed)
+        preprocessed = self.morph_gradient(preprocessed)
         preprocessed = self.binarize(preprocessed)
         preprocessed = self.morph_close(preprocessed)
         return preprocessed
@@ -101,11 +101,53 @@ class PreProcessing:
 
         return mask
 
-    def background_contour_removal(self, frame):
+    def background_contour_removal(self, frame,kernelsize=20, iterating=10):
         # preprocessing for clearer image
         preprocessed = self.preprocess(frame)
         # mask generation
-        mask = self.get_background_removal_mask(frame)
+        mask = self.get_background_removal_mask(frame,kernelsize, iterating)
         # apply mask on preprocessed image
         preprocessed = np.where(mask == 0, preprocessed, 255)
+        
+        return preprocessed
+
+    def remove_dots2(self, contourList,cutOffRadius=None):
+        contourList.sort(key=lambda x: x.radius, reverse=False)
+        radiusList = list(cnt.radius for cnt in contourList)
+        if cutOffRadius==None:
+            cutOffRadius=5*np.median(radiusList)
+
+        print("cutOffRadius: ",cutOffRadius)
+        print("MeanRadius: ", np.mean(radiusList))
+
+        for cnt in contourList:
+            if cnt.radius<cutOffRadius:
+                contourList.remove(cnt)
+            else:
+                print("Radius: ", cnt.radius)
+
+        return contourList
+
+    def get_dot_removal_mask(self, preprocessed, kernelsize=20, iterating=10):
+        mask = PreProcessing().morph_close(preprocessed,kernelsize=10)
+
+        kernel = np.ones((kernelsize, kernelsize))
+        mask = cv.erode(mask, kernel, iterating)
+
+        return mask
+
+    def remove_dots(self, preprocessed, contourList):
+        
+        contourList.sort(key=lambda x: x.radius, reverse=False)
+        radiusList = list(cnt.radius for cnt in contourList)
+        
+        cutOffRadius=np.mean(radiusList)
+
+        preprocessed = PreProcessing().morph_close(preprocessed,kernelsize=4)
+        
+        # mask generation
+        mask = self.get_dot_removal_mask(preprocessed)
+        # apply mask on preprocessed image
+        preprocessed = np.where(mask == 0, preprocessed, 255)
+        
         return preprocessed

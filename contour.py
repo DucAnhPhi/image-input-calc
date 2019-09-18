@@ -221,5 +221,5 @@ class Contour:
         subImg = blankImg[self.y1:self.y2, self.x1:self.x2]
         subImg = self.resize_keep_ratio(subImg)
         subImg = PreProcessing().convert_gray(subImg)
-        subImg = np.asarray(subImg).reshape((1, 32, 32))
+        subImg = np.asarray(subImg).reshape((32, 32, 1))
         return subImg

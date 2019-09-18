@@ -25,6 +25,8 @@ class App:
         # find contours using algorithm by Suzuki et al. (1985)
         contours, hierarchy = cv.findContours(
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+
+        
         print("Segmentation Done")
 
         # TODO: Handle too many contours appropriately
@@ -33,13 +35,26 @@ class App:
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
                        for cnt in contours]
 
+        if len(contourList)>200:
+            preprocessed = PreProcessing().remove_dots(preprocessed, contourList)
+
+
+            contours, hierarchy = cv.findContours(preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+           
+            contourList = [Contour(contour=cnt, imgShape=frame.shape) for cnt in contours]
+
+            
+            
+        #
+        #    contourList = PreProcessing().remove_dots( contourList)
+
         # filter, classify and group segmented contours
         sg = Segmentation(contourList, hierarchy, frame.shape)
         sg.group_and_classify()
         sg.filter()
 
         filtered = sg.get_contours()
-
+        
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
@@ -48,19 +63,23 @@ class App:
 
         lines = LineOrdering(filtered).get_lines(frame)
 
+        #Draw().print_lines(lines, preprocessed)
+
         # unwrap nested contours and pass contour list to solver object
         #unwrapped = [cnt.unwrap() for cnt in contourList]
 
         # derive characters and compute solution using sympy
         # Solver(unwrapped)
+        
+
         return preprocessed  # orderedImage
 
     def show_results(self, frame, result):
 
-        #frame = Draw().scale_image(frame, 0.25)
-        #result = Draw().scale_image(result, 0.25)
+        frame = Draw().scale_image(frame, 0.25)
+        result = Draw().scale_image(result, 0.25)
         cv.imshow('frame', frame)
-        #cv.imshow('preprocessed', result)
+        cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
 
     def run_with_webcam(self):
@@ -136,7 +155,7 @@ class App:
             print("Opening Video Clip")
             App().run_with_video(source)
 
-        if (sourceEnding == "jpg" or sourceEnding == "JPG"):
+        if (sourceEnding == "jpg" or sourceEnding == "JPG" or sourceEnding == "jpeg" or sourceEnding == "JPEG"):
             print("Opening Image")
             print(source)
             App().run_with_img(source)
@@ -144,8 +163,10 @@ class App:
 
 if __name__ == '__main__':
     # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
-    # App().run("sample.MOV")
+    #App().run("sample.MOV")
+    #App().run("SampleImages\Multiline.jpeg")
+    App().run("SampleImages\Test.jpg")
 
     # App().run_with_webcam()
-    App().run_with_img()
+    # App().run_with_img()
     # App().run_with_video('sample.MOV')
