@@ -34,7 +34,7 @@ class Solver:
             elif el.isMinusSign:
                 equation.append('-')
             else:
-                symbol = cl.classify([el.get_subimage()])[0]
+                symbol = cl.classify([el.get_subimage_for_classifier()])[0]
                 equation.append(symbol)
 
         self.equation = "".join(equation)

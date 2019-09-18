@@ -149,10 +149,13 @@ class Contour:
             self.isEqualBar = True
             self.equalBar = equalBar
 
-    def check_outer_border(self):
+    def is_outer_border(self):
+        is_outer = False
         if self.x1 == 0 and self.y1 == 0:
             if self.height == self.imgShape[0] and self.width == self.imgShape[1]:
                 self.remove = True
+                is_outer = True
+        return is_outer
 
     def check_holes(self, contourList, hierarchy, cnt, index):
         if cnt.remove:
@@ -213,12 +216,51 @@ class Contour:
         # return resized mask
         return cv.resize(mask, (size, size), interpolation)
 
-    def get_subimage(self):
+    def get_image(self):
         blankImg = np.zeros(
             shape=self.imgShape, dtype=np.uint8)
         cv.fillPoly(blankImg, pts=[self.contour, *
                                    self.holes], color=(255, 255, 255))
-        subImg = blankImg[self.y1:self.y2, self.x1:self.x2]
+        image = blankImg[self.y1:self.y2, self.x1:self.x2]
+        return image
+
+    def skeletonize(self, image):
+        skel = np.zeros(image.shape, np.uint8)
+        size = np.size(image)
+
+        element = cv.getStructuringElement(cv.MORPH_CROSS, (3, 3))
+        done = False
+
+        while(not done):
+            eroded = cv.erode(image, element)
+            temp = cv.dilate(eroded, element)
+            temp = cv.subtract(image, temp)
+            skel = cv.bitwise_or(skel, temp)
+            image = eroded.copy()
+
+            zeros = size - cv.countNonZero(image)
+            if zeros == size or zeros == 0:
+                done = True
+        return skel
+
+    def get_thickness(self):
+        image = self.get_image()
+        image = PreProcessing().convert_gray(image)
+
+        # sum up the image to get the area
+        area = np.sum(image)
+
+        # skeletonize the image and sum up that image to get the total length
+        skel = self.skeletonize(image)
+        length = np.sum(skel)
+
+        # divide the area by the length
+        thickness = area // length
+
+        return thickness
+
+    def get_subimage_for_classifier(self):
+        subImg = self.get_image()
         subImg = self.resize_keep_ratio(subImg)
         subImg = PreProcessing().convert_gray(subImg)
         subImg = np.asarray(subImg).reshape((1, 32, 32))

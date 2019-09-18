@@ -111,11 +111,42 @@ class LineOrdering:
             if yDev <= avgYDev:
                 tmpLine.append(current)
             else:
-                lines.append(tmpLine)
+                if len(tmpLine) > 2:
+                    lines.append(tmpLine)
                 tmpLine = [current]
             if i == n-1:
                 lines.append(tmpLine)
         return lines
+
+    def get_avg_x_dev(self, contourList):
+        avgXDev = 0
+        n = len(contourList)
+        if n == 0:
+            return np.infinity
+        for i in range(n):
+            if i == 0:
+                continue
+            currentX = contourList[i].center[0]
+            preX = contourList[i-1].center[0]
+            xDev = abs(currentX - preX)
+            avgXDev += xDev
+        return avgXDev / n
+
+    def filter_hor_outliers(self, contourList):
+        # get average x deviation with tolerance
+        avgXDev = self.get_avg_x_dev(contourList) * 2
+        filtered = []
+        for i in range(len(contourList)):
+            currentCnt = contourList[i]
+            if i == 0:
+                filtered.append(currentCnt)
+                continue
+            currentX = currentCnt.center[0]
+            preX = contourList[i-1].center[0]
+            xDev = abs(currentX - preX)
+            if xDev <= avgXDev:
+                filtered.append(currentCnt)
+        return filtered
 
     def get_lines(self, frame):
         cnts = self.contourList
@@ -129,15 +160,19 @@ class LineOrdering:
         lines = self.separate_into_lines(avgYDev)
 
         # order contours in a line by x coordinate of their centroids
+        # and filter outliers
+        filteredLines = []
         for l in range(len(lines)):
             line = lines[l]
             line.sort(key=lambda cnt: cnt.center[0])
+            line = self.filter_hor_outliers(line)
+            filteredLines.append(line)
             for i in range(len(line)):
                 cnt = line[i]
                 cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
                            cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
 
-        return lines
+        return filteredLines
 
     def get_lines_with_hor_vec(self, frame):
         tempContours = self.contourList.copy()

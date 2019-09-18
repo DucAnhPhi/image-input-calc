@@ -71,8 +71,6 @@ class Segmentation:
 
         for i in range(len(self.contourList)):
             cnt = self.contourList[i]
-            # handle outer border
-            cnt.check_outer_border()
             # handle nested contours
             cnt.check_holes(self.contourList, self.hierarchy, cnt, i)
             # check and label bar types
@@ -96,6 +94,34 @@ class Segmentation:
             if bar.remove:
                 continue
             self.handle_fraction_bar(bar)
+
+    def filter_small_contours(self):
+        # find top 3 biggest contours without outer frame border
+        k = 4
+        areas = np.array([cnt.width * cnt.height for cnt in self.contourList])
+        n = len(areas)
+        topIdx = []
+
+        if n < 4:
+            topIdx = np.array(range(n))
+        else:
+            topIdx = np.argpartition(areas, -k)[-k:]
+
+        topThickness = [self.contourList[i].get_thickness(
+        ) for i in topIdx if not self.contourList[i].is_outer_border()]
+
+        if len(topThickness) == 0:
+            return
+
+        # get minimum line thickness
+        minThickness = min(topThickness)
+
+        # get minimum area with some tolerance
+        minArea = (minThickness ** 2) * 0.8
+
+        # filter too small contours
+        self.contourList = [
+            cnt for cnt in self.contourList if cnt.width * cnt.height > minArea]
 
     def filter(self):
         # remove contours which were marked for removal before
