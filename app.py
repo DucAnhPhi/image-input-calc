@@ -25,8 +25,8 @@ class App:
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
 
         # limit observed contours
-        if len(contours) > 250:
-            contours = contours[:250]
+        if len(contours) > 1000:
+            contours = contours[:1000]
 
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
@@ -34,6 +34,7 @@ class App:
 
         # filter, classify and group segmented contours
         sg = Segmentation(contourList, hierarchy, frame.shape)
+        sg.filter_small_contours()
         sg.group_and_classify()
         sg.filter()
 
@@ -52,16 +53,16 @@ class App:
 
         # unwrap nested contours and pass contour list to solver object
         # derive characters and compute solution using sympy
-        #solutions = [Solver([cnt.unwrap() for cnt in line]) for line in lines]
+        # solutions = [Solver([cnt.unwrap() for cnt in line]) for line in lines]
 
         return preprocessed  # orderedImage
 
     def show_results(self, frame, result):
 
-        #frame = Draw().scale_image(frame, 0.25)
-        #result = Draw().scale_image(result, 0.25)
+        # frame = Draw().scale_image(frame, 0.25)
+        # result = Draw().scale_image(result, 0.25)
         cv.imshow('frame', frame)
-        #cv.imshow('preprocessed', result)
+        # cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
 
     def run_with_webcam(self):
@@ -85,7 +86,7 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    def run_with_img(self, source='sample2.jpg', name="TrainingSamples/Image_"):
+    def run_with_img(self, source='sample3.jpg', name="TrainingSamples/Image_"):
         frame = cv.imread(source, 1)
 
         preprocessed = self.process(frame, name)

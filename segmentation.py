@@ -97,6 +97,32 @@ class Segmentation:
                 continue
             self.handle_fraction_bar(bar)
 
+    def filter_small_contours(self):
+        # find top 3 biggest contours
+        maxVal = 0
+        initCnt = self.contourList[0]
+        topCnts = np.array([initCnt, initCnt, initCnt])
+        for el in self.contourList:
+            frameArea = self.imgShape[0] * self.imgShape[1]
+            area = el.width * el.height
+            if area == frameArea:
+                continue
+            if area > maxVal:
+                maxVal = area
+                topCnts[2] = topCnts[1]
+                topCnts[1] = topCnts[0]
+                topCnts[0] = el
+
+        # get minimum line thickness
+        minThickness = min([cnt.get_thickness() for cnt in topCnts])
+
+        # get minimum area with some tolerance
+        minArea = (minThickness ** 2) * 0.8
+
+        # filter too small contours
+        self.contourList = [
+            cnt for cnt in self.contourList if cnt.width * cnt.height > minArea]
+
     def filter(self):
         # remove contours which were marked for removal before
         self.contourList = [cnt for cnt in self.contourList if not cnt.remove]
