@@ -224,16 +224,10 @@ class Contour:
         image = blankImg[self.y1:self.y2, self.x1:self.x2]
         return image
 
-    def get_thickness(self):
-        image = self.get_image()
-        image = PreProcessing().convert_gray(image)
+    def skeletonize(self, image):
         skel = np.zeros(image.shape, np.uint8)
         size = np.size(image)
 
-        # sum up the image to get the area
-        area = np.sum(image)
-
-        # skeletonize the image and sum up that image to get the total length
         element = cv.getStructuringElement(cv.MORPH_CROSS, (3, 3))
         done = False
 
@@ -245,9 +239,19 @@ class Contour:
             image = eroded.copy()
 
             zeros = size - cv.countNonZero(image)
-            if zeros == size:
+            if zeros == size or zeros == 0:
                 done = True
+        return skel
 
+    def get_thickness(self):
+        image = self.get_image()
+        image = PreProcessing().convert_gray(image)
+
+        # sum up the image to get the area
+        area = np.sum(image)
+
+        # skeletonize the image and sum up that image to get the total length
+        skel = self.skeletonize(image)
         length = np.sum(skel)
 
         # divide the area by the length

@@ -97,12 +97,24 @@ class Segmentation:
 
     def filter_small_contours(self):
         # find top 3 biggest contours without outer frame border
+        k = 4
         areas = np.array([cnt.width * cnt.height for cnt in self.contourList])
-        topIdx = np.argpartition(areas, -4)[-4:]
+        n = len(areas)
+        topIdx = []
+
+        if n < 4:
+            topIdx = np.array(range(n))
+        else:
+            topIdx = np.argpartition(areas, -k)[-k:]
+
+        topThickness = [self.contourList[i].get_thickness(
+        ) for i in topIdx if not self.contourList[i].is_outer_border()]
+
+        if len(topThickness) == 0:
+            return
 
         # get minimum line thickness
-        minThickness = min([self.contourList[i].get_thickness(
-        ) for i in topIdx if not self.contourList[i].is_outer_border()])
+        minThickness = min(topThickness)
 
         # get minimum area with some tolerance
         minArea = (minThickness ** 2) * 0.8
