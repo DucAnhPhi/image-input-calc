@@ -149,10 +149,13 @@ class Contour:
             self.isEqualBar = True
             self.equalBar = equalBar
 
-    def check_outer_border(self):
+    def is_outer_border(self):
+        is_outer = False
         if self.x1 == 0 and self.y1 == 0:
             if self.height == self.imgShape[0] and self.width == self.imgShape[1]:
                 self.remove = True
+                is_outer = True
+        return is_outer
 
     def check_holes(self, contourList, hierarchy, cnt, index):
         if cnt.remove:

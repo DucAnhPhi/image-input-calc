@@ -121,6 +121,8 @@ class LineOrdering:
     def get_avg_x_dev(self, contourList):
         avgXDev = 0
         n = len(contourList)
+        if n == 0:
+            return np.infinity
         for i in range(n):
             if i == 0:
                 continue
