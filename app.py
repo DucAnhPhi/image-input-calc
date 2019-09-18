@@ -20,14 +20,13 @@ class App:
         preprocessed = PreProcessing().background_contour_removal(
             frame)
 
-        print("Preprocessing Done")
-
         # find contours using algorithm by Suzuki et al. (1985)
         contours, hierarchy = cv.findContours(
             preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-        print("Segmentation Done")
 
-        # TODO: Handle too many contours appropriately
+        # limit observed contours
+        if len(contours) > 250:
+            contours = contours[:250]
 
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
@@ -40,6 +39,9 @@ class App:
 
         filtered = sg.get_contours()
 
+        if len(filtered) == 0:
+            return preprocessed
+
         # colouring preprocessing for ease in debugging
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
@@ -49,10 +51,9 @@ class App:
         lines = LineOrdering(filtered).get_lines(frame)
 
         # unwrap nested contours and pass contour list to solver object
-        #unwrapped = [cnt.unwrap() for cnt in contourList]
-
         # derive characters and compute solution using sympy
-        # Solver(unwrapped)
+        #solutions = [Solver([cnt.unwrap() for cnt in line]) for line in lines]
+
         return preprocessed  # orderedImage
 
     def show_results(self, frame, result):
