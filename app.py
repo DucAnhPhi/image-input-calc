@@ -16,9 +16,11 @@ from solver import Solver
 class App:
 
     def process(self, frame, name="TrainingSamples/Image_"):
+        
+        resizedFrame=frame
         # preprocessing
         preprocessed = PreProcessing().background_contour_removal(
-            frame)
+            resizedFrame)
 
         print("Preprocessing Done")
 
@@ -32,24 +34,19 @@ class App:
         # TODO: Handle too many contours appropriately
 
         # initialize contour object from each contour in contour list
-        contourList = [Contour(contour=cnt, imgShape=frame.shape)
+        contourList = [Contour(contour=cnt, imgShape=resizedFrame.shape)
                        for cnt in contours]
 
-        if len(contourList)>200:
-            preprocessed = PreProcessing().remove_dots(preprocessed, contourList)
+        
 
-
-            contours, hierarchy = cv.findContours(preprocessed, cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
-           
-            contourList = [Contour(contour=cnt, imgShape=frame.shape) for cnt in contours]
-
-            
+        
             
         #
         #    contourList = PreProcessing().remove_dots( contourList)
 
         # filter, classify and group segmented contours
-        sg = Segmentation(contourList, hierarchy, frame.shape)
+        sg = Segmentation(contourList, hierarchy, resizedFrame.shape)
+        sg.filter_small_contours()
         sg.group_and_classify()
         sg.filter()
 
@@ -59,11 +56,11 @@ class App:
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
         cv.drawContours(
-            frame, [cnt.contour for cnt in filtered], -1, (0, 255, 0), 2)
+            resizedFrame, [cnt.contour for cnt in filtered], -1, (0, 255, 0), 2)
 
-        lines = LineOrdering(filtered).get_lines(frame)
+        lines = LineOrdering(filtered).get_lines(resizedFrame)
 
-        #Draw().print_lines(lines, preprocessed)
+        Draw().print_lines(lines, preprocessed,name="ToClassify/Test3_Line_")
 
         # unwrap nested contours and pass contour list to solver object
         #unwrapped = [cnt.unwrap() for cnt in contourList]
@@ -72,7 +69,7 @@ class App:
         # Solver(unwrapped)
         
 
-        return preprocessed  # orderedImage
+        return resizedFrame,preprocessed  # orderedImage
 
     def show_results(self, frame, result):
 
@@ -90,7 +87,7 @@ class App:
             _, frame = cap.read()
 
             # Processing the frame
-            preprocessed = self.process(frame)
+            frame,preprocessed = self.process(frame)
 
             # Display the resulting frame
             self.show_results(frame, preprocessed)
@@ -106,7 +103,7 @@ class App:
     def run_with_img(self, source='sample2.jpg', name="TrainingSamples/Image_"):
         frame = cv.imread(source, 1)
 
-        preprocessed = self.process(frame, name)
+        frame,preprocessed = self.process(frame,name)
 
         # Display the resulting frame
         self.show_results(frame, preprocessed)
@@ -124,7 +121,7 @@ class App:
                 _, frame = cap.read()
 
                 # Processing the frame
-                preprocessed = self.process(frame)
+                frame,preprocessed = self.process(frame)
 
                 # Display the resulting frame
                 self.show_results(frame, preprocessed)
@@ -165,7 +162,7 @@ if __name__ == '__main__':
     # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     #App().run("sample.MOV")
     #App().run("SampleImages\Multiline.jpeg")
-    App().run("SampleImages\Test.jpg")
+    App().run("SampleImages\Test3.jpg")
 
     # App().run_with_webcam()
     # App().run_with_img()

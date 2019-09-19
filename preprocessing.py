@@ -151,3 +151,15 @@ class PreProcessing:
         preprocessed = np.where(mask == 0, preprocessed, 255)
         
         return preprocessed
+    
+    def resize(self, frame):
+        height,width, depth=frame.shape
+
+        imageScale=1000/max(height,width)
+        
+        newHeight=int(height*imageScale)
+        newWidth=int(width*imageScale)
+
+        resizedFrame= cv.resize(frame,(newWidth,newHeight))
+        
+        return resizedFrame

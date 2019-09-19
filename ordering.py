@@ -92,6 +92,8 @@ class LineOrdering:
             currentY = self.contourList[i].center[1]
             preY = self.contourList[i-1].center[1]
             avgYDev += abs(currentY-preY)
+        if n==0:
+            return 0
         return avgYDev / n
 
     def separate_into_lines(self, avgYDev):
