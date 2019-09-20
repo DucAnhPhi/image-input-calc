@@ -3,36 +3,26 @@ import numpy as np
 import string
 import random
 from preprocessing import PreProcessing
+from enums import BarType
 
 
 class Contour:
     def __init__(self,
                  contour,
                  imgShape,
-                 fraction=None,
-                 holes=[],
-                 isFractionBar=False,
-                 isMinusSign=False,
-                 isEqualBar=False,
-                 isEqualSign=False):
+                 fraction=None):
         self.contour = contour
 
-        # Labels
-        self.isFractionBar = isFractionBar
-        self.isMinusSign = isMinusSign
-        self.isEqualBar = isEqualBar
-        self.isEqualSign = isEqualSign
+        self.barType = None
 
         self.remove = False
-
-        self.equalBar = None  # contour object
 
         # generate random id
         chars = string.ascii_lowercase + string.digits
         self.contourId = ''.join(random.choices(chars, k=8))
 
         self.fraction = fraction  # fraction object in fraction.py
-        self.holes = holes  # list of contours (not contour objects!)
+        self.holes = []  # list of contours (not contour objects!)
         self.imgShape = imgShape  # (height, width)
 
         (x, y), radius = cv.minEnclosingCircle(contour)
@@ -48,6 +38,10 @@ class Contour:
         boundingRect = cv.boundingRect(contour)
         self.width = int(boundingRect[2])
         self.height = int(boundingRect[3])
+
+        minAreaRect = cv.minAreaRect(contour)
+        self.trueWidth = max(minAreaRect[1])
+        self.trueHeight = min(minAreaRect[1])
 
         self.x1 = int(boundingRect[0])
         self.x2 = self.x1 + self.width
@@ -77,100 +71,21 @@ class Contour:
 
     def is_bar(self):
         if self.width > self.height:
-            minAreaRect = cv.minAreaRect(self.contour)
-            trueWidth = max(minAreaRect[1])
-            trueHeight = min(minAreaRect[1])
-            if trueWidth > trueHeight * 2:
+            if self.trueWidth > self.trueHeight * 2:
                 return True
         return False
 
-    def is_fraction_bar(self, contourList):
-        # only consider bars
-        if not self.is_bar():
-            return False
+    def set_bar_type(self, BarType):
+        self.barType = BarType
 
-        # define acceptance area of possible fraction
-        minX = self.x1
-        maxX = self.x2
-        minY = max(self.y1-(self.radius), 0)
-        maxY = self.y2+(self.radius)
+    def add_hole(self, cnt):
+        self.holes.append(cnt)
 
-        # check for contours above and below bar
-        above = False
-        below = False
-        center = ((maxY - minY) // 2) + minY
-        for cnt in contourList:
-            if self.contourId == cnt.contourId:
-                continue
-            if cnt.is_inside_area(minX, maxX, minY, center):
-                above = True
-                continue
-            if cnt.is_inside_area(minX, maxX, center, maxY):
-                below = True
-        self.isFractionBar = above and below
-        return self.isFractionBar
+    def mark_for_removal(self):
+        self.remove = True
 
-    def check_bar_type(self, contourList):
-        # don't consider contours which are about to be removed
-        if self.remove:
-            return False
-        # only consider bars
-        if not self.is_bar():
-            return False
-
-        # define acceptance area of possible fraction
-        minX = self.x1
-        maxX = self.x2
-        minY = max(self.y1-(self.radius), 0)
-        maxY = self.y2+(self.radius)
-
-        # check for contours above and below bar
-        above = False
-        below = False
-        # remember neighbour to compose possible equal sign later
-        equalBar = None
-        center = ((maxY - minY) // 2) + minY
-        for cnt in contourList:
-            if self.contourId == cnt.contourId:
-                continue
-            if cnt.is_inside_area(minX, maxX, minY, center):
-                above = True
-                equalBar = cnt
-                continue
-            if cnt.is_inside_area(minX, maxX, center, maxY):
-                below = True
-                equalBar = cnt
-
-        if not above and not below:
-            self.isMinusSign = True
-        elif above and below:
-            self.isFractionBar = True
-        else:
-            self.isEqualBar = True
-            self.equalBar = equalBar
-
-    def is_outer_border(self):
-        is_outer = False
-        if self.x1 == 0 and self.y1 == 0:
-            if self.height == self.imgShape[0] and self.width == self.imgShape[1]:
-                self.remove = True
-                is_outer = True
-        return is_outer
-
-    def check_holes(self, contourList, hierarchy, cnt, index):
-        if cnt.remove:
-            return
-        parentIndex = hierarchy[0][index][-1]
-        if parentIndex == -1:
-            return
-        else:
-            parent = contourList[parentIndex]
-            parentArea = parent.width * parent.height
-            if cnt.is_inside_area(parent.x1, parent.x2, parent.y1, parent.y2):
-                child_area = cnt.width * cnt.height
-                if child_area > parentArea * 0.1:
-                    parent.holes.append(cnt.contour)
-                    cnt.remove = True
+    def unmark_for_removal(self):
+        self.remove = False
 
     def unwrap(self):
         # contour can contain nested contours

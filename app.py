@@ -28,13 +28,17 @@ class App:
         if len(contours) > 500:
             contours = contours[:500]
 
+        # ignore first contour, as it is outer border of the frame
+        contours = contours[1:]
+        hierarchy = hierarchy[0][1:]-1
+        hierarchy = np.where(hierarchy < 0, -1, hierarchy)
+
         # initialize contour object from each contour in contour list
         contourList = [Contour(contour=cnt, imgShape=frame.shape)
                        for cnt in contours]
 
         # filter, classify and group segmented contours
         sg = Segmentation(contourList, hierarchy, frame.shape)
-        sg.filter_small_contours()
         sg.group_and_classify()
         sg.filter()
 
@@ -50,7 +54,7 @@ class App:
         for line in lines:
             for cnt in line:
                 cv.drawContours(
-                    frame, [cnt.contour], 0, (0, 255, 0), 2)
+                    frame, [cnt.contour, *cnt.holes], -1, (0, 255, 0), 2)
 
         # unwrap nested contours and pass contour list to solver object
         # derive characters and compute solution using sympy

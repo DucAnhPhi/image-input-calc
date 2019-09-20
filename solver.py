@@ -1,6 +1,7 @@
 from sympy.parsing.sympy_parser import parse_expr
 from iic import MathSymbolClassifier
 from contour import Contour
+from enums import BarType
 
 
 class Solver:
@@ -27,11 +28,11 @@ class Solver:
         for el in temp:
             if isinstance(el, str):
                 equation.append(el)
-            elif el.isFractionBar:
+            elif el.barType == BarType.FRACTION:
                 equation.append('/')
-            elif el.isEqualSign:
+            elif el.barType == BarType.EQUAL:
                 equation.append('=')
-            elif el.isMinusSign:
+            elif el.barType == BarType.MINUS:
                 equation.append('-')
             else:
                 symbol = cl.classify([el.get_subimage_for_classifier()])[0]
