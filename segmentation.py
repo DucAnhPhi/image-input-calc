@@ -13,13 +13,13 @@ class Segmentation:
         self.minLineThickness = self.get_min_line_thickness()
 
     def get_min_line_thickness(self):
-        # find top 3 biggest contours without outer frame border
-        k = 4
+        # find top 3 biggest contours
+        k = 3
         areas = np.array([cnt.width * cnt.height for cnt in self.contourList])
         n = len(areas)
         topIdx = []
 
-        if n < 4:
+        if n < 3:
             topIdx = np.array(range(n))
         else:
             topIdx = np.argpartition(areas, -k)[-k:]
