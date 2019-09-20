@@ -2,3 +2,5 @@ opencv-python==4.1.0.25
 numpy==1.17.0
 sympy==1.4
 mpmath==1.1.0
+tensorflow==1.14.0
+matplotlib==3.1.1
