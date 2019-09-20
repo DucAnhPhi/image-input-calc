@@ -84,9 +84,6 @@ class Contour:
     def mark_for_removal(self):
         self.remove = True
 
-    def unmark_for_removal(self):
-        self.remove = False
-
     def unwrap(self):
         # contour can contain nested contours
         # recursively unwrap these contours
