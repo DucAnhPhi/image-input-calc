@@ -10,31 +10,17 @@ class Segmentation:
         self.contourList = contourList
         self.hierarchy = hierarchy
         self.imgShape = imgShape
-        self.minLineThickness = self.get_min_line_thickness()
+        self.lineThickness = self.get_line_thickness()
 
-    def get_min_line_thickness(self):
-        # find top 3 biggest contours
-        k = 3
+    def get_line_thickness(self):
         areas = np.array([cnt.width * cnt.height for cnt in self.contourList])
-        n = len(areas)
-        topIdx = []
-
-        if n < 3:
-            topIdx = np.array(range(n))
-        else:
-            topIdx = np.argpartition(areas, -k)[-k:]
-
-        topThickness = []
-        for i in topIdx:
-            currentCnt = self.contourList[i]
-            topThickness.append(currentCnt.get_thickness())
-
-        if len(topThickness) == 0:
-            return
-
-        # get minimum line thickness with some tolerance
-        minThickness = min(topThickness) * 0.8
-        return minThickness
+        medianAreaIndices = np.argwhere(
+            areas == np.percentile(areas, 50, interpolation='nearest'))
+        thickness = [
+            self.contourList[i[0]].get_thickness() for i in medianAreaIndices]
+        # get median line thickness with some tolerance
+        medianThickness = np.median(thickness) * 0.8
+        return medianThickness
 
     def get_contours(self):
         return self.contourList
@@ -177,7 +163,7 @@ class Segmentation:
 
         # mark small contours for removal later
         for cnt in self.contourList:
-            if min(cnt.trueWidth, cnt.trueHeight) < self.minLineThickness:
+            if min(cnt.trueWidth, cnt.trueHeight) < self.lineThickness:
                 cnt.mark_for_removal()
 
     def filter(self):
