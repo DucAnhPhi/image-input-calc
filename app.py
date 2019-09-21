@@ -33,6 +33,9 @@ class App:
         hierarchy = hierarchy[0][1:]-1
         hierarchy = np.where(hierarchy < 0, -1, hierarchy)
 
+        if len(contours) == 0:
+            return preprocessed
+
         # initialize contour object from each contour in contour list
         binarized = PreProcessing().custom_binarize(frame)
         contourList = [Contour(contour=cnt, imgShape=frame.shape, frameBinary=binarized)
