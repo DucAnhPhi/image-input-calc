@@ -10,8 +10,9 @@ class Contour:
     def __init__(self,
                  contour,
                  imgShape,
-                 fraction=None):
+                 fraction=None, frameBinary=None):
         self.contour = contour
+        self.frameBinary = frameBinary
 
         self.barType = None
 
@@ -134,6 +135,8 @@ class Contour:
         cv.fillPoly(blankImg, pts=[self.contour, *
                                    self.holes], color=(255, 255, 255))
         image = blankImg[self.y1:self.y2, self.x1:self.x2]
+        image = PreProcessing().convert_gray(image)
+
         return image
 
     def skeletonize(self, image):
@@ -157,7 +160,6 @@ class Contour:
 
     def get_thickness(self):
         image = self.get_image()
-        image = PreProcessing().convert_gray(image)
 
         # sum up the image to get the area
         area = np.sum(image)
@@ -172,8 +174,14 @@ class Contour:
         return thickness
 
     def get_subimage_for_classifier(self):
-        subImg = self.get_image()
+        blankImg = np.zeros(
+            shape=self.imgShape, dtype=np.uint8)
+        cv.fillPoly(blankImg, pts=[self.contour, *
+                                   self.holes], color=(255, 255, 255))
+        mask = blankImg[self.y1:self.y2, self.x1:self.x2]
+        mask = cv.cvtColor(mask, cv.COLOR_BGR2GRAY)
+        subImg = self.frameBinary[self.y1:self.y2, self.x1:self.x2]
+        subImg = cv.bitwise_and(subImg, subImg, mask=mask)
         subImg = self.resize_keep_ratio(subImg)
-        subImg = PreProcessing().convert_gray(subImg)
         subImg = np.asarray(subImg).reshape((1, 32, 32))
         return subImg

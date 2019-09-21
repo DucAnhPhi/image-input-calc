@@ -16,7 +16,7 @@ from solver import Solver
 class App:
 
     def process(self, frame, name="TrainingSamples/Image_"):
-        # preprocessing
+        # preprocessing for contour detection
         preprocessed = PreProcessing().background_contour_removal(
             frame)
 
@@ -34,7 +34,8 @@ class App:
         hierarchy = np.where(hierarchy < 0, -1, hierarchy)
 
         # initialize contour object from each contour in contour list
-        contourList = [Contour(contour=cnt, imgShape=frame.shape)
+        binarized = PreProcessing().custom_binarize(frame)
+        contourList = [Contour(contour=cnt, imgShape=frame.shape, frameBinary=binarized)
                        for cnt in contours]
 
         # filter, classify and group segmented contours
