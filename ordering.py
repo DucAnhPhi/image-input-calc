@@ -115,7 +115,7 @@ class LineOrdering:
                 if len(tmpLine) > 2:
                     lines.append(tmpLine)
                 tmpLine = [currentCnt]
-            if i == n-1:
+            if i == n-1 and len(tmpLine) > 2:
                 lines.append(tmpLine)
         return lines
 

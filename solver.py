@@ -5,7 +5,10 @@ from enums import BarType
 
 
 class Solver:
-    def __init__(self, contourList):
+    def __init__(self):
+        self.cl = MathSymbolClassifier()
+
+    def get_equation(self, contourList):
         def add_brackets(cnt):
             if not isinstance(cnt, list):
                 return cnt
@@ -22,7 +25,6 @@ class Solver:
                     yield el
 
         temp = flatten(temp)
-        cl = MathSymbolClassifier()
         equation = []
 
         for el in temp:
@@ -35,20 +37,24 @@ class Solver:
             elif el.barType == BarType.MINUS:
                 equation.append('-')
             else:
-                symbol = cl.classify([el.get_subimage_for_classifier()])[0]
+                symbol = self.cl.classify(
+                    [el.get_subimage_for_classifier()])[0]
                 equation.append(symbol)
 
-        self.equation = "".join(equation)
-        print(self.equation)
+        equationString = "".join(equation)
+        print(equationString)
+        return equationString
 
-    def solve(self):
-        expr = parse_expr(self.equation)
-        solution = expr.evalf(4)
-        return solution
+    def solve(self, contourList):
+        equationString = self.get_equation(contourList)
+        # expr = parse_expr(equationString)
+        # solution = expr.evalf(4)
+        # return solution
+        # print(expr)
 
 
 if __name__ == '__main__':
     eq = '(1/2 + 4 * 3.5) / 2 + 2.00001'
     eq = [[['1', '/', '2'], '+', ['4', '*', '3', '.', '5']],
           '/', '2', '+', '2', '.', '00001']
-    print(Solver(eq).solve())
+    print(Solver().solve(eq))

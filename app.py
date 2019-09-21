@@ -14,6 +14,8 @@ from solver import Solver
 
 
 class App:
+    def __init__(self, solver):
+        self.solver = solver
 
     def process(self, frame, name="TrainingSamples/Image_"):
         # preprocessing for contour detection
@@ -62,7 +64,8 @@ class App:
 
         # unwrap nested contours and pass contour list to solver object
         # derive characters and compute solution using sympy
-        # solutions = [Solver([cnt.unwrap() for cnt in line]) for line in lines]
+        solutions = [self.solver.solve([cnt.unwrap() for cnt in line])
+                     for line in lines]
 
         return preprocessed  # orderedImage
 
@@ -129,34 +132,35 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    def run(self, source):
-        if (source == "" or source == "webcam" or source == "Webcam"):
-            print("Using Webcam")
-            App().run_with_webcam()
+    # def run(self, source):
+    #     if (source == "" or source == "webcam" or source == "Webcam"):
+    #         print("Using Webcam")
+    #         App().run_with_webcam()
 
-        if (source == "TrainingSamples"):
-            for i in range(0, 42):
-                name = ("ToClassify2/Image_" + str(292 + i) + "_")
-                source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
-                print("Opening Image")
-                print(source)
-                App().run_with_img(source, name)
-        sourceEnding = source.split(".", 1)[1]
+    #     if (source == "TrainingSamples"):
+    #         for i in range(0, 42):
+    #             name = ("ToClassify2/Image_" + str(292 + i) + "_")
+    #             source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
+    #             print("Opening Image")
+    #             print(source)
+    #             App().run_with_img(source, name)
+    #     sourceEnding = source.split(".", 1)[1]
 
-        if sourceEnding == "MOV":
-            print("Opening Video Clip")
-            App().run_with_video(source)
+    #     if sourceEnding == "MOV":
+    #         print("Opening Video Clip")
+    #         App().run_with_video(source)
 
-        if (sourceEnding == "jpg" or sourceEnding == "JPG"):
-            print("Opening Image")
-            print(source)
-            App().run_with_img(source)
+    #     if (sourceEnding == "jpg" or sourceEnding == "JPG"):
+    #         print("Opening Image")
+    #         print(source)
+    #         App().run_with_img(source)
 
 
 if __name__ == '__main__':
+    solver = Solver()
     # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     # App().run("sample.MOV")
 
-    # App().run_with_webcam()
-    App().run_with_img()
-    # App().run_with_video('sample.MOV')
+    # App(solver).run_with_webcam()
+    App(solver).run_with_img()
+    # App(solver).run_with_video('sample.MOV')
