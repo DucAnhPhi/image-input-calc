@@ -3,5 +3,6 @@ from enum import Enum
 
 class BarType(Enum):
     MINUS = 1
-    FRACTION = 2
-    EQUAL = 3
+    FRACTION_HOR = 2
+    FRACTION_VERT = 3
+    EQUAL = 4

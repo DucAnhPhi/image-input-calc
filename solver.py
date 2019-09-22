@@ -2,13 +2,14 @@ from sympy.parsing.sympy_parser import parse_expr
 from iic import MathSymbolClassifier
 from contour import Contour
 from enums import BarType
+import cv2 as cv
 
 
 class Solver:
     def __init__(self):
         self.cl = MathSymbolClassifier()
 
-    def get_equation(self, contourList):
+    def get_equation(self, contourList, frame):
         def add_brackets(cnt):
             if not isinstance(cnt, list):
                 return cnt
@@ -30,13 +31,21 @@ class Solver:
         for el in temp:
             if isinstance(el, str):
                 equation.append(el)
-            elif el.barType == BarType.FRACTION:
+            elif el.barType == BarType.FRACTION_HOR or el.barType == BarType.FRACTION_VERT:
+                cv.drawContours(
+                    frame, [el.contour], -1, (0, 255, 0), 2)
                 equation.append('/')
             elif el.barType == BarType.EQUAL:
+                cv.drawContours(
+                    frame, [el.contour], -1, (0, 0, 255), 2)
                 equation.append('=')
             elif el.barType == BarType.MINUS:
+                cv.drawContours(
+                    frame, [el.contour], -1, (255, 0, 0), 2)
                 equation.append('-')
             else:
+                cv.drawContours(
+                    frame, [el.contour], -1, (255, 255, 0), 2)
                 symbol = self.cl.classify(
                     [el.get_subimage_for_classifier()])[0]
                 equation.append(symbol)
@@ -45,8 +54,8 @@ class Solver:
         print(equationString)
         return equationString
 
-    def solve(self, contourList):
-        equationString = self.get_equation(contourList)
+    def solve(self, contourList, frame):
+        equationString = self.get_equation(contourList, frame)
         # expr = parse_expr(equationString)
         # solution = expr.evalf(4)
         # return solution

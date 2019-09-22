@@ -71,10 +71,17 @@ class Contour:
         return is_inside
 
     def is_bar(self):
-        if self.width > self.height:
-            if self.trueWidth > self.trueHeight * 2:
-                return True
-        return False
+        if self.trueWidth > self.trueHeight * 2:
+            if len(self.holes) == 0:
+                area = cv.contourArea(self.contour)
+                minRectArea = self.trueHeight * self.trueWidth
+                extent = float(area)/minRectArea
+                if extent > 0.7 or self.trueWidth > self.trueHeight * 4:
+                    return True
+
+    def is_vertical_bar(self):
+        if self.width < self.height:
+            return True
 
     def set_bar_type(self, BarType):
         self.barType = BarType

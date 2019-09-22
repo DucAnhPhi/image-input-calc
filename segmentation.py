@@ -18,8 +18,8 @@ class Segmentation:
             areas == np.percentile(areas, 50, interpolation='nearest'))
         thickness = [
             self.contourList[i[0]].get_thickness() for i in medianAreaIndices]
-        # get median line thickness with some tolerance
-        medianThickness = np.median(thickness) * 0.8
+        # get median line thickness
+        medianThickness = np.median(thickness)
         return medianThickness
 
     def get_contours(self):
@@ -101,6 +101,10 @@ class Segmentation:
         if not cnt.is_bar():
             return
 
+        if cnt.is_vertical_bar():
+            cnt.set_bar_type(BarType.FRACTION_VERT)
+            return
+
         # define acceptance area of possible fraction
         minX = cnt.x1
         maxX = cnt.x2
@@ -131,7 +135,7 @@ class Segmentation:
         if not above and not below:
             cnt.set_bar_type(BarType.MINUS)
         elif above and below:
-            cnt.set_bar_type(BarType.FRACTION)
+            cnt.set_bar_type(BarType.FRACTION_HOR)
         else:
             self.group_equal(cnt, equalBar)
 
@@ -148,7 +152,7 @@ class Segmentation:
             self.label_bar_type(cnt, self.contourList)
 
         fractionBars = [
-            cnt for cnt in self.contourList if cnt.barType == BarType.FRACTION]
+            cnt for cnt in self.contourList if cnt.barType == BarType.FRACTION_HOR]
 
         # sort fraction bars ascending by width
         fractionBars.sort(key=lambda bar: bar.width)
@@ -160,10 +164,10 @@ class Segmentation:
             self.group_fraction(bar)
 
     def check_small_contours(self):
-
+        tolerance = 0.8
         # mark small contours for removal later
         for cnt in self.contourList:
-            if min(cnt.trueWidth, cnt.trueHeight) < self.lineThickness:
+            if min(cnt.trueWidth, cnt.trueHeight) < self.lineThickness * tolerance:
                 cnt.mark_for_removal()
 
     def filter(self):

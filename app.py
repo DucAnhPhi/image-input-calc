@@ -57,14 +57,8 @@ class App:
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
         lines = LineOrdering(filtered).get_lines(frame)
-        for line in lines:
-            for cnt in line:
-                cv.drawContours(
-                    frame, [cnt.contour, *cnt.holes], -1, (0, 255, 0), 2)
 
-        # unwrap nested contours and pass contour list to solver object
-        # derive characters and compute solution using sympy
-        solutions = [self.solver.solve([cnt.unwrap() for cnt in line])
+        solutions = [self.solver.solve([cnt.unwrap() for cnt in line], frame)
                      for line in lines]
 
         return preprocessed  # orderedImage
