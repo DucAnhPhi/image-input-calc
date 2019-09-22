@@ -46,7 +46,6 @@ class App:
         # filter, classify and group segmented contours
         sg = Segmentation(contourList, hierarchy, frame.shape)
         sg.group_and_classify()
-        sg.filter()
 
         filtered = sg.get_contours()
 
@@ -57,6 +56,9 @@ class App:
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
         lines = LineOrdering(filtered).get_lines(frame)
+
+        # label signs which need positional information
+        sg.label_comma_and_multiply(lines)
 
         solutions = [self.solver.solve([cnt.unwrap() for cnt in line], frame)
                      for line in lines]

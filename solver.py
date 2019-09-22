@@ -43,6 +43,14 @@ class Solver:
                 cv.drawContours(
                     frame, [el.contour], -1, (255, 0, 0), 2)
                 equation.append('-')
+            elif el.barType == BarType.COMMA:
+                cv.drawContours(
+                    frame, [el.contour], -1, (255, 0, 255), 2)
+                equation.append('.')
+            elif el.barType == BarType.MULTIPLY:
+                cv.drawContours(
+                    frame, [el.contour], -1, (0, 255, 255), 2)
+                equation.append('*')
             else:
                 cv.drawContours(
                     frame, [el.contour], -1, (255, 255, 0), 2)
