@@ -7,6 +7,9 @@
 
 
 \documentclass[12pt]{article}
+
+\usepackage{biblatex}
+
 \usepackage{graphicx}         % fuer das Einbinden von Grafiken
 \usepackage{caption}       
 \usepackage{comment}  
@@ -16,6 +19,10 @@
 \usepackage{amssymb}					%Sonderzeichen und Symbole	
 \usepackage{hyperref}
 \usepackage{listings}
+
+
+
+
 
 \RequirePackage[backend=biber,
     sorting=none, % http://tex.stackexchange.com/a/51439
@@ -35,6 +42,13 @@
 \maketitle
 
 \begin{abstract}
+	This paper deals with the development of a calculator, which can infer, from an image of an equation, its solution.
+	To do this, the image will, after going through some preprocessing, be segmented into the separate symbols that make up the equation.
+	These symbols will then be ordered and classified, which allows solving of the equation.
+	While similar projects exist, this project goes into detail, how this can be done.
+	And, being open source, demonstrates, how such a problem may be tackled and gives a sophisticated basis for many other projects on a variety of topics.
+	
+	
 	
 \end{abstract}
 \newpage
@@ -47,20 +61,22 @@
 Computers are superior to humans in many everyday disciplines.
 A Calculator, for instance, uses less time to calculate the solution of most simple mathematical problems than it does for the user to enter the equation.
 This has inspired us to search for a solution to this flaw in a common household item.
-If we want to improve upon the common calculator, we will not have to improve the calculating part of a program.
-Instead we should focus on improving the efficiency of entering an equation into the calculator.
-For this we could use a variety of different Input methods.\\
-We decided to make our calculator able to determine equations as seen from an Image.
-In the following paper we will explain, how we succeeded in creating such a calculator
+If we want to improve upon calculators, we will not have to increase the speed at which computers calculate.
+Instead the focus should lie on improving the efficiency of entering an equation into the calculator.\\
+We decided to make a calculator able to find the solution of equations, when given an image of the equation.
+In the following paper we will explain, how such a calculator can be designed.\\
+We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
+
 \section{Introduction}
 
 	
 
 \section{Preprocessing}
-	Our programm is at first given no more than an incoming image.
-	Working with this image is not easy.
-	Therefore, its first step is too simply improve upon the quality of the image.\\
-	The image will ideally has the following improvements:\\
+	Our program receives at first a simple unaltered image.
+	From this image it is difficult to detect significant features, such as the symbols that make up the equation.
+	Therefore, it is necessary to do some preprocessing, before further steps make sense.\\
+	We are facing several issues in this.
+	Some improvements we could make include:\\
 	\begin{itemize}
 		% !!!
 		\item Correction for different Quality of Camera, Lighting, etc.:
@@ -69,11 +85,11 @@ In the following paper we will explain, how we succeeded in creating such a calc
 		A future improvement of this project would improve greatly by having an adaptive preprocessing step.
 		% !!!
 		\item Simplification of the input dimensions: Explicitly we want our image to be a black-white image, with the only two colours being black (0) and white (255).
-		\item Connectedness of the symbols: For later steps it is usefull to not segment any symbols. In the same manner we do not wish for two different symbols to be connected.
+		\item Connectedness of the symbols: For later steps it is useful to not segment any symbols. In the same manner we do not wish for two different symbols to be connected.
 		\item Removal of Noise: Often the background (e.g. paper or whiteboard) is not uniform and this can create spots on the image. (The human eye is very good at filtering these out.)
 		\item Background Contour removal: Often times when taking an image of a contour there will be other objects in the image (e.g. pencils, the border of the paper, etc.).
 	\end{itemize}
-	
+	%!!! ??? Add more
 	We correct for (most of) these issues in two separate steps:\\
 	At first we use a few select image processing steps to deal with most of the issues.\\
 	In a second step we remove the contours that can be attributed to background objects.
@@ -168,14 +184,58 @@ In the following paper we will explain, how we succeeded in creating such a calc
 	Thereby, we can reduce the amount of classes we need to identify with the classifier. \\
 	For the Line Assigning we have developed several algorithms, of which we will be discussing the most interesting, the ones able to tackle a particular problem and the most efficient ones.
 	
-%??? maybe add this	\subsection{Naive Approach}
-	%??? !!! Add upgraded Text
+	\subsection{Problems with Determining Line Order}
+	
 	
 	\subsection{Determining the Direction of Writing}
-	%??? !!! Add upgraded Text
+	When writing an equation, most people tend to write roughly along an "invisible line".
+	Therefore, when taking an image of said equation, we can expect it to adhere roughly to the line.
+	We can use this to determine the order of the symbols.\\
+	There are however, two issues with this:\\
+	Firstly, unlike a computer a human will not precisely write their symbols in a line.
+	Oftentimes a symbol will be significantly above or below said line.
+	It gets even worse, if we take a look at exponents, division bars and similar.\\
+	Secondly, the "invisible line" may not be along the horizontal of an image.
+	This may be because of sloppiness of the writer, or because the image was taken at an angle.\\
+	Because of this, it is very useful to be able to determine the direction of such an "invisible line".
+	In the following we will be discussing a method how to determine this line.
+	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10°$.
+	All of the following algorithms are capable of dealing with such small deviations.\\
+	
+	
+	
+	%\subsection{A Naive Approach}
+	%This section aims not to introduce a particular algorithm, but to illustrate some of the problems such an algorithm must face.
+	
+	%A naive approach to assigning lines, may be to assume two symbols are within the same line, if they are close to each other.\\
+	%This could be implemented, by determining a radius of acceptance $R$.
 	
 	\subsection{Assigning Lines to Proposed Line Positions}
-	%??? !!! Add upgraded Text
+	Our aim is to accurately order the contours into lines.
+	A possible method for doing this is by proposing the position of lines.
+	Then we check for each proposed line, whether or not a given contour is a good fit (if it is within a certain radius of the line).\\
+	For this procedure we at first have to find a rough estimate of the diameter of a line.
+	This can be done in a variety of different ways.
+	The best method we found at first determines the extension (radius of minimal enclosing circle) of every single found contour.
+	Of these, the biggest radius that isn't part of a fraction is then chosen to be the presumed line radius.\\
+	To find the ideal line position, we propose a great variety of possible lines.
+	In practice we choose a line every $0.4 \cdot \mathrm{line radius}$.
+	For every one of these lines, the appropriate contours are assigned.
+	Because we choose a lot of different lines, it is very likely that contours are present in multiple lines.
+	We can find the best lines, by removing all lines, that have a neighbouring lines, which contain more symbols.
+	The longest lines correspond to the written lines.\\
+	Afterwards, all lines with less than 3 symbols in them are removed.
+	This can be done with confidence, because even the smallest equation (e.g. "1+1") has at least 3 symbols.\\
+	
+	While there are some obvious flaws with this method, it works surprisingly and consistently well.
+	It performs especially well, when equations are written along lines with large spaces between symbols.
+	Compared to other methods it can maintain the position of a line and doesn't wander into other lines.\\
+	It does however, have difficulty if there are hazy patches in an image, which cause a large amount of wrong contours close to each other.
+	The algorithm will always attempt to place a line around these contours.\\
+	Another issue is caused, if the lines are written too close and there is a large contour.
+	If this is the case, then the line might be placed in between both lines and use contours from both lines.
+	%!!! ??? Add more issues
+	%!!! ??? Add images
 	
 \section{Symbol Classification}
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
