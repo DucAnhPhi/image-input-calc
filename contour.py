@@ -73,11 +73,17 @@ class Contour:
     def is_bar(self):
         if self.trueWidth > self.trueHeight * 2:
             if len(self.holes) == 0:
+                # calculate smoothness
                 area = cv.contourArea(self.contour)
                 minRectArea = self.trueHeight * self.trueWidth
-                extent = float(area)/minRectArea
-                if extent > 0.7 or self.trueWidth > self.trueHeight * 4:
-                    return True
+                smoothness = float(area)/minRectArea
+                # calculate curvature
+                hull = cv.convexHull(self.contour)
+                hullArea = cv.contourArea(hull)
+                curvature = float(area)/hullArea
+                if curvature > 0.7:
+                    if smoothness > 0.7 or self.trueWidth > self.trueHeight * 4:
+                        return True
 
     def is_vertical_bar(self):
         if self.width < self.height:
