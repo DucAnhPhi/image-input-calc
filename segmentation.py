@@ -200,7 +200,7 @@ class Segmentation:
         self.contourList = [cnt for cnt in self.contourList if not cnt.remove]
 
     def check_small_contours(self):
-        tolerance = 0.8
+        tolerance = 0.2
         minThickness = self.lineThickness * tolerance
         # mark small contours for removal later
         for cnt in self.contourList:
