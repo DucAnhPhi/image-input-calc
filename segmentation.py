@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from contour import Contour
 from fraction import Fraction
-from enums import BarType
+from enums import MathSign
 
 
 class Segmentation:
@@ -54,7 +54,7 @@ class Segmentation:
         maxY = max(b1Y+b1Height, b2Y+b2Height)
         outerCnt = self.generate_contour_from_edges(minX, maxX, minY, maxY)
         grouped = Contour(outerCnt, self.imgShape)
-        grouped.set_bar_type(BarType.EQUAL)
+        grouped.set_bar_type(MathSign.EQUAL)
 
         # mark contours for removal and add new grouped contour
         bar1.mark_for_removal()
@@ -98,7 +98,7 @@ class Segmentation:
         yDevToBottom = abs(currCnt.center[1] - preCnt.y2)
         if yDevToBottom < yDevToCentroid:
             if cv.contourArea(currCnt.contour) < cv.contourArea(preCnt.contour):
-                currCnt.set_bar_type(BarType.COMMA)
+                currCnt.set_bar_type(MathSign.COMMA)
 
     def label_multiply(self, currCnt, preCnt):
         yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
@@ -106,7 +106,7 @@ class Segmentation:
         if 2 * yDevToCentroid < xDevToCentroid:
             if currCnt.width <= self.lineThickness * 2:
                 if currCnt.height <= self.lineThickness * 2:
-                    currCnt.set_bar_type(BarType.MULTIPLY)
+                    currCnt.set_bar_type(MathSign.MULTIPLY)
 
     def label_comma_and_multiply(self, lines):
         def label_signs(orderedContours):
@@ -135,7 +135,7 @@ class Segmentation:
             return
 
         if cnt.is_vertical_bar():
-            cnt.set_bar_type(BarType.FRACTION_VERT)
+            cnt.set_bar_type(MathSign.FRACTION_VERT)
             return
 
         # define acceptance area of possible fraction
@@ -166,9 +166,9 @@ class Segmentation:
                 equalBar = tempCnt
 
         if not above and not below:
-            cnt.set_bar_type(BarType.MINUS)
+            cnt.set_bar_type(MathSign.MINUS)
         elif above and below:
-            cnt.set_bar_type(BarType.FRACTION_HOR)
+            cnt.set_bar_type(MathSign.FRACTION_HOR)
         else:
             self.group_equal(cnt, equalBar)
 
@@ -185,7 +185,7 @@ class Segmentation:
             self.label_bar_type(cnt)
 
         fractionBars = [
-            cnt for cnt in self.contourList if cnt.barType == BarType.FRACTION_HOR]
+            cnt for cnt in self.contourList if cnt.mathSign == MathSign.FRACTION_HOR]
 
         # sort fraction bars ascending by width
         fractionBars.sort(key=lambda bar: bar.width)
@@ -200,7 +200,7 @@ class Segmentation:
         self.contourList = [cnt for cnt in self.contourList if not cnt.remove]
 
     def check_small_contours(self):
-        tolerance = 0.8
+        tolerance = 0.7
         minThickness = self.lineThickness * tolerance
         # mark small contours for removal later
         for cnt in self.contourList:
