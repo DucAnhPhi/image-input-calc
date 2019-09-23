@@ -8,7 +8,7 @@
 
 \documentclass[12pt]{article}
 
-\usepackage{biblatex}
+%\usepackage{biblatex}
 
 \usepackage{graphicx}         % fuer das Einbinden von Grafiken
 \usepackage{caption}       
@@ -19,6 +19,7 @@
 \usepackage{amssymb}					%Sonderzeichen und Symbole	
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage[utf8]{inputenc}
 
 
 
@@ -68,6 +69,13 @@ In the following paper we will explain, how such a calculator can be designed.\\
 We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
 
 \section{Introduction}
+The creation of an automatic image input calculator for handwritten formula mainly combines two common computer-scientific problems. 
+
+For once, several operations from visual computing need to be applied to the image. The application has to segment the input image into one segment per character. It is important that the ordering of these symbols is preserved during this step. Otherwise, it would not be possible to reconstruct the original formula.
+
+The second issue our program has to address, is the recognition of each segmented character. To do so, we can apply methods from machine learning. Luckily, the recognition of handwritten symbols is a well-known problem that has been approached by various researchers before. LeCun et al \cite{lecun1998} for instance discussed different methods to recognized handwritten digits in 1998. With this work, they made a huge contribution by providing this MNIST database of handwritten digits \cite{mnist} that is used for many toy examples in machine learning. In fact, the task that is solved around the MNIST dataset does not differ very much from our own classification task. Symbols that can appear in a calculator input will mainly be digits from 0 to 9. Additionally, mathematical operators, brackets, latin symbols and greek symbols could be found in a mathematical formula. For this work however, we will focus on recognizing only digits and simple mathematical operators like plus, minus, multiplication-, and division symbols, as well as brackets.
+
+After these two major steps are complete, there is only one task left. Reconstructing the formula with the recognized symbols, and aligning them in the order in which they appeared on the input image to finally evaluate the term and present the result.
 
 	
 
@@ -111,14 +119,15 @@ We hope that this serves as an inspiration to solve similar issues, and that the
 			(Because our image is inverted, the code uses an erosion function.) %??? fix
 			Therefore, it is useful at this point to thicken the contours.
 		\end{itemize}
-		
-		%def preprocess(self, img):
-		%preprocessed = self.convert_gray(img)
-		%preprocessed = self.gaussian_blur(preprocessed)
-		%preprocessed = self.morph_open(preprocessed)
-		%preprocessed = self.binarize(preprocessed)
-		%preprocessed = self.erode(preprocessed)
-		%return preprocessed
+		\begin{lstlisting}
+	def preprocess(self, img):
+		preprocessed = self.convert_gray(img)
+		preprocessed = self.gaussian_blur(preprocessed)
+		preprocessed = self.morph_open(preprocessed)
+		preprocessed = self.binarize(preprocessed)
+		preprocessed = self.erode(preprocessed)
+		return preprocessed
+		\end{lstlisting}
 			
 	
 	\subsection{Border Removal}%??? !!! Add before vs after Images, after Preprocessing is complete
@@ -199,7 +208,7 @@ We hope that this serves as an inspiration to solve similar issues, and that the
 	This may be because of sloppiness of the writer, or because the image was taken at an angle.\\
 	Because of this, it is very useful to be able to determine the direction of such an "invisible line".
 	In the following we will be discussing a method how to determine this line.
-	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10°$.
+	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10$.
 	All of the following algorithms are capable of dealing with such small deviations.\\
 	
 	
@@ -246,21 +255,22 @@ After the preprocessing routine is complete, each handwritten character is extra
 	
 	The framework containing most of the machine learning functions we are using, is \texttt{pytorch}. We decided to use \texttt{pytorch} because we familiarized ourselves with this library during the exercises of this class. Furthermore, \texttt{pytorch} offers complete models suitable for classification.
 		
+	Dash- or dotlike symbols however are extremely hard to recognize automatically, since they cause major overfitting within the network. A highly accurate classifier is crucial for our program to work. For this reason, we perform a manual classification of difficult symbols and leave the automatic classification for symbols with distinctive features.
 	
 	\subsection{Training data}
 		To create a well trained model, a sufficient amount of training data is crucial. For the training routine, we decided to use two public data sets of handwritten symbols. Additionally, we created some training images ourselves that are created the same way as the input of the future classifier in our system. All of these images merge into a combined data set which will be finally used to train the character classificator.
 		
-		We created our own instance of the \texttt{Dataset} class provided by \texttt{pytorch} to capsule the data. It is crucial that the training data resembles the images created by our application as well as possible. Therefore, we apply an individual preprocessing routine to each dataset. Usually, this contains all steps made during the preprocessing of the segmented images. Additionally, the \texttt{numpy} arrays describing the images are transformed into \texttt{PIL} images. By doing so, we are able to apply some transformations to the images which are offered by \texttt{pytorch} to create some data augmentation. Furthermore, we applied a padding of 2 pixels to the images and resized them to 32*32 pixels. All images are converted to 1-channel grayscale and inverted to have a black background and white content. Finally, the images are transformed to \texttt{pytorch} Tensors to make them suitable for the neural network. 
+		We created our own instance of the \texttt{Dataset} class provided by \texttt{pytorch} to capsule the data. It is crucial that the training data resembles the images created by our application as well as possible. Therefore, we apply an individual preprocessing routine to each dataset. Usually, this contains all steps made during the preprocessing of the segmented images. Additionally, the \texttt{numpy} arrays describing the images are transformed into \texttt{PIL} images. By doing so, we are able to apply some transformations to the images which are offered by \texttt{pytorch} to create some data augmentation. Furthermore, we resized them to 32*32 pixels. All images are converted to 1-channel grayscale and inverted to have a black background and white content. Finally, the images are transformed to \texttt{pytorch} Tensors to make them suitable for the neural network. 
 		
 		\subsubsection{MNIST}
-			As a basic training routine, we used the already mentioned MNIST database of handwritten digits\cite{mnist}. \texttt{pytorch} offers the MNIST data directly. However, the format in which the images are provided by \texttt{pytorch} is not suitable with the preprocessing routine that makes mainly use of the \texttt{opencv} functions. Therefore, we gather the data not from \texttt{tensorflow}. The images are converted to \texttt{numpy} arrays. Afterwards all necessary operations get applied and the preprocessed images will be saved. 
+			As a basic training routine, we used the already mentioned MNIST database of handwritten digits. \texttt{pytorch} offers the MNIST data directly. However, the format in which the images are provided by \texttt{pytorch} is not suitable with the preprocessing routine that makes mainly use of the \texttt{opencv} functions. Therefore, we gather the data not from \texttt{tensorflow}. The images are converted to \texttt{numpy} arrays. Afterwards all necessary operations get applied and the preprocessed images will be saved. 
 			
 			To finally include the preprocessed images in the combined dataset, we provide a function to load the images again, convert them into \texttt{PIL} images, apply the necessary transformations and make them into tensors.
 			
 		\subsubsection{HASY}
-			Mathematical symbols such as brackets or plus signs need to get recognized as well. To include these symbols in our training process we extended our training data with a subset of the HASYv2\cite{hasy} dataset. This dataset contains 168233 images in total which can be labeled with one of 369 classes including all numbers and latin letters. 
+			Mathematical symbols need to get recognized as well. To include these symbols in our training process we extended our training data with a subset of the HASYv2\cite{hasy} dataset. This dataset contains 168233 images in total which can be labeled with one of 369 classes including all numbers and latin letters. 
 			
-			Not all symbols in this dataset are relevant for our classifier. Therefore, we filter the images according to their labels and thus simply include the ones that are necessary for our training procedure. We remain with roughly 6000 images after the filtering. Since MNIST contains 60000 images of digits, we have a critical overflow of digit characters in comparison to mathematical operators and letters. To reduce this gap, we apply a number of transformation to all non-digit characters. By rotating, flipping and combinations of rotation and flipping we generate four extra images per non-digit symbol.
+			Not all symbols in this dataset are relevant for our classifier. Therefore, we filter the images according to their labels and thus simply include the ones that are necessary for our training procedure. Our first approach was to take only the digits and plus symbols from this dataset. Unfortunately, many of the digit images were cropped or of poor quality. In the end, we decided to take only the plus symbols from the dataset what leaves us with roughly 100 images after the filtering. Since MNIST contains 60000 images of digits, we have a critical overflow of digit characters in comparison to the plus symbols. To reduce this gap, we make use of data augmentation and apply a number of transformation to all non-digit characters. By rotating, flipping and combinations of rotation and flipping we generate four extra images per non-digit symbol and remain now with 405 training images.
 			
 		\subsubsection{Custom training images}
 		Furthermore, we generated some training images ourselves by writing down symbols and capture them the same way in which our application will capture the mathematical formula during usage.
@@ -270,7 +280,7 @@ After the preprocessing routine is complete, each handwritten character is extra
 		
 		Stochastic optimization is done by using an \textit{ADAM}\cite{adam} optimizer. Since it is claimed to work best on classification issues with multiple classes, we use cross entropy loss as a loss function.
 		
-		We decided to leave 15 different symbols to the automatical classification: The digits from 0 to 9, the letters \textit{x} and \textit{y}, as well as the symbols \textit{(}, \textit{)} and \textit{+}. Other characters such as \textit{-} or \textit{=} will be classified in an earlier step in a manual way. Thus, our classifier needs to map the images to one of 15 labels.
+		We decided to leave 11 different symbols to the automatical classification: The digits from 0 to 9,  and \textit{+}. Therefore, the classification problem we are trying to solve is very close to MNIST what makes the chances high to achieve a good accuracy. Other operators will be classified in an earlier step in a manual way. Thus, our classifier needs to map the images to one of 15 labels.
 				
 		\subsubsection{Neural network}
 		
@@ -279,8 +289,8 @@ After the preprocessing routine is complete, each handwritten character is extra
 			\caption{The AlexNet architecture}
 			\label{fig:architecture}
 		\end{figure}
-		The network architecture we decided on is \textit{AlexNet}\cite{alexnet}. Thus, the network contains five convolutional and three fully connected layers. The convolutional layers are followed by max-pooling layers while some dropout layers are placed before the linear layers (see figures \ref{fig:architecture} and \ref{fig:layers}). An implementation of \textit{AlexNet} is provided by \texttt{pytorch}. Since the model is suited for images with three color channels we modified the first layer to accept images with only one channel.
-		\begin{figure}[h!]
+		The network architecture we decided on is \textit{AlexNet}\cite{alexnet}. Thus, the network contains five convolutional and three fully connected layers. The convolutional layers are followed by max-pooling layers while some dropout layers are placed before the linear layers (see figures \ref{fig:architecture}). An implementation of \textit{AlexNet} is provided by \texttt{pytorch}. Since the model is suited for images with three color channels we modified the first layer to accept images with only one channel. On the next page, a summary of the network is displayed. It shows, which layers the network contains and how these layers look like.
+		\newpage
 			\begin{lstlisting}
 AlexNet(
   (features): Sequential(
@@ -318,9 +328,7 @@ AlexNet(
   )
 )
 		\end{lstlisting}
-		\caption{AlexNet layers in PyTorch}
-		\label{fig:layers}
-		\end{figure}
+		\newpage
 		
 	\subsubsection{Hyperparameter training}
 	\texttt{pytorch} allows to set the training hyper parameters. The ones that are relevant in our routine are the learning rate, the beta values for the \textit{ADAM} optimizer, and the weight decay. To find the optimal values for these parameters, we created a second notebook in which we trained under the same conditions for one epoch with different hyperparameter values and compared the achieved accuracies. Table \ref{tab:hyperparams} shows which values we tried out for each parameter. The best results were achieved with a learning rate of 0.001, a beta tuple of (0.95, 0.95), and a weight decay of 0.
@@ -337,12 +345,18 @@ AlexNet(
 		\label{tab:hyperparams}
 	\end{table}
 	
-	\subsection{Classifier}
+	\subsection{Automatic Classification}
 	After the training is complete, we save the model to a \textit{.ckpt} file. The actual classifier that will be used in our program will be an instance of the class \texttt{MathSymbolClassifier}. This class simply contains an \textit{AlexNet} instance in which we load the information from the trained model. To predict what each of our segmented images shows, the class provides a function \texttt{classify}. The function takes a \texttt{numpy} array with images as an input, creates a tensor out of this array and leads the data through the network. Afterwards the predicted label is returned as a string and can be furtherly processed by the symbolic math solver.
+	
+	\subsection{Manual Classification}
+	Before the extracted symbols are given as an input for the automatic classifier, we check manually if they picture a symbol that our classifier can not recognize. This applies for opening and closing brackets, minus symbols, equal signs, commas, and multiplication dots.
 
 \section{Calculations}
 
 \section{Discussion}
+	In this section, we will discuss the progression of this project regarding the result.
+	\subsection{Classification problems}
+	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
 
 \section{Conclusion}
 
