@@ -127,19 +127,20 @@ class Segmentation:
                 if i < len(contours)-1:
                     postCnt = contours[i+1]
 
-                # remove points which are not between two ciphers
-                invalid = preCnt == None or postCnt == None
-                invalid = invalid or preCnt.mathSign != None
-                invalid = invalid or postCnt.mathSign != None
-                if preCnt != None:
-                    invalid = invalid or self.is_point(preCnt)
-                if postCnt != None:
-                    invalid = invalid or self.is_point(postCnt)
-                if invalid:
-                    currCnt.mark_for_removal()
-                else:
+                valid = False
+                between = preCnt != None and postCnt != None
+                if between:
+                    valid = preCnt.mathSign == None and postCnt.mathSign == None
+                    valid = valid and not self.is_point(
+                        preCnt) and not self.is_point(postCnt)
+
+                if valid:
+                    # label points which are between two ciphers
                     self.label_comma(currCnt, preCnt)
                     self.label_multiply(currCnt, preCnt)
+                else:
+                    # remove points which are not between two ciphers
+                    currCnt.mark_for_removal()
 
         for i in range(len(lines)):
             currLine = lines[i]

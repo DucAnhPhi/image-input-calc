@@ -184,8 +184,7 @@ class LineOrdering:
             if orthDev <= avgOrthDev:
                 tmpLine.append(curr)
             else:
-                if len(tmpLine) > 2:
-                    lines.append(tmpLine)
+                lines.append(tmpLine)
                 tmpLine = []
 
         print(self.horVec, self.orthVec)
