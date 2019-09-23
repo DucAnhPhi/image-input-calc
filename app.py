@@ -58,10 +58,17 @@ class App:
         lines = LineOrdering(filtered).get_lines(frame)
 
         # label signs which need positional information
-        sg.label_comma_and_multiply(lines)
+        lines = sg.label_points(lines)
+
+        for l in range(len(lines)):
+            line = lines[l]
+            for i in range(len(line)):
+                cnt = line[i]
+                cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
+                           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
 
         solutions = [self.solver.solve([cnt.unwrap() for cnt in line], frame)
-                     for line in lines]
+                     for line in lines if len(line) > 2]
 
         return preprocessed  # orderedImage
 

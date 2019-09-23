@@ -133,24 +133,6 @@ class LineOrdering:
             avgXDev += xDev
         return avgXDev / n
 
-    def filter_hor_outliers(self, contourList):
-        # get average x deviation with tolerance
-        avgXDev = self.get_avg_x_dev(contourList) * 2
-        filtered = []
-        for i in range(len(contourList)):
-            currentCnt = contourList[i]
-            if i == 0:
-                filtered.append(currentCnt)
-                continue
-            preCnt = contourList[i-1]
-            currentX = currentCnt.center[0]
-            preX = preCnt.center[0]
-            xDev = abs(currentX - preX)
-            acceptDev = max(avgXDev, preCnt.radius * 2)
-            if xDev <= acceptDev:
-                filtered.append(currentCnt)
-        return filtered
-
     def get_lines(self, frame):
         cnts = self.contourList
         # sort contours by Y coordinate of their centroids
@@ -165,15 +147,9 @@ class LineOrdering:
         # order contours in a line by x coordinate of their centroids
         # and filter outliers
         filteredLines = []
-        for l in range(len(lines)):
-            line = lines[l]
+        for line in lines:
             line.sort(key=lambda cnt: cnt.center[0])
-            line = self.filter_hor_outliers(line)
             filteredLines.append(line)
-            for i in range(len(line)):
-                cnt = line[i]
-                cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
-                           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
 
         return filteredLines
 

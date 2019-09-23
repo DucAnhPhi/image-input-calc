@@ -104,27 +104,52 @@ class Segmentation:
         yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
         xDevToCentroid = abs(currCnt.center[0] - preCnt.center[0])
         if 2 * yDevToCentroid < xDevToCentroid:
-            if currCnt.width <= self.lineThickness * 2:
-                if currCnt.height <= self.lineThickness * 2:
-                    currCnt.set_bar_type(MathSign.MULTIPLY)
+            currCnt.set_bar_type(MathSign.MULTIPLY)
 
-    def label_comma_and_multiply(self, lines):
-        def label_signs(orderedContours):
-            for i in range(len(orderedContours)):
-                if i == 0:
+    def is_point(self, cnt):
+        isPoint = cnt.trueWidth <= self.lineThickness * 2
+        isPoint = isPoint and cnt.trueHeight <= self.lineThickness * 2
+        return isPoint
+
+    def label_points(self, lines):
+        def label_contours(contours):
+            for i in range(len(contours)):
+                currCnt = contours[i]
+
+                # only label points
+                if not self.is_point(currCnt):
                     continue
-                currCnt = orderedContours[i]
-                preCnt = orderedContours[i-1]
-                self.label_comma(currCnt, preCnt)
-                self.label_multiply(currCnt, preCnt)
+
+                preCnt = None
+                postCnt = None
+                if i > 0:
+                    preCnt = contours[i-1]
+                if i < len(contours)-1:
+                    postCnt = contours[i+1]
+
+                # remove points which are not between two ciphers
+                invalid = preCnt == None or postCnt == None
+                invalid = invalid or preCnt.mathSign != None
+                invalid = invalid or postCnt.mathSign != None
+                if preCnt != None:
+                    invalid = invalid or self.is_point(preCnt)
+                if postCnt != None:
+                    invalid = invalid or self.is_point(postCnt)
+                if invalid:
+                    currCnt.mark_for_removal()
+                else:
+                    self.label_comma(currCnt, preCnt)
+                    self.label_multiply(currCnt, preCnt)
 
         for i in range(len(lines)):
             currLine = lines[i]
-            label_signs(currLine)
+            label_contours(currLine)
             for el in currLine:
                 if el.fraction != None:
-                    label_signs(el.fraction.nominator)
-                    label_signs(el.fraction.denominator)
+                    label_contours(el.fraction.nominator)
+                    label_contours(el.fraction.denominator)
+
+        return [[cnt for cnt in line if not cnt.remove] for line in lines]
 
     def label_bar_type(self, cnt):
         # don't consider contours which are about to be removed
