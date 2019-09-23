@@ -122,3 +122,11 @@ class PreProcessing:
          preprocessed = self.convert_gray(img)
          preprocessed = self.medium_binarize(preprocessed)
          return preprocessed
+
+    def preprocessing_fenja(self, img):
+        preprocessed = self.convert_gray(img)
+        preprocessed = self.gaussian_blur(preprocessed)
+        preprocessed = self.morph_open(preprocessed)
+        preprocessed = self.binarize(preprocessed)
+        preprocessed = self.erode(preprocessed)
+        return preprocessed

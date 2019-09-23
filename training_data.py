@@ -18,7 +18,7 @@ SYMBOL_CODES = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
                 113, 114,
                 196, 923, 924]
 
-IMAGE_DIMS = (1, 28, 28)
+IMAGE_DIMS = (1, 32, 32)
 
 
 class MyDataSet(Dataset):
@@ -48,16 +48,16 @@ class MyDataSet(Dataset):
                         labels.append(label_idx)
                         if label_idx >= 12:
                             img = self.custom_preprocessing(img)
-                            rotation = transforms.RandomRotation(20)
                             flip = transforms.RandomHorizontalFlip()
-                            rot_img = rotation(img)
                             flip_img = flip(img)
+                            rotation = transforms.RandomRotation(20)
+                            rot_img = rotation(img)
                             rot_flip = rotation(flip(img))
                             flip_rot = flip(rotation(img))
-                            imgs.append(self.torch_preprocess(rot_img))
                             imgs.append(self.torch_preprocess(flip_img))
                             imgs.append(self.torch_preprocess(rot_flip))
                             imgs.append(self.torch_preprocess(flip_rot))
+                            imgs.append(self.torch_preprocess(rot_img))
                             labels.append(label_idx)
                             labels.append(label_idx)
                             labels.append(label_idx)
@@ -74,8 +74,7 @@ class MyDataSet(Dataset):
                                  std=[0.229])
         preprocess = transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
-            transforms.Pad(2),
-            transforms.Resize(28),
+            transforms.Resize(32),
             transforms.ToTensor(),
             #normalize
         ])
@@ -84,7 +83,7 @@ class MyDataSet(Dataset):
     @staticmethod
     def custom_preprocessing(img):
         custom_preprocessing = preprocessing.PreProcessing()
-        img = custom_preprocessing.preprocess3(img)
+        img = custom_preprocessing.preprocessing_fenja(img)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         img = Image.fromarray(img)
         img = PIL.ImageOps.invert(img)
@@ -166,6 +165,7 @@ class CombinedData(MyDataSet):
         else:
             imgs, labels = super().get_data_from_file(self.test_file)
         self.append_mnist(imgs, labels, train)
+        self.append_own(imgs, labels)
         self.data = imgs
         self.targets = labels
         self.size = len(imgs)
@@ -173,14 +173,30 @@ class CombinedData(MyDataSet):
     def append_mnist(self, imgs, labels, train):
         if train:
             path = 'mnist_train'
+            xpath = 'mnist_x_train.npy'
         else:
             path = 'mnist_test'
+            xpath = 'mnist_x_test.npy'
         mnist_data = MNIST(path, train=train, download=True)
-        for img in tqdm(mnist_data.data):
-            pil_img = transforms.ToPILImage()(img)
+        mnist_x = np.load(xpath)
+        for i in tqdm(range(mnist_x.shape[0])):
+            img = np.reshape(mnist_x[i], (32, 32))
+            pil_img = Image.fromarray(img, 'L')
             pil_img = PIL.ImageOps.invert(pil_img)
-            imgs.append(super().torch_preprocess(pil_img))
+            imgs.append(self.torch_preprocess(pil_img))
         for label in tqdm(mnist_data.targets):
             labels.append(label.item())
 
+    def append_own(self, imgs, labels, path='ToClassify'):
+        label_idx = 0
+        for symbol in MATH_SYMBOLS:
+            try:
+                images = os.listdir(os.path.join(path, symbol))
+                for image_file in images:
+                    img = cv2.imread(os.path.join(path, symbol, image_file))
+                    imgs.append(self.preprocess(img))
+                    labels.append(label_idx)
+            except FileNotFoundError:
+                print("No training data for {0}. Skipping".format(symbol))
+            label_idx += 1
 

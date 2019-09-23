@@ -11,13 +11,13 @@ from PIL import Image
 
 class MathSymbolClassifier():
     def __init__(self, model_path):
-        self.classifier = models.densenet201(num_classes=len(td.MATH_SYMBOLS))
-        self.classifier.features.conv0 = Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        self.classifier = models.alexnet(num_classes=15)
+        self.classifier.features[0] = Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.classifier.load_state_dict(torch.load(model_path))
 
     def test_classification(self):
         file_path = "SubImages"
-        images = torch.zeros((20, 1, 28, 28))
+        images = torch.zeros((20, 1, 32, 32))
         sym_idx = []
         i = 0
         for file_name in sorted(os.listdir(file_path)):
@@ -49,7 +49,7 @@ class MathSymbolClassifier():
 
 
 if __name__ == '__main__':
-    cls = MathSymbolClassifier('model-all_data.ckpt')
+    cls = MathSymbolClassifier('combined-model-92.ckpt')
 
     recognized = cls.test_classification()
 
