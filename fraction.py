@@ -26,6 +26,8 @@ class Fraction:
         for nb in contourList:
             if nb.contourId == bar.contourId:
                 continue
+            if nb.remove:
+                continue
             if nb.is_inside_area(minX, maxX, minY, center):
                 self.nominator.append(nb)
                 # update boundary coordinates

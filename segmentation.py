@@ -18,8 +18,8 @@ class Segmentation:
             areas == np.percentile(areas, 50, interpolation='nearest'))
         thickness = [
             self.contourList[i[0]].get_thickness() for i in medianAreaIndices]
-        # get median line thickness with some tolerance
-        medianThickness = np.median(thickness) * 0.8
+        # get median line thickness
+        medianThickness = np.median(thickness)
         return medianThickness
 
     def get_contours(self):
@@ -93,12 +93,49 @@ class Segmentation:
             parent.add_hole(cnt.contour)
             cnt.mark_for_removal()
 
-    def label_bar_type(self, cnt, contourList):
+    def label_comma(self, currCnt, preCnt):
+        yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
+        yDevToBottom = abs(currCnt.center[1] - preCnt.y2)
+        if yDevToBottom < yDevToCentroid:
+            if cv.contourArea(currCnt.contour) < cv.contourArea(preCnt.contour):
+                currCnt.set_bar_type(BarType.COMMA)
+
+    def label_multiply(self, currCnt, preCnt):
+        yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
+        xDevToCentroid = abs(currCnt.center[0] - preCnt.center[0])
+        if 2 * yDevToCentroid < xDevToCentroid:
+            if currCnt.width <= self.lineThickness * 2:
+                if currCnt.height <= self.lineThickness * 2:
+                    currCnt.set_bar_type(BarType.MULTIPLY)
+
+    def label_comma_and_multiply(self, lines):
+        def label_signs(orderedContours):
+            for i in range(len(orderedContours)):
+                if i == 0:
+                    continue
+                currCnt = orderedContours[i]
+                preCnt = orderedContours[i-1]
+                self.label_comma(currCnt, preCnt)
+                self.label_multiply(currCnt, preCnt)
+
+        for i in range(len(lines)):
+            currLine = lines[i]
+            label_signs(currLine)
+            for el in currLine:
+                if el.fraction != None:
+                    label_signs(el.fraction.nominator)
+                    label_signs(el.fraction.denominator)
+
+    def label_bar_type(self, cnt):
         # don't consider contours which are about to be removed
         if cnt.remove:
             return
         # only consider bars
         if not cnt.is_bar():
+            return
+
+        if cnt.is_vertical_bar():
+            cnt.set_bar_type(BarType.FRACTION_VERT)
             return
 
         # define acceptance area of possible fraction
@@ -115,7 +152,7 @@ class Segmentation:
         equalBar = None
         center = ((maxY - minY) // 2) + minY
 
-        for tempCnt in contourList:
+        for tempCnt in self.contourList:
             if tempCnt.remove:
                 continue
             if cnt.contourId == tempCnt.contourId:
@@ -131,7 +168,7 @@ class Segmentation:
         if not above and not below:
             cnt.set_bar_type(BarType.MINUS)
         elif above and below:
-            cnt.set_bar_type(BarType.FRACTION)
+            cnt.set_bar_type(BarType.FRACTION_HOR)
         else:
             self.group_equal(cnt, equalBar)
 
@@ -145,10 +182,10 @@ class Segmentation:
 
         for cnt in self.contourList:
             # check and label bar types
-            self.label_bar_type(cnt, self.contourList)
+            self.label_bar_type(cnt)
 
         fractionBars = [
-            cnt for cnt in self.contourList if cnt.barType == BarType.FRACTION]
+            cnt for cnt in self.contourList if cnt.barType == BarType.FRACTION_HOR]
 
         # sort fraction bars ascending by width
         fractionBars.sort(key=lambda bar: bar.width)
@@ -159,13 +196,13 @@ class Segmentation:
                 continue
             self.group_fraction(bar)
 
-    def check_small_contours(self):
-
-        # mark small contours for removal later
-        for cnt in self.contourList:
-            if min(cnt.trueWidth, cnt.trueHeight) < self.lineThickness:
-                cnt.mark_for_removal()
-
-    def filter(self):
         # remove contours which were marked for removal before
         self.contourList = [cnt for cnt in self.contourList if not cnt.remove]
+
+    def check_small_contours(self):
+        tolerance = 0.8
+        minThickness = self.lineThickness * tolerance
+        # mark small contours for removal later
+        for cnt in self.contourList:
+            if cnt.trueWidth < minThickness or cnt.trueHeight < minThickness:
+                cnt.mark_for_removal()
