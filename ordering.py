@@ -100,21 +100,22 @@ class LineOrdering:
         cnts = self.contourList
         n = len(cnts)
         for i in range(n):
-            current = cnts[i]
+            currentCnt = cnts[i]
             if i == 0:
-                tmpLine.append(current)
+                tmpLine.append(currentCnt)
                 continue
-            pre = cnts[i-1]
-            currentY = current.center[1]
-            preY = pre.center[1]
+            preCnt = cnts[i-1]
+            currentY = currentCnt.center[1]
+            preY = preCnt.center[1]
             yDev = abs(currentY-preY)
-            if yDev <= avgYDev:
-                tmpLine.append(current)
+            acceptDev = max(avgYDev, preCnt.radius)
+            if yDev <= acceptDev:
+                tmpLine.append(currentCnt)
             else:
                 if len(tmpLine) > 2:
                     lines.append(tmpLine)
-                tmpLine = [current]
-            if i == n-1:
+                tmpLine = [currentCnt]
+            if i == n-1 and len(tmpLine) > 2:
                 lines.append(tmpLine)
         return lines
 
@@ -141,10 +142,12 @@ class LineOrdering:
             if i == 0:
                 filtered.append(currentCnt)
                 continue
+            preCnt = contourList[i-1]
             currentX = currentCnt.center[0]
-            preX = contourList[i-1].center[0]
+            preX = preCnt.center[0]
             xDev = abs(currentX - preX)
-            if xDev <= avgXDev:
+            acceptDev = max(avgXDev, preCnt.radius * 2)
+            if xDev <= acceptDev:
                 filtered.append(currentCnt)
         return filtered
 

@@ -14,9 +14,11 @@ from solver import Solver
 
 
 class App:
+    def __init__(self, solver):
+        self.solver = solver
 
     def process(self, frame, name="TrainingSamples/Image_"):
-        # preprocessing
+        # preprocessing for contour detection
         preprocessed = PreProcessing().background_contour_removal(
             frame)
 
@@ -28,15 +30,22 @@ class App:
         if len(contours) > 500:
             contours = contours[:500]
 
+        # ignore first contour, as it is outer border of the frame
+        contours = contours[1:]
+        hierarchy = hierarchy[0][1:]-1
+        hierarchy = np.where(hierarchy < 0, -1, hierarchy)
+
+        if len(contours) == 0:
+            return preprocessed
+
         # initialize contour object from each contour in contour list
-        contourList = [Contour(contour=cnt, imgShape=frame.shape)
+        binarized = PreProcessing().custom_binarize(frame)
+        contourList = [Contour(contour=cnt, imgShape=frame.shape, frameBinary=binarized)
                        for cnt in contours]
 
         # filter, classify and group segmented contours
         sg = Segmentation(contourList, hierarchy, frame.shape)
-        sg.filter_small_contours()
         sg.group_and_classify()
-        sg.filter()
 
         filtered = sg.get_contours()
 
@@ -47,14 +56,12 @@ class App:
         preprocessed = cv.cvtColor(preprocessed, cv.COLOR_GRAY2BGR)
 
         lines = LineOrdering(filtered).get_lines(frame)
-        for line in lines:
-            for cnt in line:
-                cv.drawContours(
-                    frame, [cnt.contour], 0, (0, 255, 0), 2)
 
-        # unwrap nested contours and pass contour list to solver object
-        # derive characters and compute solution using sympy
-        # solutions = [Solver([cnt.unwrap() for cnt in line]) for line in lines]
+        # label signs which need positional information
+        sg.label_comma_and_multiply(lines)
+
+        solutions = [self.solver.solve([cnt.unwrap() for cnt in line], frame)
+                     for line in lines]
 
         return preprocessed  # orderedImage
 
@@ -121,34 +128,35 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    def run(self, source):
-        if (source == "" or source == "webcam" or source == "Webcam"):
-            print("Using Webcam")
-            App().run_with_webcam()
+    # def run(self, source):
+    #     if (source == "" or source == "webcam" or source == "Webcam"):
+    #         print("Using Webcam")
+    #         App().run_with_webcam()
 
-        if (source == "TrainingSamples"):
-            for i in range(0, 42):
-                name = ("ToClassify2/Image_" + str(292 + i) + "_")
-                source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
-                print("Opening Image")
-                print(source)
-                App().run_with_img(source, name)
-        sourceEnding = source.split(".", 1)[1]
+    #     if (source == "TrainingSamples"):
+    #         for i in range(0, 42):
+    #             name = ("ToClassify2/Image_" + str(292 + i) + "_")
+    #             source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
+    #             print("Opening Image")
+    #             print(source)
+    #             App().run_with_img(source, name)
+    #     sourceEnding = source.split(".", 1)[1]
 
-        if sourceEnding == "MOV":
-            print("Opening Video Clip")
-            App().run_with_video(source)
+    #     if sourceEnding == "MOV":
+    #         print("Opening Video Clip")
+    #         App().run_with_video(source)
 
-        if (sourceEnding == "jpg" or sourceEnding == "JPG"):
-            print("Opening Image")
-            print(source)
-            App().run_with_img(source)
+    #     if (sourceEnding == "jpg" or sourceEnding == "JPG"):
+    #         print("Opening Image")
+    #         print(source)
+    #         App().run_with_img(source)
 
 
 if __name__ == '__main__':
+    solver = Solver()
     # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     # App().run("sample.MOV")
 
-    # App().run_with_webcam()
-    App().run_with_img()
-    # App().run_with_video('sample.MOV')
+    # App(solver).run_with_webcam()
+    App(solver).run_with_img()
+    # App(solver).run_with_video('sample.MOV')
