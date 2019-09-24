@@ -3,6 +3,7 @@ import numpy as np
 from contour import Contour
 from fraction import Fraction
 from enums import MathSign
+from enums import Position
 
 
 class Segmentation:
@@ -54,7 +55,7 @@ class Segmentation:
         maxY = max(b1Y+b1Height, b2Y+b2Height)
         outerCnt = self.generate_contour_from_edges(minX, maxX, minY, maxY)
         grouped = Contour(outerCnt, self.imgShape)
-        grouped.set_bar_type(MathSign.EQUAL)
+        grouped.set_math_sign_type(MathSign.EQUAL)
 
         # mark contours for removal and add new grouped contour
         bar1.mark_for_removal()
@@ -98,57 +99,74 @@ class Segmentation:
         yDevToBottom = abs(currCnt.center[1] - preCnt.y2)
         if yDevToBottom < yDevToCentroid:
             if cv.contourArea(currCnt.contour) < cv.contourArea(preCnt.contour):
-                currCnt.set_bar_type(MathSign.COMMA)
+                currCnt.set_math_sign_type(MathSign.COMMA)
 
     def label_multiply(self, currCnt, preCnt):
         yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
         xDevToCentroid = abs(currCnt.center[0] - preCnt.center[0])
         if 2 * yDevToCentroid < xDevToCentroid:
-            currCnt.set_bar_type(MathSign.MULTIPLY)
+            currCnt.set_math_sign_type(MathSign.MULTIPLY)
 
     def is_point(self, cnt):
         isPoint = cnt.trueWidth <= self.lineThickness * 2
         isPoint = isPoint and cnt.trueHeight <= self.lineThickness * 2
         return isPoint
 
-    def label_points(self, lines):
-        def label_contours(contours):
+    def label_point(self, currCnt, preCnt, postCnt):
+        valid = False
+        between = preCnt != None and postCnt != None
+        if between:
+            valid = preCnt.mathSign == None and postCnt.mathSign == None
+            valid = valid and not self.is_point(
+                preCnt) and not self.is_point(postCnt)
+
+        if valid:
+            # label points which are between two cyphers
+            self.label_comma(currCnt, preCnt)
+            self.label_multiply(currCnt, preCnt)
+        else:
+            # remove points which are not between two cyphers
+            currCnt.mark_for_removal()
+
+    def label_exponent(self, currCnt, preCnt, postCnt):
+        valid = False
+        before = preCnt != None
+        if before:
+            valid = currCnt.mathSign == None
+            valid = valid and preCnt.mathSign == None
+            valid = valid and not self.is_point(preCnt)
+            valid = valid and cv.contourArea(
+                preCnt.contour) > cv.contourArea(currCnt.contour)
+            yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
+            yDevToTop = abs(currCnt.center[1] - preCnt.y1)
+            valid = valid and yDevToCentroid > yDevToTop
+            if valid:
+                currCnt.set_position_type(Position.EXPONENT)
+
+    def label_contours(self, lines):
+        def label_helper(contours):
             for i in range(len(contours)):
                 currCnt = contours[i]
-
-                # only label points
-                if not self.is_point(currCnt):
-                    continue
-
                 preCnt = None
                 postCnt = None
+
                 if i > 0:
                     preCnt = contours[i-1]
                 if i < len(contours)-1:
                     postCnt = contours[i+1]
 
-                valid = False
-                between = preCnt != None and postCnt != None
-                if between:
-                    valid = preCnt.mathSign == None and postCnt.mathSign == None
-                    valid = valid and not self.is_point(
-                        preCnt) and not self.is_point(postCnt)
-
-                if valid:
-                    # label points which are between two ciphers
-                    self.label_comma(currCnt, preCnt)
-                    self.label_multiply(currCnt, preCnt)
+                if self.is_point(currCnt):
+                    self.label_point(currCnt, preCnt, postCnt)
                 else:
-                    # remove points which are not between two ciphers
-                    currCnt.mark_for_removal()
+                    self.label_exponent(currCnt, preCnt, postCnt)
 
         for i in range(len(lines)):
             currLine = lines[i]
-            label_contours(currLine)
+            label_helper(currLine)
             for el in currLine:
                 if el.fraction != None:
-                    label_contours(el.fraction.nominator)
-                    label_contours(el.fraction.denominator)
+                    label_helper(el.fraction.nominator)
+                    label_helper(el.fraction.denominator)
 
         return [[cnt for cnt in line if not cnt.remove] for line in lines]
 
@@ -161,7 +179,7 @@ class Segmentation:
             return
 
         if cnt.is_vertical_bar():
-            cnt.set_bar_type(MathSign.FRACTION_VERT)
+            cnt.set_math_sign_type(MathSign.FRACTION_VERT)
             return
 
         # define acceptance area of possible fraction
@@ -192,9 +210,9 @@ class Segmentation:
                 equalBar = tempCnt
 
         if not above and not below:
-            cnt.set_bar_type(MathSign.MINUS)
+            cnt.set_math_sign_type(MathSign.MINUS)
         elif above and below:
-            cnt.set_bar_type(MathSign.FRACTION_HOR)
+            cnt.set_math_sign_type(MathSign.FRACTION_HOR)
         else:
             self.group_equal(cnt, equalBar)
 

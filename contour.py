@@ -3,7 +3,7 @@ import numpy as np
 import string
 import random
 from preprocessing import PreProcessing
-from enums import MathSign
+from enums import Position
 
 
 class Contour:
@@ -15,6 +15,7 @@ class Contour:
         self.frameBinary = frameBinary
 
         self.mathSign = None
+        self.position = Position.BASIS
 
         self.remove = False
 
@@ -89,8 +90,11 @@ class Contour:
         if self.width < self.height:
             return True
 
-    def set_bar_type(self, mathSign):
+    def set_math_sign_type(self, mathSign):
         self.mathSign = mathSign
+
+    def set_position_type(self, position):
+        self.position = position
 
     def add_hole(self, cnt):
         self.holes.append(cnt)

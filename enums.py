@@ -8,3 +8,8 @@ class MathSign(Enum):
     MULTIPLY = 4
     COMMA = 5
     EQUAL = 6
+
+
+class Position(Enum):
+    BASIS = 1
+    EXPONENT = 2

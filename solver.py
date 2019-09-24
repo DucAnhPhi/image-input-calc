@@ -2,6 +2,7 @@ from sympy.parsing.sympy_parser import parse_expr
 from iic import MathSymbolClassifier
 from contour import Contour
 from enums import MathSign
+from enums import Position
 import cv2 as cv
 
 
@@ -52,10 +53,17 @@ class Solver:
                     frame, [el.contour], -1, (0, 255, 255), 2)
                 equation.append('*')
             else:
-                cv.drawContours(
-                    frame, [el.contour, *el.holes], -1, (255, 255, 0), 2)
+                isExponent = el.position == Position.EXPONENT
+                if el.position == Position.BASIS:
+                    cv.drawContours(
+                        frame, [el.contour, *el.holes], -1, (255, 255, 0), 2)
+                elif isExponent:
+                    cv.drawContours(
+                        frame, [el.contour, *el.holes], -1, (255, 255, 255), 2)
                 symbol = self.cl.classify(
                     [el.get_subimage_for_classifier()])[0]
+                if symbol.isdigit() and isExponent:
+                    equation.append('^')
                 equation.append(symbol)
 
         equationString = "".join(equation)

@@ -57,8 +57,8 @@ class App:
 
         lines = LineOrdering(filtered).get_lines(frame)
 
-        # label signs which need positional information
-        lines = sg.label_points(lines)
+        # label contours with additional positional information
+        lines = sg.label_contours(lines)
 
         for l in range(len(lines)):
             line = lines[l]
