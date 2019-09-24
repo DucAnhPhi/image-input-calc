@@ -188,6 +188,15 @@ Our program evaluates images. The input source could be an image file, a video f
 	
 	\subsection{Contour Detection}
 	After the preprocessing is done, we can deploy an algorithm to detect contours from the image. In simple terms, a contour is the boundary of an object in the image. OpenCV defines a contour as a "curve joining all the continuous points (along the boundary), having the same color or intensity". These contours are essential for later shape analysis, object detection and recognition.
+	
+	\subsection{Remove Small Contours}
+	Not all segmented contours represent handwritten signs. Some are noise which passed the preprocessing. Usually this noise is rather small, e.g. points or thin lines. With the assumption that handwritten signs have approximately equal line thickness we filter out contours which are thinner than that. For this to work well we have to find a good reference line thickness value. Computing the average line thickness is costly and might be inaccurate for images with lots of small noise. To make sure not to include the line thickness of noise we select contours of median size. Then we compute the line thickness for each of these selected contours. The median out of these computed values is our reference line thickness.
+	We compute the line thickness of a contour with the following formula: contour area / contour length. The contour area is the sum of its binary image, whereas the contour length is the sum of its topological skeleton binary image. A topological skeleton of a contour is a thin version that is equidistant to its boundaries.
+	
+	\subsection{Group Contours}
+	Some contours belong together to form a mathematical structure. For simplification purposes we group them to a single contour.
+	
+	\subsubsection{Fractions}
 
 \section{Line Assigning and Ordering}
 	After finding the Contours we now face the problem, of bringing them into an order, where they then can be classified and calculated.
