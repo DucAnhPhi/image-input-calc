@@ -43,9 +43,7 @@
 \maketitle
 
 \begin{abstract}
-	This paper deals with the development of a calculator, which can infer, from an image of an equation, its solution.
-	To do this, the image will, after going through some preprocessing, be segmented into the separate symbols that make up the equation.
-	These symbols will then be ordered and classified, which allows solving of the equation.
+	This paper attempts to solve handwritten mathematical equations with state of the art computer vision and machine learning methods. This entails two main challenges: Recognizing handwritten symbols and infer their mathematical structure to compute a solution. We came up with a series of steps to tackle these challenges. Initially we remove noise with a preprocessing step. We then segment each handwritten character from the image and use their size and positional information to infer their mathematical structure. For the character recognition we deploy an Artificial Neural Network.
 	While similar projects exist, this project goes into detail, how this can be done.
 	And, being open source, demonstrates, how such a problem may be tackled and gives a sophisticated basis for many other projects on a variety of topics.
 	
@@ -77,7 +75,11 @@ The second issue our program has to address, is the recognition of each segmente
 
 After these two major steps are complete, there is only one task left. Reconstructing the formula with the recognized symbols, and aligning them in the order in which they appeared on the input image to finally evaluate the term and present the result.
 
-	
+\section{Technology}
+We chose to implemented the project in Python 3. Python provides an excellent collection of useful libraries. For the computer vision tasks we used OpenCV (Open Source Computer Vision Library) and for machine learning tasks we leveraged PyTorch, an open source machine learning framework.
+
+\section{Data Collection}
+Our program evaluates images. The input source could be an image file, a video file or the local webcam. We enable a smooth user experience as results are computed rapidly through efficient implementation. The user could hold a sheet of written equations in front of the webcam and see the computed results almost immediately.
 
 \section{Preprocessing}
 	Our program receives at first a simple unaltered image.
@@ -103,14 +105,14 @@ After these two major steps are complete, there is only one task left. Reconstru
 	In a second step we remove the contours that can be attributed to background objects.
 
 	\subsection{Simple Preprocessing}%??? !!! Add stepwise Images, after Preprocessing is complete
-		The image our programm receives as input is likely not easily analysed.
+		The image our program receives as input is likely not easily analyzed.
 		We therefore manipulate the image with a few select operations, before continuing with our algorithm.
 		It should be noted here, that there is a great variety of different algorithms that work well.
-		The algorithm we will be presenting here is the one, we found to be the most usefull for our purpose.\\
+		The algorithm we will be presenting here is the one, we found to work well for our purpose.\\
 		It operates in five steps:
 		\begin{itemize}
-			\item Grayscaling: At first we grayscale our image. Here we reduce the BGR (blue, green, red) image into an image with a single dimension per pixel. This is usefull, because this simplifies our image and allows us to more easily analyse the image.
-			\item Gaussian Blur: Here we apply a gaussian blur kernel on the image to smooth it out. This reduces the noise.
+			\item Grayscaling: At first we grayscale our image. Here we reduce the BGR (blue, green, red) image into an image with a single dimension per pixel. This is useful, because this simplifies our image and allows us to more easily analyse the image.
+			\item Gaussian Blur: Here we apply a Gaussian blur kernel on the image to smooth it out. This reduces the noise.
 			\item Morphological Opening: We apply a filter that removes a specific type of noise: Small dots. This is done by applying an erosion followed by a dilation filter. %??? is this the right filter
 			\item Adaptive Threshold: We add a filter that applies a threshold. Any pixel below this threshold gets set to 0 any pixel above it gets set to 255. %??? check
 			This threshold differentiates the symbols from the background.
@@ -183,6 +185,9 @@ After these two major steps are complete, there is only one task left. Reconstru
 	
 	
 \section{Segmentation}
+	
+	\subsection{Contour Detection}
+	After the preprocessing is done, we can deploy an algorithm to detect contours from the image. In simple terms, a contour is the boundary of an object in the image. OpenCV defines a contour as a "curve joining all the continuous points (along the boundary), having the same color or intensity". These contours are essential for later shape analysis, object detection and recognition.
 
 \section{Line Assigning and Ordering}
 	After finding the Contours we now face the problem, of bringing them into an order, where they then can be classified and calculated.
