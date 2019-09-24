@@ -103,8 +103,9 @@ class Segmentation:
 
     def label_multiply(self, currCnt, preCnt):
         yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
-        xDevToCentroid = abs(currCnt.center[0] - preCnt.center[0])
-        if 2 * yDevToCentroid < xDevToCentroid:
+        yDevToTop = abs(currCnt.center[1] - preCnt.y1)
+        yDevToBottom = abs(currCnt.center[1] - preCnt.y2)
+        if yDevToTop > yDevToCentroid and yDevToBottom > yDevToCentroid:
             currCnt.set_math_sign_type(MathSign.MULTIPLY)
 
     def is_point(self, cnt):
@@ -116,7 +117,9 @@ class Segmentation:
         valid = False
         between = preCnt != None and postCnt != None
         if between:
-            valid = preCnt.mathSign == None and postCnt.mathSign == None
+            valid = currCnt.mathSign == None
+            valid = valid and preCnt.mathSign == None
+            valid = valid and postCnt.mathSign == None
             valid = valid and not self.is_point(
                 preCnt) and not self.is_point(postCnt)
 
