@@ -62,12 +62,14 @@ class Solver:
                 equation.append(symbol)
 
         equationString = "".join(equation)
-        print(equationString)
         return equationString
 
     def solve(self, contourList, frame):
         equationString = self.get_equation(contourList, frame)
-        # expr = parse_expr(equationString)
-        # solution = expr.evalf(4)
-        # return solution
-        # print(expr)
+        equationString = equationString.replace("=", "")
+        try:
+            expr = parse_expr(equationString)
+            solution = expr.evalf(4)
+            print(equationString + " = " + str(solution))
+        except:
+            print(equationString+" = " + "?")
