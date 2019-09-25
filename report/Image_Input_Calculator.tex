@@ -250,7 +250,7 @@ This enables a smooth user experience and allows live analysis of an equation.
 	This may be because of sloppiness of the writer, or because the image was taken at an angle.\\
 	Because of this, it is very useful to be able to determine the direction of such an "invisible line".
 	In the following we will be discussing a method how to determine this line.
-	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10$.
+	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10^\circ$.
 	All of the following algorithms are capable of dealing with such small deviations.\\
 	
 	
@@ -288,9 +288,33 @@ This enables a smooth user experience and allows live analysis of an equation.
 	%!!! ??? Add more issues
 	%!!! ??? Add images
 	
-	\subsection{Preclassification}
-	Given the size, shape and positional information along with the order in which the symbols are written 
+\section{Preclassification}
+	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network.
+	This is very beneficial for the program, since the classification problem becomes more difficult, the more classes there are.
+	Additionally it is very difficult for the classifier to detect contours caused by noise, because it does not have any positional information.\\
+	A partial classification is also necessary for the line ordering, for instance when considering division bars.\\
+	In the following we will be discussing some of the possible preclassifications that performed well.
 	
+	\subsection{Division by Bar}
+	
+	\subsection{Division by Slash}
+	
+	\subsection{Dots, Commas and Multiplication Symbols}
+		A difficulty with detecting handwritten equations is the common usage of points or point-like symbols.
+		This makes it nearly impossible to account for all possible interpretations of this.
+		Therefore we have focused on the two most common cases:
+		The multiplication dot ("$\cdot$") and the comma or dot indicating a partial number (e.g. "$3,14$" or "$3.14$").\\
+		Other important times where a dot appears in an equation, which unfortunately we were unable to cover, include points included in letters (e.g. "$i=\sqrt{-1}$"), the time derivative of a variable (e.g. "$\dot{x}=v$") and the dots included in a definition symbol ("$:=$" or "$=:$").\\  % ??? cite https://en.wikipedia.org/wiki/List_of_mathematical_symbols
+		When analysing the symbols, the program is facing a variety of difficulties.
+		These are tackled in two steps
+	
+	\subsection{Minus}
+	
+	\subsection{Equal Sign}
+	
+	\subsection{Exponent}
+	
+	\subsection{Brackets}
 	
 \section{Symbol Classification}
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
