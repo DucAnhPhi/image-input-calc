@@ -45,9 +45,8 @@ class PreProcessing:
             img, boundary, 255, cv.THRESH_BINARY)
         return medianbinarized
 
-    def preprocess(self, img):
-        preprocessed = self.convert_gray(img)
-        preprocessed = self.gaussian_blur(preprocessed)
+    def preprocess(self, grayscale):
+        preprocessed = self.gaussian_blur(grayscale)
         preprocessed = self.morph_open(preprocessed)
         preprocessed = self.binarize(preprocessed)
         preprocessed = self.erode(preprocessed)
@@ -102,11 +101,23 @@ class PreProcessing:
 
         return mask
 
+    def get_brightness_removal_mask(self, grayscale):
+        average = grayscale.mean()
+        mask = np.where(grayscale < average, 0, 255)
+        return mask
+
     def background_contour_removal(self, frame):
+        grayscale = self.convert_gray(frame)
         # preprocessing for clearer image
-        preprocessed = self.preprocess(frame)
-        # mask generation
-        mask = self.get_background_removal_mask(frame)
+        preprocessed = self.preprocess(grayscale)
+        # mask generation for background removal
+        backgroundMask = self.get_background_removal_mask(frame)
         # apply mask on preprocessed image
-        preprocessed = np.where(mask == 0, preprocessed, 255)
+        preprocessed = np.where(backgroundMask == 0, preprocessed, 255)
+
+        # mask generation for brightness removal
+        brightnessMask = self.get_brightness_removal_mask(grayscale)
+        # apply mask on preprocessed image
+        preprocessed = np.where(brightnessMask == 0, preprocessed, 255)
+
         return preprocessed

@@ -2,16 +2,19 @@ import torch
 import re
 import cv2
 import os
-from network import CharacterClassifier
 import training_data as td
+from torchvision.models import alexnet
+from torch.nn import Conv2d
 import numpy as np
 
 
 class MathSymbolClassifier:
-    def __init__(self, model_path='hasy_model-02.ckpt'):
-        self.classifier = CharacterClassifier(
-            td.IMAGE_DIMS, [50], len(td.MATH_SYMBOLS))
-        self.classifier.load_state_dict(torch.load(model_path))
+    def __init__(self, model_path='combined-model-98-v2.ckpt'):
+        self.classifier = alexnet(num_classes=15)
+        self.classifier.features[0] = Conv2d(1, 64, kernel_size=(
+            7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        self.classifier.load_state_dict(
+            torch.load(model_path, map_location="cpu"))
 
     def test_classification(self):
         file_path = "SubImages"

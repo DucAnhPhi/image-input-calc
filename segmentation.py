@@ -2,7 +2,8 @@ import cv2 as cv
 import numpy as np
 from contour import Contour
 from fraction import Fraction
-from enums import BarType
+from enums import MathSign
+from enums import Position
 
 
 class Segmentation:
@@ -54,7 +55,7 @@ class Segmentation:
         maxY = max(b1Y+b1Height, b2Y+b2Height)
         outerCnt = self.generate_contour_from_edges(minX, maxX, minY, maxY)
         grouped = Contour(outerCnt, self.imgShape)
-        grouped.set_bar_type(BarType.EQUAL)
+        grouped.set_math_sign_type(MathSign.EQUAL)
 
         # mark contours for removal and add new grouped contour
         bar1.mark_for_removal()
@@ -98,33 +99,79 @@ class Segmentation:
         yDevToBottom = abs(currCnt.center[1] - preCnt.y2)
         if yDevToBottom < yDevToCentroid:
             if cv.contourArea(currCnt.contour) < cv.contourArea(preCnt.contour):
-                currCnt.set_bar_type(BarType.COMMA)
+                currCnt.set_math_sign_type(MathSign.COMMA)
 
     def label_multiply(self, currCnt, preCnt):
         yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
-        xDevToCentroid = abs(currCnt.center[0] - preCnt.center[0])
-        if 2 * yDevToCentroid < xDevToCentroid:
-            if currCnt.width <= self.lineThickness * 2:
-                if currCnt.height <= self.lineThickness * 2:
-                    currCnt.set_bar_type(BarType.MULTIPLY)
+        yDevToTop = abs(currCnt.center[1] - preCnt.y1)
+        yDevToBottom = abs(currCnt.center[1] - preCnt.y2)
+        if yDevToTop > yDevToCentroid and yDevToBottom > yDevToCentroid:
+            currCnt.set_math_sign_type(MathSign.MULTIPLY)
 
-    def label_comma_and_multiply(self, lines):
-        def label_signs(orderedContours):
-            for i in range(len(orderedContours)):
-                if i == 0:
-                    continue
-                currCnt = orderedContours[i]
-                preCnt = orderedContours[i-1]
-                self.label_comma(currCnt, preCnt)
-                self.label_multiply(currCnt, preCnt)
+    def is_point(self, cnt):
+        isPoint = cnt.trueWidth <= self.lineThickness * 2
+        isPoint = isPoint and cnt.trueHeight <= self.lineThickness * 2
+        return isPoint
+
+    def label_point(self, currCnt, preCnt, postCnt):
+        valid = False
+        between = preCnt != None and postCnt != None
+        if between:
+            valid = currCnt.mathSign == None
+            valid = valid and preCnt.mathSign == None
+            valid = valid and postCnt.mathSign == None
+            valid = valid and not self.is_point(
+                preCnt) and not self.is_point(postCnt)
+
+        if valid:
+            # label points which are between two cyphers
+            self.label_comma(currCnt, preCnt)
+            self.label_multiply(currCnt, preCnt)
+        else:
+            # remove points which are not between two cyphers
+            currCnt.mark_for_removal()
+
+    def label_exponent(self, currCnt, preCnt, postCnt):
+        valid = False
+        before = preCnt != None
+        if before:
+            valid = currCnt.mathSign == None
+            valid = valid and preCnt.mathSign == None
+            valid = valid and not self.is_point(preCnt)
+            valid = valid and cv.contourArea(
+                preCnt.contour) > cv.contourArea(currCnt.contour)
+            yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
+            yDevToTop = abs(currCnt.center[1] - preCnt.y1)
+            valid = valid and yDevToCentroid > yDevToTop
+            if valid:
+                currCnt.set_position_type(Position.EXPONENT)
+
+    def label_contours(self, lines):
+        def label_helper(contours):
+            for i in range(len(contours)):
+                currCnt = contours[i]
+                preCnt = None
+                postCnt = None
+
+                if i > 0:
+                    preCnt = contours[i-1]
+                if i < len(contours)-1:
+                    postCnt = contours[i+1]
+
+                if self.is_point(currCnt):
+                    self.label_point(currCnt, preCnt, postCnt)
+                # else:
+                #     self.label_exponent(currCnt, preCnt, postCnt)
 
         for i in range(len(lines)):
             currLine = lines[i]
-            label_signs(currLine)
+            label_helper(currLine)
             for el in currLine:
                 if el.fraction != None:
-                    label_signs(el.fraction.nominator)
-                    label_signs(el.fraction.denominator)
+                    label_helper(el.fraction.nominator)
+                    label_helper(el.fraction.denominator)
+
+        return [[cnt for cnt in line if not cnt.remove] for line in lines]
 
     def label_bar_type(self, cnt):
         # don't consider contours which are about to be removed
@@ -135,7 +182,7 @@ class Segmentation:
             return
 
         if cnt.is_vertical_bar():
-            cnt.set_bar_type(BarType.FRACTION_VERT)
+            cnt.set_math_sign_type(MathSign.FRACTION_VERT)
             return
 
         # define acceptance area of possible fraction
@@ -166,9 +213,9 @@ class Segmentation:
                 equalBar = tempCnt
 
         if not above and not below:
-            cnt.set_bar_type(BarType.MINUS)
+            cnt.set_math_sign_type(MathSign.MINUS)
         elif above and below:
-            cnt.set_bar_type(BarType.FRACTION_HOR)
+            cnt.set_math_sign_type(MathSign.FRACTION_HOR)
         else:
             self.group_equal(cnt, equalBar)
 
@@ -185,7 +232,7 @@ class Segmentation:
             self.label_bar_type(cnt)
 
         fractionBars = [
-            cnt for cnt in self.contourList if cnt.barType == BarType.FRACTION_HOR]
+            cnt for cnt in self.contourList if cnt.mathSign == MathSign.FRACTION_HOR]
 
         # sort fraction bars ascending by width
         fractionBars.sort(key=lambda bar: bar.width)
@@ -200,7 +247,7 @@ class Segmentation:
         self.contourList = [cnt for cnt in self.contourList if not cnt.remove]
 
     def check_small_contours(self):
-        tolerance = 0.8
+        tolerance = 0.7
         minThickness = self.lineThickness * tolerance
         # mark small contours for removal later
         for cnt in self.contourList:
