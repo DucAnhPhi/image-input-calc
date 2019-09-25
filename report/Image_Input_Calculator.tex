@@ -89,7 +89,7 @@ We chose to implemented the project in Python 3. Python provides an excellent co
 \section{Data Collection}
 The user can have the program analyse images from a variety of sources.
 Using the library \texttt{OpenCV}, it is capable of reading image files, video files and may also use a webcam if present.
-This enables a smooth user experience and allows live analysis of an equation.
+This enables a smooth user experience and allows realtime analysis of an equation.
 
 
 %Our program evaluates images.
@@ -215,16 +215,65 @@ This enables a smooth user experience and allows live analysis of an equation.
 \section{Segmentation}
 	
 	\subsection{Contour Detection}
-	After the preprocessing is done, we can deploy an algorithm to detect contours from the image. In simple terms, a contour is the boundary of an object in the image. OpenCV defines a contour as a "curve joining all the continuous points (along the boundary), having the same color or intensity". These contours are essential for later shape analysis, object detection and recognition.
+	After the preprocessing is done, we can deploy an algorithm to detect contours from the image.
+	In simple terms, a contour is the boundary of an object in the image.
+	OpenCV defines a contour as a "curve joining all the continuous points (along the boundary), having the same color or intensity".
+	OpenCV represents them as a tuple list of x- and y-coordinates.
+	These contours are essential for later shape analysis, object detection and recognition.
+
+	The underlying algorithm we used for contour detection is from the paper Suzuki et. al. (1985).
+	Not only does the algorithm reliably detect contours, it also gives us hierarchical information among them.
+	This is important for making sense of nested contours later.
 	
 	\subsection{Remove Small Contours}
-	Not all segmented contours represent handwritten signs. Some are noise which passed the preprocessing. Usually this noise is rather small, e.g. points or thin lines. With the assumption that handwritten signs have approximately equal line thickness we filter out contours which are thinner than that. For this to work well we have to find a good reference line thickness value. Computing the average line thickness is costly and might be inaccurate for images with lots of small noise. To make sure not to include the line thickness of noise we select contours of median size. Then we compute the line thickness for each of these selected contours. The median out of these computed values is our reference line thickness.
-	We compute the line thickness of a contour with the following formula: contour area / contour length. The contour area is the sum of its binary image, whereas the contour length is the sum of its topological skeleton binary image. A topological skeleton of a contour is a thin version that is equidistant to its boundaries.
+	Not all segmented contours represent handwritten signs.
+	Some are noise which passed the preprocessing. Usually this noise is rather small, e.g. points or thin lines.
+	With the assumption that handwritten signs have approximately equal line thickness we filter out contours which are thinner than that.
+	For this to work well we have to find a good reference line thickness value.
+	Computing the average line thickness is costly and might be inaccurate for images with lots of small noise.
+	To make sure not to include the line thickness of noise we select contours of median size.
+	Then we compute the line thickness for each of these selected contours.
+	The median out of these computed values is our reference line thickness.
+	We compute the line thickness of a contour with the following formula:
+		contour area / contour length.
+	The contour area is the sum of its binary image, whereas the contour length is the sum of its topological skeleton binary image.
+	A topological skeleton of a contour is a thinnest version that is equidistant to its boundaries.
 	
 	\subsection{Group Contours}
-	Some contours belong together to form a mathematical structure. For simplification purposes we group them to a single contour.
+	Some contours belong together to form a mathematical symbol or structure. In the following we replace them with their grouped version.
+
+	\subsubsection{Handle Nested Contours}
+	For example a handwritten '8' usually consists of 3 contours: The outer frame and the inner two holes, which are detected as separate contours.
+	To not confuse these holes as distinct math symbols we group them together in a single, custom contour object.
+	A contour object has the parent or most outer contour stored in its “contour” property.
+	The contours representing holes are stored in the “holes” property.
 	
 	\subsubsection{Fractions}
+	Fractions are problematic as they have an inherit order to them – especially nested fractions.
+	These orders have to be taken into account. Additionally fractions have multiple (at least 2) expressions stacked vertically, spanning several lines.
+	This can be problematic, when evaluating multiple lines of equations, confusing nominator and denominator for different equations.
+	The solution to these problems is to simplify fractions to single contours (their bounding boxes) while still preserving positional information about each grouped element.
+
+	Initially we have to find fractions first. We find fraction bars, which are contours with the following criteria:
+	- their width is more than twice as big as their height
+	- they do not contain any holes
+	- their ratio of contour area to minimum bounding box area exceeds 0.7
+	- their ratio of contour area to their convex hull area exceeds 0.7
+	- they have a horizontal orientation
+	- they contain contours above and below them inside a defined acceptance area
+
+	After sorting the fraction bars (ascending) by their width we apply the following algorithm to each bar iteratively, starting with the smallest one:
+	- extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
+	- sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
+	- create a bounding box around the whole fraction
+	- create a contour object with the bounding box and reference to the Fraction object
+
+	\subsubsection{Equal Sign}
+	A written "=" sign consists of two vertically stacked horizontal bars. We group both contours in a single contour object.
+	Equal bars are detected similar to the fraction bars with the difference that they only have to contain contours above or below them.
+	Once an equal bar is found, we create a bounding box around itself and its counter part (above or below).
+	A new contour object is created with the bounding box as its "contour" property.
+
 
 \section{Line Assigning and Ordering}
 	After finding the Contours we now face the problem, of bringing them into an order, where they then can be classified and calculated.
