@@ -52,6 +52,8 @@ class Solver:
                 cv.drawContours(
                     frame, [el.contour], -1, (0, 255, 255), 2)
                 equation.append('*')
+
+
             else:
                 cv.drawContours(
                     frame, [el.contour, *el.holes], -1, (255, 255, 0), 2)

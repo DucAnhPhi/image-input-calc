@@ -90,6 +90,7 @@ class Segmentation:
     def handle_nested_contour(self, cnt, index):
         parentIndex = self.hierarchy[index][-1]
         if self.is_nested_contour(cnt, parentIndex):
+
             parent = self.contourList[parentIndex]
             parent.add_hole(cnt.contour)
             cnt.mark_for_removal()
@@ -227,6 +228,9 @@ class Segmentation:
             # handle nested contours
             self.handle_nested_contour(cnt, i)
 
+        #for i in range(len(self.contourList)):
+            #if len(self.contourList[i].holes)!=0:
+            #    print(len(self.contourList[i].holes))
 
 
         for cnt in self.contourList:

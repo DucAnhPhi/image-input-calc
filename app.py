@@ -37,6 +37,7 @@ class App:
         hierarchy = hierarchy[0][1:]-1
         hierarchy = np.where(hierarchy < 0, -1, hierarchy)
 
+
         if len(contours) == 0:
             return preprocessed
 
@@ -66,14 +67,14 @@ class App:
             line = lines[l]
             for i in range(len(line)):
                 cnt = line[i]
-                cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
-                           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+                #cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
+                #           cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
         #Draw().print_lines(lines, frame, name="ToClassify/Numbers2_Line_")
 
         solutions = [self.solver.solve([cnt.unwrap() for cnt in line], frame)
                      for line in lines if len(line) > 2]
 
-        return binarized  # orderedImage
+        return preprocessed  # orderedImage
 
     def show_results(self, frame, result):
 
