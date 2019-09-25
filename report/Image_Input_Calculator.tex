@@ -2,7 +2,8 @@
 % Notation:
 % ??? = unsure about something, some flaw in Text, something is missing
 % !!! = there is still work to do here
-
+%
+% write Libraries like \texttt{PyTorch}
 
 
 
@@ -43,7 +44,14 @@
 \maketitle
 
 \begin{abstract}
-	This paper attempts to solve handwritten mathematical equations with state of the art computer vision and machine learning methods. This entails two main challenges: Recognizing handwritten symbols and infer their mathematical structure to compute a solution. We came up with a series of steps to tackle these challenges. Initially we remove noise with a preprocessing step. We then segment each handwritten character from the image and use their size and positional information to infer their mathematical structure. For the character recognition we deploy an Artificial Neural Network.
+	This paper discusses a program that can solve a variety of handwritten mathematical equations given only an image, using state of the art computer vision and machine learning methods.
+	Given a video or a live feed as input the program is able to compute the equation in real time.
+	We came up with a series of steps to tackle this challenge.
+	Initially we remove noise with a preprocessing step.
+	Then each handwritten character is segmented from the image and their size, shape and positional information is used to infer their mathematical structure.
+	This also allows simple characters (e.g. points and bars) to be classified.
+	The remaining characters are recognised using an \textit{AlexNet} Artificial Neural Network.
+	With the inferred mathematical structure and the classified characters we can reconstruct the equation as a String and pass it to the Symbolic Math Solver \texttt{SymPy}.
 	While similar projects exist, this project goes into detail, how this can be done.
 	And, being open source, demonstrates, how such a problem may be tackled and gives a sophisticated basis for many other projects on a variety of topics.
 	
@@ -79,7 +87,15 @@ After these two major steps are complete, there is only one task left. Reconstru
 We chose to implemented the project in Python 3. Python provides an excellent collection of useful libraries. For the computer vision tasks we used OpenCV (Open Source Computer Vision Library) and for machine learning tasks we leveraged PyTorch, an open source machine learning framework.
 
 \section{Data Collection}
-Our program evaluates images. The input source could be an image file, a video file or the local webcam. We enable a smooth user experience as results are computed rapidly through efficient implementation. The user could hold a sheet of written equations in front of the webcam and see the computed results almost immediately.
+The user can have the program analyse images from a variety of sources.
+Using the library \texttt{OpenCV}, it is capable of reading image files, video files and may also use a webcam if present.
+This enables a smooth user experience and allows live analysis of an equation.
+
+
+%Our program evaluates images.
+%The input source could be an image file, a video file or the local webcam.
+%We enable a smooth user experience as results are computed rapidly through efficient implementation.
+%The user could hold a sheet of written equations in front of the webcam and see the computed results almost immediately.
 
 \section{Preprocessing}
 	Our program receives at first a simple unaltered image.
@@ -98,11 +114,13 @@ Our program evaluates images. The input source could be an image file, a video f
 		\item Connectedness of the symbols: For later steps it is useful to not segment any symbols. In the same manner we do not wish for two different symbols to be connected.
 		\item Removal of Noise: Often the background (e.g. paper or whiteboard) is not uniform and this can create spots on the image. (The human eye is very good at filtering these out.)
 		\item Background Contour removal: Often times when taking an image of a contour there will be other objects in the image (e.g. pencils, the border of the paper, etc.).
+		\item Correction for Reflected Bright Spots: Especially, when taking images from white boards, the program has to contend with light sources reflected of the background.
 	\end{itemize}
-	%!!! ??? Add more
-	We correct for (most of) these issues in two separate steps:\\
-	At first we use a few select image processing steps to deal with most of the issues.\\
-	In a second step we remove the contours that can be attributed to background objects.
+		%!!! ??? Add more
+		We correct for (most of) these issues in three separate steps:\\
+		At first we use a few select image processing steps to deal with most of the issues.\\
+		In a second step we remove the contours that can be attributed to background objects.
+		Lastly we correct for reflected light sources. %!!! Add to master
 
 	\subsection{Simple Preprocessing}%??? !!! Add stepwise Images, after Preprocessing is complete
 		The image our program receives as input is likely not easily analyzed.
@@ -121,15 +139,15 @@ Our program evaluates images. The input source could be an image file, a video f
 			(Because our image is inverted, the code uses an erosion function.) %??? fix
 			Therefore, it is useful at this point to thicken the contours.
 		\end{itemize}
-		\begin{lstlisting}
-	def preprocess(self, img):
-		preprocessed = self.convert_gray(img)
-		preprocessed = self.gaussian_blur(preprocessed)
-		preprocessed = self.morph_open(preprocessed)
-		preprocessed = self.binarize(preprocessed)
-		preprocessed = self.erode(preprocessed)
-		return preprocessed
-		\end{lstlisting}
+	%	\begin{lstlisting}
+	%def preprocess(self, img):
+	%	preprocessed = self.convert_gray(img)
+	%	preprocessed = self.gaussian_blur(preprocessed)
+	%	preprocessed = self.morph_open(preprocessed)
+	%	preprocessed = self.binarize(preprocessed)
+	%	preprocessed = self.erode(preprocessed)
+	%	return preprocessed
+	%	\end{lstlisting}
 			
 	
 	\subsection{Border Removal}%??? !!! Add before vs after Images, after Preprocessing is complete
@@ -152,7 +170,17 @@ Our program evaluates images. The input source could be an image file, a video f
 		In this manner we determine the mask.
 		Our resulting image is determined, by having all pixels white, except those, that are black both in the mask and in the simple preprocessing.
 		This removes background contours, without making our image unreadable.
-	
+
+
+	\subsection{Reflection Removal}
+		Bright light sources may reflect of the surface on which the equation is written.
+		This occurs especially often, when using a white board.
+		Unfortunately the adaptive Threshold function cannot differentiate between the writing and the bright reflexes.
+		Fortunately the reflected light sources all have in common, that they are significantly brighter than the average image.
+		It is therefore possible to create a fairly simple mask which simply removes all pixels, which are significantly brighter than the average pixel of the image.
+		After applying this mask, the image no longer contains contours caused by reflected light sources.%??? significantly
+		
+		
 	\subsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
 		A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
 		The "Adaptive Threshold" function \cite{adaThresh}, found in the openCV library is very useful in this case. %???
@@ -260,6 +288,10 @@ Our program evaluates images. The input source could be an image file, a video f
 	%!!! ??? Add more issues
 	%!!! ??? Add images
 	
+	\subsection{Preclassification}
+	Given the size, shape and positional information along with the order in which the symbols are written 
+	
+	
 \section{Symbol Classification}
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
 	
@@ -267,17 +299,17 @@ After the preprocessing routine is complete, each handwritten character is extra
 	
 	To classify the image, we use a deep convolutional neural network (CNN). The network will be trained in beforehand. During the use of our main application, the segmented and preprocessed images of the characters are going though the forward pass of the trained model. The labels that were assigned during this process are furthermore send to the symbolic math solver to evaluate the result of the term. 
 	
-	The framework containing most of the machine learning functions we are using, is \texttt{pytorch}. We decided to use \texttt{pytorch} because we familiarized ourselves with this library during the exercises of this class. Furthermore, \texttt{pytorch} offers complete models suitable for classification.
+	The framework containing most of the machine learning functions we are using, is \texttt{PyTorch}. We decided to use \texttt{PyTorch} because we familiarized ourselves with this library during the exercises of this class. Furthermore, \texttt{PyTorch} offers complete models suitable for classification.
 		
 	Dash- or dotlike symbols however are extremely hard to recognize automatically, since they cause major overfitting within the network. A highly accurate classifier is crucial for our program to work. For this reason, we perform a manual classification of difficult symbols and leave the automatic classification for symbols with distinctive features.
 	
 	\subsection{Training data}
 		To create a well trained model, a sufficient amount of training data is crucial. For the training routine, we decided to use two public data sets of handwritten symbols. Additionally, we created some training images ourselves that are created the same way as the input of the future classifier in our system. All of these images merge into a combined data set which will be finally used to train the character classificator.
 		
-		We created our own instance of the \texttt{Dataset} class provided by \texttt{pytorch} to capsule the data. It is crucial that the training data resembles the images created by our application as well as possible. Therefore, we apply an individual preprocessing routine to each dataset. Usually, this contains all steps made during the preprocessing of the segmented images. Additionally, the \texttt{numpy} arrays describing the images are transformed into \texttt{PIL} images. By doing so, we are able to apply some transformations to the images which are offered by \texttt{pytorch} to create some data augmentation. Furthermore, we resized them to 32*32 pixels. All images are converted to 1-channel grayscale and inverted to have a black background and white content. Finally, the images are transformed to \texttt{pytorch} Tensors to make them suitable for the neural network. 
+		We created our own instance of the \texttt{Dataset} class provided by \texttt{PyTorch} to capsule the data. It is crucial that the training data resembles the images created by our application as well as possible. Therefore, we apply an individual preprocessing routine to each dataset. Usually, this contains all steps made during the preprocessing of the segmented images. Additionally, the \texttt{numpy} arrays describing the images are transformed into \texttt{PIL} images. By doing so, we are able to apply some transformations to the images which are offered by \texttt{PyTorch} to create some data augmentation. Furthermore, we resized them to 32*32 pixels. All images are converted to 1-channel grayscale and inverted to have a black background and white content. Finally, the images are transformed to \texttt{PyTorch} Tensors to make them suitable for the neural network. 
 		
 		\subsubsection{MNIST}
-			As a basic training routine, we used the already mentioned MNIST database of handwritten digits. \texttt{pytorch} offers the MNIST data directly. However, the format in which the images are provided by \texttt{pytorch} is not suitable with the preprocessing routine that makes mainly use of the \texttt{opencv} functions. Therefore, we gather the data not from \texttt{tensorflow}. The images are converted to \texttt{numpy} arrays. Afterwards all necessary operations get applied and the preprocessed images will be saved. 
+			As a basic training routine, we used the already mentioned MNIST database of handwritten digits. \texttt{PyTorch} offers the MNIST data directly. However, the format in which the images are provided by \texttt{PyTorch} is not suitable with the preprocessing routine that makes mainly use of the \texttt{OpenCV} functions. Therefore, we gather the data not from \texttt{TensorFlow}. The images are converted to \texttt{NumPy} arrays. Afterwards all necessary operations get applied and the preprocessed images will be saved. 
 			
 			To finally include the preprocessed images in the combined dataset, we provide a function to load the images again, convert them into \texttt{PIL} images, apply the necessary transformations and make them into tensors.
 			
@@ -290,7 +322,7 @@ After the preprocessing routine is complete, each handwritten character is extra
 		Furthermore, we generated some training images ourselves by writing down symbols and capture them the same way in which our application will capture the mathematical formula during usage.
 		
 	\subsection{Training}
-		A \textit{Jupyter notebook} is provided for the complete training routine. First of all, the combined dataset is loaded for test and training data. This dataset includes images from MNIST, HASY, and our own images as well. Since the class that holds our dataset inherits from \texttt{pytorch}'s class \texttt{Dataset}, we are allowed to use a \texttt{DataLoader} for training. The \texttt{DataLoader} class makes it possible to iterate in a comfortable way over the minibatched dataset. We use minibatches of the size of 16 samples per batch. The training is running over 10 epochs.
+		A \textit{Jupyter notebook} is provided for the complete training routine. First of all, the combined dataset is loaded for test and training data. This dataset includes images from MNIST, HASY, and our own images as well. Since the class that holds our dataset inherits from \texttt{PyTorch}'s class \texttt{Dataset}, we are allowed to use a \texttt{DataLoader} for training. The \texttt{DataLoader} class makes it possible to iterate in a comfortable way over the minibatched dataset. We use minibatches of the size of 16 samples per batch. The training is running over 10 epochs.
 		
 		Stochastic optimization is done by using an \textit{ADAM}\cite{adam} optimizer. Since it is claimed to work best on classification issues with multiple classes, we use cross entropy loss as a loss function.
 		
@@ -303,7 +335,7 @@ After the preprocessing routine is complete, each handwritten character is extra
 			\caption{The AlexNet architecture}
 			\label{fig:architecture}
 		\end{figure}
-		The network architecture we decided on is \textit{AlexNet}\cite{alexnet}. Thus, the network contains five convolutional and three fully connected layers. The convolutional layers are followed by max-pooling layers while some dropout layers are placed before the linear layers (see figures \ref{fig:architecture}). An implementation of \textit{AlexNet} is provided by \texttt{pytorch}. Since the model is suited for images with three color channels we modified the first layer to accept images with only one channel. On the next page, a summary of the network is displayed. It shows, which layers the network contains and how these layers look like.
+		The network architecture we decided on is \textit{AlexNet}\cite{alexnet}. Thus, the network contains five convolutional and three fully connected layers. The convolutional layers are followed by max-pooling layers while some dropout layers are placed before the linear layers (see figures \ref{fig:architecture}). An implementation of \textit{AlexNet} is provided by \texttt{PyTorch}. Since the model is suited for images with three color channels we modified the first layer to accept images with only one channel. On the next page, a summary of the network is displayed. It shows, which layers the network contains and how these layers look like.
 		\newpage
 			\begin{lstlisting}
 AlexNet(
@@ -345,7 +377,7 @@ AlexNet(
 		\newpage
 		
 	\subsubsection{Hyperparameter training}
-	\texttt{pytorch} allows to set the training hyper parameters. The ones that are relevant in our routine are the learning rate, the beta values for the \textit{ADAM} optimizer, and the weight decay. To find the optimal values for these parameters, we created a second notebook in which we trained under the same conditions for one epoch with different hyperparameter values and compared the achieved accuracies. Table \ref{tab:hyperparams} shows which values we tried out for each parameter. The best results were achieved with a learning rate of 0.001, a beta tuple of (0.95, 0.95), and a weight decay of 0.
+	The library \texttt{PyTorch} allows to set the training hyper parameters. The ones that are relevant in our routine are the learning rate, the beta values for the \textit{ADAM} optimizer, and the weight decay. To find the optimal values for these parameters, we created a second notebook in which we trained under the same conditions for one epoch with different hyperparameter values and compared the achieved accuracies. Table \ref{tab:hyperparams} shows which values we tried out for each parameter. The best results were achieved with a learning rate of 0.001, a beta tuple of (0.95, 0.95), and a weight decay of 0.
 	\begin{table}[h!]
 		\begin{tabular}{c|c}
 			\textbf{Parameter} & \textbf{Values} \\
@@ -360,7 +392,7 @@ AlexNet(
 	\end{table}
 	
 	\subsection{Automatic Classification}
-	After the training is complete, we save the model to a \textit{.ckpt} file. The actual classifier that will be used in our program will be an instance of the class \texttt{MathSymbolClassifier}. This class simply contains an \textit{AlexNet} instance in which we load the information from the trained model. To predict what each of our segmented images shows, the class provides a function \texttt{classify}. The function takes a \texttt{numpy} array with images as an input, creates a tensor out of this array and leads the data through the network. Afterwards the predicted label is returned as a string and can be furtherly processed by the symbolic math solver.
+	After the training is complete, we save the model to a \textit{.ckpt} file. The actual classifier that will be used in our program will be an instance of the class \texttt{MathSymbolClassifier}. This class simply contains an \textit{AlexNet} instance in which we load the information from the trained model. To predict what each of our segmented images shows, the class provides a function \texttt{classify}. The function takes a \texttt{NumPy} array with images as an input, creates a tensor out of this array and leads the data through the network. Afterwards the predicted label is returned as a string and can be further processed by the symbolic math solver \texttt{SymPy}.
 	
 	\subsection{Manual Classification}
 	Before the extracted symbols are given as an input for the automatic classifier, we check manually if they picture a symbol that our classifier can not recognize. This applies for opening and closing brackets, minus symbols, equal signs, commas, and multiplication dots.
