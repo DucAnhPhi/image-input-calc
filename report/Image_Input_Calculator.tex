@@ -308,17 +308,20 @@ reproduce and finally solve the written equations.
 
 
 \section{Line Assigning and Ordering}
-	After finding the Contours we now face the problem, of bringing them into an order, where they then can be classified and calculated.
-	We order them before classifying them, because this allows us to remove certain contours, based on criteria, we will go into later.
-	This saves the program from having to classify contours caused by noise.
-	Thereby our program becomes more efficient.
-	It also becomes possible to classify some symbols, based on their size and position.
-	Thereby, we can reduce the amount of classes we need to identify with the classifier. \\
+	At this stage we have a list of (grouped) contour objects. We now face the problem of bringing them in a correct mathematical order, based on their position in the image.
+	This task seems trivial for one equation - simply sort the contours by their x-coordinate.
+	However, we aim to solve multiple equations, which are each written in a separate new line.
+	So looking at the x-axis is not enough, we have to take the y-axis into account too.
+
+	We first sort the contours by their y-coordinate. This way, contours, which are in the same horizontal line, are closer to each other.
+	We then calculate the average y-distance between neighbouring contours. We use this y-deviation value as a reference value to determine whether a new line starts.
+	We iterate over the sorted list of contours and compare the y-deviation to the contour before. If the deviation is greater than our reference value,
+	start a new line with the current contour. If the deviation is within the boundary, add the contour to the current line.
+	We assign the first contour to the current line automatically, as it has no predecessor.
+	Now we extracted lines from the ordered list of contours. Each contour in a line is then sorted by their x-coordinate.
+
 	For the Line Assigning we have developed several algorithms, of which we will be discussing the most interesting, the ones able to tackle a particular problem and the most efficient ones.
-	
-	\subsection{Problems with Determining Line Order}
-	
-	
+
 	\subsection{Determining the Direction of Writing}
 	When writing an equation, most people tend to write roughly along an "invisible line".
 	Therefore, when taking an image of said equation, we can expect it to adhere roughly to the line.
