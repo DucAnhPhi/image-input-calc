@@ -154,3 +154,13 @@ class Draw:
 
 
         return inIm
+
+
+    def print_lines(self, lines, frame, name="ToClassify/Test_Line_"):
+        images=[]
+        for i in range(len(lines)):
+            
+            Images = [cnt.get_image() for cnt in lines[i]]
+            for j in range(len(Images)):
+                cv.imwrite((name + str(i) + "_"+ "Symbol"+ str(j) + ".png"), Images[j])
+                print("Saved image "+(name + str(i) + "_"+ "Symbol"+ str(j) + ".png"))

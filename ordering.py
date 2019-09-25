@@ -3,6 +3,7 @@ import numpy as np
 
 from segmentation import Segmentation
 from drawing import Draw
+from enums import BarType
 from contour import Contour
 from fraction import Fraction
 
@@ -112,7 +113,31 @@ class LineOrdering:
             if yDev <= acceptDev:
                 tmpLine.append(currentCnt)
             else:
-                if len(tmpLine) > 2:
+                numberOfMathSymbols = 0
+                for el in tmpLine:
+                    isMathSymbols=True
+                    if el.barType==BarType.FRACTION_HOR:
+                        isMathSymbols=False
+                        
+                    if el.barType==BarType.FRACTION_VERT:
+                        isMathSymbols=False
+
+                    if el.barType==BarType.EQUAL:
+                        isMathSymbols=False
+                        
+                    if el.barType==BarType.MINUS:
+                        isMathSymbols=False
+
+                    if el.barType==BarType.COMMA:
+                        isMathSymbols=False
+                        
+                    if el.barType==BarType.MULTIPLY:
+                        isMathSymbols=False
+                    
+                    if isMathSymbols:
+                        numberOfMathSymbols=numberOfMathSymbols+1
+
+                if numberOfMathSymbols >= 2:
                     lines.append(tmpLine)
                 tmpLine = [currentCnt]
             if i == n-1 and len(tmpLine) > 2:
