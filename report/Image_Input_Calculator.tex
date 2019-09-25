@@ -44,13 +44,13 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 \maketitle
 
 \begin{abstract}
-	This paper discusses a program that can solve a variety of handwritten mathematical equations given only an image, using state of the art computer vision and machine learning methods.
-	Given a video or a live feed as input the program is able to compute the equation in real time.
+	This paper discusses a program that can solve a variety of handwritten mathematical equations, using state of the art computer vision and machine learning methods.
+	Given a single image or a stream of images, the program is able to detect, recognize and compute written equations in real time.
 	We came up with a series of steps to tackle this challenge.
 	Initially we remove noise with a preprocessing step.
 	Then each handwritten character is segmented from the image and their size, shape and positional information is used to infer their mathematical structure.
 	This also allows simple characters (e.g. points and bars) to be classified.
-	The remaining characters are recognised using an \textit{AlexNet} Artificial Neural Network.
+	The remaining characters are recognized using an \textit{AlexNet} Artificial Neural Network.
 	With the inferred mathematical structure and the classified characters we can reconstruct the equation as a String and pass it to the Symbolic Math Solver \texttt{SymPy}.
 	While similar projects exist, this project goes into detail, how this can be done.
 	And, being open source, demonstrates, how such a problem may be tackled and gives a sophisticated basis for many other projects on a variety of topics.
@@ -213,6 +213,10 @@ This enables a smooth user experience and allows realtime analysis of an equatio
 	
 	
 \section{Segmentation}
+In the segmentation step we extract written characters from the image.
+These extracted pixels are then further evaluated - they make up the building blocks of our program.
+In the following and sections to come, we are going to detect, group, order and classify these segments, in order to
+reproduce and finally solve the written equations.
 	
 	\subsection{Contour Detection}
 	After the preprocessing is done, we can deploy an algorithm to detect contours from the image.
@@ -222,13 +226,16 @@ This enables a smooth user experience and allows realtime analysis of an equatio
 	These contours are essential for later shape analysis, object detection and recognition.
 
 	The underlying algorithm we used for contour detection is from the paper Suzuki et. al. (1985).
+	The paper presents a border following technique for binary images. "It derives a sequence of the coordinates [...]
+	from the border between a connected component of 1-pixels (1-component) and a connected component of 0-pixels (background or hole)."
 	Not only does the algorithm reliably detect contours, it also gives us hierarchical information among them.
+	
 	This is important for making sense of nested contours later.
 	
 	\subsection{Remove Small Contours}
 	Not all segmented contours represent handwritten signs.
 	Some are noise which passed the preprocessing. Usually this noise is rather small, e.g. points or thin lines.
-	With the assumption that handwritten signs have approximately equal line thickness we filter out contours which are thinner than that.
+	With the assumption that handwritten signs have approximately equal line thickness we can confidently remove all contours which have a significantly smaller line thickness.
 	For this to work well we have to find a good reference line thickness value.
 	Computing the average line thickness is costly and might be inaccurate for images with lots of small noise.
 	To make sure not to include the line thickness of noise we select contours of median size.
@@ -250,28 +257,53 @@ This enables a smooth user experience and allows realtime analysis of an equatio
 	
 	\subsubsection{Fractions}
 	Fractions are problematic as they have an inherit order to them – especially nested fractions.
-	These orders have to be taken into account. Additionally fractions have multiple (at least 2) expressions stacked vertically, spanning several lines.
-	This can be problematic, when evaluating multiple lines of equations, confusing nominator and denominator for different equations.
+	These orders have to be taken into account. Additionally fractions have multiple (at least 2) expressions stacked vertically, which may span several lines.
+	This can cause problems, when evaluating multiple lines of equations, because the nominator and denominator may be accidentally assigned to the wrong line.
 	The solution to these problems is to simplify fractions to single contours (their bounding boxes) while still preserving positional information about each grouped element.
 
 	Initially we have to find fractions first. We find fraction bars, which are contours with the following criteria:
-	- their width is more than twice as big as their height
-	- they do not contain any holes
-	- their ratio of contour area to minimum bounding box area exceeds 0.7
-	- their ratio of contour area to their convex hull area exceeds 0.7
-	- they have a horizontal orientation
-	- they contain contours above and below them inside a defined acceptance area
+	\begin{itemize}
+	\item - their width is more than twice as big as their height
+	\stop{itemize}
+	\begin{itemize}
+	\item - they do not contain any holes
+	\stop{itemize}
+	\begin{itemize}
+	\item - their ratio of contour area to minimum bounding box area exceeds 0.7
+	\stop{itemize}
+	\begin{itemize}
+	\item - their ratio of contour area to their convex hull area exceeds 0.7
+	\stop{itemize}
+	\begin{itemize}
+	\item - they have a horizontal orientation
+	\stop{itemize}
+	\begin{itemize}
+	\item - they contain contours above and below them inside a defined acceptance area
+	\stop{itemize}
+
+	We chose these criteria based on experimental observations.
 
 	After sorting the fraction bars (ascending) by their width we apply the following algorithm to each bar iteratively, starting with the smallest one:
-	- extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
-	- sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
-	- create a bounding box around the whole fraction
-	- create a contour object with the bounding box and reference to the Fraction object
+	\begin{itemize}
+	\item - extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
+	\stop{itemize}
+	\begin{itemize}
+	\item - sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
+	\stop{itemize}
+	\begin{itemize}
+	\item - create a bounding box around the whole fraction
+	\stop{itemize}
+	\begin{itemize}
+	\item - create a contour object with the bounding box and reference to the Fraction object
+	\stop{itemize}
 
 	\subsubsection{Equal Sign}
 	A written "=" sign consists of two vertically stacked horizontal bars. We group both contours in a single contour object.
-	Equal bars are detected similar to the fraction bars with the difference that they only have to contain contours above or below them.
-	Once an equal bar is found, we create a bounding box around itself and its counter part (above or below).
+	The bars of an equal sign will be detected in a similar manner as the fraction bars.
+	They can, however, be distinguished by the contours around them.
+	While a fraction bar will always have symbols above and below it, equal sign bars always appear in pairs
+	and either have a single contour above it or below it, but never both.
+	Once an equal bar is found, we create a bounding box around itself and its counter part.
 	A new contour object is created with the bounding box as its "contour" property.
 
 
