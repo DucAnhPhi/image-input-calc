@@ -27,8 +27,8 @@
 
 
 \RequirePackage[backend=biber,
-    sorting=none, % http://tex.stackexchange.com/a/51439
-    maxcitenames=2]{biblatex} %% biber with biblatex
+sorting=none, % http://tex.stackexchange.com/a/51439
+maxcitenames=2]{biblatex} %% biber with biblatex
 \DeclareFieldFormat{apacase}{#1} % disable case altering
 \newrobustcmd{\citeright}[1]{\begin{flushright}-- \citeauthor{#1}, \citeyear{#1}\end{flushright}} % like \cite{} but with a dash and aligned to the right
 \addbibresource{sources.bib}
@@ -349,13 +349,22 @@ This enables a smooth user experience and allows realtime analysis of an equatio
 	\subsection{Division by Slash}
 	
 	\subsection{Dots, Commas and Multiplication Symbols}
-		A difficulty with detecting handwritten equations is the common usage of points or point-like symbols.
-		This makes it nearly impossible to account for all possible interpretations of this.
-		Therefore we have focused on the two most common cases:
-		The multiplication dot ("$\cdot$") and the comma or dot indicating a partial number (e.g. "$3,14$" or "$3.14$").\\
-		Other important times where a dot appears in an equation, which unfortunately we were unable to cover, include points included in letters (e.g. "$i=\sqrt{-1}$"), the time derivative of a variable (e.g. "$\dot{x}=v$") and the dots included in a definition symbol ("$:=$" or "$=:$").\\  % ??? cite https://en.wikipedia.org/wiki/List_of_mathematical_symbols
-		When analysing the symbols, the program is facing a variety of difficulties.
-		These are tackled in two steps
+	A difficulty with detecting handwritten equations is the common usage of points or point-like symbols.
+	This makes it nearly impossible to account for all possible interpretations of this.
+	Therefore we have focused on the two most common cases:
+	The multiplication dot ("$\cdot$") and the comma or dot indicating a partial number (e.g. "$3,14$" or "$3.14$").\\
+	Other important times where a dot appears in an equation, which unfortunately we were unable to cover, include points included in letters (e.g. "$i=\sqrt{-1}$"), the time derivative of a variable (e.g. "$\dot{x}=v$") and the dots included in a definition symbol ("$:=$" or "$=:$").\\  % ??? cite https://en.wikipedia.org/wiki/List_of_mathematical_symbols
+	To find determine whether or not a contour is such a symbol, we at first can determine it's size.
+	If it has a significantly larger width or height than the line thickness (for instance twice as large), we may rule out that this symbol is a dot of any kind.
+	The size however, does not give a good indication as to what type of dot this may be.
+	The different types of dots can only be distinguished by their position in relation to other symbols.
+	As the line has already been ordered, we are able to take a look at the preceding and following contour.
+	If the contour in question is either the first or last contour in a line, we can rule out, that it is a multiplication dot or a comma, as these never appear at the beginning or end of a line.
+	Next we compare its position relative to its neighbouring contours.\\
+	If the contour is closer to the lower end of the contour than the mid point for both of its neighbours, then the contour is classified as a comma.\\
+	
+	If the contour is closer to the mid point than the lower end of the contour for both of its neighbours, then the contour is classified as a multiplication dot.\\
+	
 	
 	\subsection{Minus}
 	
