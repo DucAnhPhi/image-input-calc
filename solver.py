@@ -53,17 +53,12 @@ class Solver:
                     frame, [el.contour], -1, (0, 255, 255), 2)
                 equation.append('*')
             else:
-                isExponent = el.position == Position.EXPONENT
-                if el.position == Position.BASIS:
-                    cv.drawContours(
-                        frame, [el.contour, *el.holes], -1, (255, 255, 0), 2)
-                elif isExponent:
-                    cv.drawContours(
-                        frame, [el.contour, *el.holes], -1, (255, 255, 255), 2)
+                cv.drawContours(
+                    frame, [el.contour, *el.holes], -1, (255, 255, 0), 2)
                 symbol = self.cl.classify(
                     [el.get_subimage_for_classifier()])[0]
-                if symbol.isdigit() and isExponent:
-                    equation.append('^')
+                # if symbol.isdigit() and isExponent:
+                #     equation.append('^')
                 equation.append(symbol)
 
         equationString = "".join(equation)

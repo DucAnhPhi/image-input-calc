@@ -160,8 +160,8 @@ class Segmentation:
 
                 if self.is_point(currCnt):
                     self.label_point(currCnt, preCnt, postCnt)
-                else:
-                    self.label_exponent(currCnt, preCnt, postCnt)
+                # else:
+                #     self.label_exponent(currCnt, preCnt, postCnt)
 
         for i in range(len(lines)):
             currLine = lines[i]
