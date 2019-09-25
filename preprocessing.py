@@ -102,11 +102,24 @@ class PreProcessing:
 
         return mask
 
+    def get_brightness_removal_mask(self, frame):
+        grayscale = self.convert_gray(frame.copy())
+        average = grayscale.mean()
+        print("Average: ", average)
+        mask = np.where(grayscale < average, 0, 255)
+        return mask
+
     def background_contour_removal(self, frame):
         # preprocessing for clearer image
         preprocessed = self.preprocess(frame)
-        # mask generation
-        mask = self.get_background_removal_mask(frame)
+        # mask generation for background removal
+        backGroundMask = self.get_background_removal_mask(frame)
         # apply mask on preprocessed image
-        preprocessed = np.where(mask == 0, preprocessed, 255)
+        preprocessed = np.where(backGroundMask == 0, preprocessed, 255)
+
+        # mask generation for brightness removal
+        brightnessMask = self.get_brightness_removal_mask(frame)
+        # apply mask on preprocessed image
+        preprocessed = np.where(brightnessMask == 0, preprocessed, 255)
+
         return preprocessed
