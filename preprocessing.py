@@ -110,6 +110,7 @@ class PreProcessing:
         return mask
 
     def background_contour_removal(self, frame):
+
         # preprocessing for clearer image
         preprocessed = self.preprocess(frame)
         # mask generation for background removal

@@ -227,6 +227,8 @@ class Segmentation:
             # handle nested contours
             self.handle_nested_contour(cnt, i)
 
+
+
         for cnt in self.contourList:
             # check and label bar types
             self.label_bar_type(cnt)

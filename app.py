@@ -18,6 +18,8 @@ class App:
         self.solver = solver
 
     def process(self, frame, name="TrainingSamples/Image_"):
+
+        print(type(frame))
         # preprocessing for contour detection
         preprocessed = PreProcessing().background_contour_removal(
             frame)
@@ -66,18 +68,19 @@ class App:
                 cnt = line[i]
                 cv.putText(frame, str(l) + str(i), (cnt.center[0], cnt.center[1]),
                            cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 1)
+        #Draw().print_lines(lines, frame, name="ToClassify/Numbers2_Line_")
 
         solutions = [self.solver.solve([cnt.unwrap() for cnt in line], frame)
                      for line in lines if len(line) > 2]
 
-        return preprocessed  # orderedImage
+        return binarized  # orderedImage
 
     def show_results(self, frame, result):
 
-        # frame = Draw().scale_image(frame, 0.25)
-        # result = Draw().scale_image(result, 0.25)
+        frame = Draw().scale_image(frame, 0.25)
+        result = Draw().scale_image(result, 0.25)
         cv.imshow('frame', frame)
-        # cv.imshow('preprocessed', result)
+        cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
 
     def run_with_webcam(self):
@@ -135,35 +138,36 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    # def run(self, source):
-    #     if (source == "" or source == "webcam" or source == "Webcam"):
-    #         print("Using Webcam")
-    #         App().run_with_webcam()
+    def run(self, source):
+        if (source == "" or source == "webcam" or source == "Webcam"):
+            print("Using Webcam")
+            App(solver).run_with_webcam()
 
-    #     if (source == "TrainingSamples"):
-    #         for i in range(0, 42):
-    #             name = ("ToClassify2/Image_" + str(292 + i) + "_")
-    #             source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
-    #             print("Opening Image")
-    #             print(source)
-    #             App().run_with_img(source, name)
-    #     sourceEnding = source.split(".", 1)[1]
+        if (source == "TrainingSamples"):
+            for i in range(0, 42):
+                name = ("ToClassify2/Image_" + str(292 + i) + "_")
+                source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
+                print("Opening Image")
+                print(source)
+                App(solver).run_with_img(source, name)
+        sourceEnding = source.split(".", 1)[1]
 
-    #     if sourceEnding == "MOV":
-    #         print("Opening Video Clip")
-    #         App().run_with_video(source)
-
-    #     if (sourceEnding == "jpg" or sourceEnding == "JPG"):
-    #         print("Opening Image")
-    #         print(source)
-    #         App().run_with_img(source)
+        if sourceEnding == "MOV":
+            print("Opening Video Clip")
+            App(solver).run_with_video(source)
+        if (sourceEnding == "jpg" or sourceEnding == "JPG" or sourceEnding == "jpeg" or sourceEnding == "JPEG"):
+             print("Opening Image")
+             print(source)
+             App(solver).run_with_img(source)
 
 
 if __name__ == '__main__':
     solver = Solver()
-    # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
-    # App().run("sample.MOV")
+    App(solver).run("Test2.JPG")
+    #App(solver).run("Numbers2.JPG")
+    #App(solver).run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
+    # App(solver).run("sample.MOV")
 
     # App(solver).run_with_webcam()
-    App(solver).run_with_img()
+    #App(solver).run_with_img()
     # App(solver).run_with_video('sample.MOV')
