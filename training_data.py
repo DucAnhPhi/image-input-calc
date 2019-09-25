@@ -19,10 +19,11 @@ SYMBOL_CODES = [
 IMAGE_DIMS = (1, 32, 32)
 
 
-class MyDataSet(Dataset):
+class DataCollection(Dataset):
 
-    def __init__(self, data_root, data_subfolder='', train_file='', test_file='', train=True):
-        super(MyDataSet, self).__init__()
+    def __init__(self, data_root='HASY', data_subfolder=os.path.join('classification-task', 'fold-1'),
+                 train_file='train.csv', test_file='test.csv', train=True):
+        super(DataCollection, self).__init__()
         self.train = train
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
@@ -31,7 +32,18 @@ class MyDataSet(Dataset):
         self.train_file = train_file
         self.test_file = test_file
 
-    def get_data_from_file(self, file):
+        imgs, labels = self.get_hasy_data()
+        self.append_mnist(imgs, labels, train)
+        #self.append_own(imgs, labels)
+        self.data = imgs
+        self.targets = labels
+        self.size = len(imgs)
+
+    def get_hasy_data(self):
+        if self.train:
+            file = self.train_file
+        else:
+            file = self.test_file
         with open(os.path.join(self.data_subfolder, file)) as label_file:
             label_reader = csv.DictReader(label_file)
             rows = list(label_reader)
@@ -43,53 +55,35 @@ class MyDataSet(Dataset):
                     if symbol == label_id:
                         label_idx += 10
                         img = cv2.imread(os.path.join(self.data_subfolder, label['path']))
-                        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                         imgs.append(self.preprocess(img))
                         labels.append(label_idx)
-                        img = self.custom_preprocessing(img)
-                        flip = transforms.RandomHorizontalFlip()
-                        flip_img = flip(img)
-                        rotation = transforms.RandomRotation(20)
-                        rot_img = rotation(img)
-                        rot_flip = rotation(flip(img))
-                        flip_rot = flip(rotation(img))
-                        imgs.append(self.torch_preprocess(flip_img))
-                        imgs.append(self.torch_preprocess(rot_flip))
-                        imgs.append(self.torch_preprocess(flip_rot))
-                        imgs.append(self.torch_preprocess(rot_img))
-                        labels.append(label_idx)
-                        labels.append(label_idx)
-                        labels.append(label_idx)
-                        labels.append(label_idx)
+                        self.data_augmentation(img, label_idx, imgs, labels)
         return imgs, labels
 
     @staticmethod
-    def preprocess(img):
-        return MyDataSet.torch_preprocess(MyDataSet.custom_preprocessing(img))
+    def preprocess(img, invert=True):
+        return DataCollection.torch_preprocess(DataCollection.custom_preprocessing(img, invert))
 
     @staticmethod
     def torch_preprocess(img):
-        normalize = transforms.Normalize(mean=[0.485],
-                                 std=[0.229])
         preprocess = transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
-            transforms.ToTensor(),
-            #normalize
+            transforms.ToTensor()
         ])
         return preprocess(img)
 
     @staticmethod
-    def custom_preprocessing(img):
-        img = MyDataSet.resize_keep_ratio(img, size=32)
+    def custom_preprocessing(img, invert=True):
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = DataCollection.resize_keep_ratio(img, size=32)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
         custom_preprocessing = PreProcessing()
         preprocessed = custom_preprocessing.convert_gray(img)
         preprocessed = custom_preprocessing.gaussian_blur(preprocessed)
         preprocessed = custom_preprocessing.binarize(preprocessed)
-        np.save('test_img.png', preprocessed)
-        #preprocessed = preprocessed.reshape((1, 32, 32))
         pil_img = Image.fromarray(preprocessed)
-        pil_img = PIL.ImageOps.invert(pil_img)
+        if invert:
+            pil_img = PIL.ImageOps.invert(pil_img)
         return pil_img
 
     @staticmethod
@@ -115,6 +109,21 @@ class MyDataSet(Dataset):
         # return resized mask
         return cv2.resize(mask, (size, size), interpolation)
 
+    @staticmethod
+    def data_augmentation(img, label, imgs, labels, pillow=False, invert=True):
+        if not pillow:
+            img = DataCollection.custom_preprocessing(img, invert)
+        flip = transforms.RandomHorizontalFlip()
+        rotation1 = transforms.RandomRotation(20)
+        rotation2 = transforms.RandomRotation(10)
+        rotation3 = transforms.RandomRotation(5)
+        augmented = [rotation1(img), rotation2(img), rotation3(img), flip(img),
+                     rotation1(flip(img)), flip(rotation1(img)), rotation2(flip(img)),
+                     flip(rotation2(img)), rotation3(flip(img)), flip(rotation3(img))]
+        for augmented_img in augmented:
+            imgs.append(DataCollection.torch_preprocess(augmented_img))
+            labels.append(label)
+
     def __len__(self):
         return self.size
 
@@ -128,73 +137,6 @@ class MyDataSet(Dataset):
 
     def get_character(self, idx):
         return MATH_SYMBOLS[self.get_symbol(idx)]
-
-
-class HASY(MyDataSet):
-
-    def __init__(self, data_root, train=True):
-        super(HASY, self).__init__(data_root, data_subfolder=os.path.join('classification-task', 'fold-1'),
-                                   train_file='train.csv', test_file='test.csv', train=train)
-        if train:
-            imgs, labels = super().get_data_from_file(self.train_file)
-        else:
-            imgs, labels = super().get_data_from_file(self.test_file)
-        self.data = imgs
-        self.targets = labels
-        self.size = len(imgs)
-
-
-class SegmentedImgs(MyDataSet):
-
-    def __init__(self, data_root, train=True):
-        super(SegmentedImgs, self).__init__(data_root, train_file='labels.csv', test_file='labels.csv', train=train)
-        if train:
-            imgs, labels = super().get_data_from_file(self.train_file)
-        else:
-            imgs, labels = super().get_data_from_file(self.test_file)
-        self.data = imgs
-        self.targets = labels
-        self.size = len(imgs)
-
-
-class OwnImgs(MyDataSet):
-
-    def __init__(self, path='ToClassify'):
-        super().__init__(path)
-        imgs, labels = self.__get_data_from_folders()
-        self.data = imgs
-        self.targets = labels
-        self.size = len(imgs)
-
-    def __get_data_from_folders(self):
-        imgs, labels = [], []
-        label_idx = 0
-        for symbol in MATH_SYMBOLS:
-            try:
-                images = os.listdir(os.path.join(self.data_root, symbol))
-                for image_file in images:
-                    img = cv2.imread(os.path.join(self.data_root, symbol, image_file))
-                    imgs.append(self.preprocess(img))
-                    labels.append(label_idx)
-            except FileNotFoundError:
-                print("No training data for {0}. Skipping".format(symbol))
-            label_idx += 1
-        return imgs, labels
-
-
-class CombinedData(MyDataSet):
-    def __init__(self, data_root, train=True):
-        super(CombinedData, self).__init__(data_root, data_subfolder=os.path.join('classification-task', 'fold-1'),
-                                   train_file='train.csv', test_file='test.csv', train=train)
-        if train:
-            imgs, labels = super().get_data_from_file(self.train_file)
-        else:
-            imgs, labels = super().get_data_from_file(self.test_file)
-        self.append_mnist(imgs, labels, train)
-        self.append_own(imgs, labels)
-        self.data = imgs
-        self.targets = labels
-        self.size = len(imgs)
 
     def append_mnist(self, imgs, labels, train):
         if train:
@@ -220,8 +162,19 @@ class CombinedData(MyDataSet):
                 images = os.listdir(os.path.join(path, symbol))
                 for image_file in images:
                     img = cv2.imread(os.path.join(path, symbol, image_file))
-                    imgs.append(self.preprocess(img))
+                    img = np.reshape(img, (32, 32))
+                    pil_img = Image.fromarray(img, 'L')
+                    pil_img = PIL.ImageOps.invert(pil_img)
+                    rotated1 = transforms.RandomRotation(10)(pil_img)
+                    rotated2 = transforms.RandomRotation(5)(pil_img)
+                    imgs.append(self.torch_preprocess(pil_img))
+                    imgs.append(self.torch_preprocess(rotated1))
+                    imgs.append(self.torch_preprocess(rotated2))
                     labels.append(label_idx)
+                    labels.append(label_idx)
+                    labels.append(label_idx)
+                    if symbol == '+':
+                        DataCollection.data_augmentation(img, label_idx, imgs, labels, pillow=True, invert=False)
             except FileNotFoundError:
                 print("No training data for {0}. Skipping".format(symbol))
             label_idx += 1
