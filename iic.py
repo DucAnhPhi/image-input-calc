@@ -10,10 +10,12 @@ import numpy as np
 
 
 class MathSymbolClassifier:
-    def __init__(self, model_path='combined-model.ckpt'):
+    def __init__(self, model_path='combined-model-95.ckpt'):
         self.classifier = alexnet(num_classes=15)
-        self.classifier.features[0] = Conv2d(1, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        self.classifier.load_state_dict(torch.load(model_path))
+        self.classifier.features[0] = Conv2d(1, 64, kernel_size=(
+            7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+        self.classifier.load_state_dict(
+            torch.load(model_path, map_location="cpu"))
 
     def test_classification(self):
         file_path = "SubImages"
