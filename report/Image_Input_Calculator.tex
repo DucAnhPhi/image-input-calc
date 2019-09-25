@@ -15,7 +15,7 @@
 \usepackage{caption}       
 \usepackage{comment}  
 \usepackage{float}
-\usepackage{subcaption}
+\usepackage{subfigure}
 \usepackage{amsmath}					%Um Formeln einzugeben
 \usepackage{amssymb}					%Sonderzeichen und Symbole	
 \usepackage{hyperref}
@@ -123,19 +123,86 @@ This enables a smooth user experience and allows realtime analysis of an equatio
 		Lastly we correct for reflected light sources. %!!! Add to master
 
 	\subsection{Simple Preprocessing}%??? !!! Add stepwise Images, after Preprocessing is complete
+	
+	\begin{figure*}[htp]
+		\centering
+		\subfigure[Original Frame]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame}}\quad
+		\subfigure[Grayscaled]{\includegraphics[width=.45\linewidth]{ImagesForReport/Grayscale}}
+		
+		\subfigure[Gaussian Blur]{\includegraphics[width=.45\linewidth]{ImagesForReport/GaussianBlur}}\quad
+		\subfigure[Morphological Opening]{\includegraphics[width=.45\linewidth]{ImagesForReport/MorphOpen}}
+		
+		\subfigure[Adaptive Gaussian Thresholding]{\includegraphics[width=.45\linewidth]{ImagesForReport/AdaptiveGaussianThresholding}}\quad
+		\subfigure[Dilation]{\includegraphics[width=.45\linewidth]{ImagesForReport/Eroding}}
+		
+		\caption{Various Steps performed during the Simple Preprocessing Process}
+		\label{fig:SimplePreprocessing}
+	\end{figure*}
+
+%	\begin{figure}
+%		\centering
+%		\begin{subfigure}{.5\textwidth}
+%			\centering
+%			\includegraphics[width=.8\linewidth]{ImagesForReport/Frame}
+%			\caption{Original Frame}
+%			\label{fig:OriginalFrame1}
+%		\end{subfigure}
+%		
+%		\begin{subfigure}{.5\textwidth}
+%			\centering
+%			\includegraphics[width=.8\linewidth]{ImagesForReport/Grayscale}
+%			\caption{Grayscaled}
+%			\label{fig:Grayscale1}
+%		\end{subfigure}\\
+%		
+%		\begin{subfigure}{.5\textwidth}
+%			\centering
+%			\includegraphics[width=.8\linewidth]{ImagesForReport/GaussianBlur}
+%			\caption{Gaussian Blur}
+%			\label{fig:GB1}
+%		\end{subfigure}
+%		
+%		\begin{subfigure}{.5\textwidth}
+%			\centering
+%			\includegraphics[width=.8\linewidth]{ImagesForReport/MorphOpen}
+%			\caption{Morphological Opening}
+%			\label{fig:MorphOpen1}
+%		\end{subfigure}\\
+%	
+%		\begin{subfigure}{.5\textwidth}
+%			\centering
+%			\includegraphics[width=.8\linewidth]{ImagesForReport/AdaptiveGaussianThresholding}
+%			\caption{Adaptive Gaussian Thresholding}
+%			\label{fig:AGT1}
+%		\end{subfigure}
+%		
+%		\begin{subfigure}{.5\textwidth}
+%			\centering
+%			\includegraphics[width=.8\linewidth]{ImagesForReport/Dilation}
+%			\caption{Dilation}
+%			\label{fig:Dilation1}
+%		\end{subfigure}\\
+%		
+%		\caption{Various Steps performed during the Simple Preprocessing Process}
+%		\label{fig:SimplePreprocessing}
+%	\end{figure}
+
+
 		The image our program receives as input is likely not easily analyzed.
 		We therefore manipulate the image with a few select operations, before continuing with our algorithm.
 		It should be noted here, that there is a great variety of different algorithms that work well.
 		The algorithm we will be presenting here is the one, we found to work well for our purpose.\\
-		It operates in five steps:
+		It operates in five steps (as can be seen in fig: \ref{fig:SimplePreprocessing}):
 		\begin{itemize}
 			\item Grayscaling: At first we grayscale our image. Here we reduce the BGR (blue, green, red) image into an image with a single dimension per pixel. This is useful, because this simplifies our image and allows us to more easily analyse the image.
 			\item Gaussian Blur: Here we apply a Gaussian blur kernel on the image to smooth it out. This reduces the noise.
 			\item Morphological Opening: We apply a filter that removes a specific type of noise: Small dots. This is done by applying an erosion followed by a dilation filter. %??? is this the right filter
-			\item Adaptive Threshold: We add a filter that applies a threshold. Any pixel below this threshold gets set to 0 any pixel above it gets set to 255. %??? check
+			\item Adaptive Gaussian Threshold: We add a filter that applies a threshold. Any pixel below this threshold gets set to 0 any pixel above it gets set to 255. %??? check
 			This threshold differentiates the symbols from the background.
 			We will later explain in more precision how this filter works. %??? !!! Do it
-			\item Dilation: After the previous steps it is possible that some of the symbols have deteriorated into several parts. %??? Errosion is Dilation correct?
+			\item Dilation: After the previous steps it is possible that some of the symbols have deteriorated into several parts.
+			This allows for easier contour detection.
+			However, that makes the contour more difficult to be recognised by the classifier, which is why this step will be undone later. %??? Errosion is Dilation correct?
 			(Because our image is inverted, the code uses an erosion function.) %??? fix
 			Therefore, it is useful at this point to thicken the contours.
 		\end{itemize}
@@ -170,16 +237,39 @@ This enables a smooth user experience and allows realtime analysis of an equatio
 		In this manner we determine the mask.
 		Our resulting image is determined, by having all pixels white, except those, that are black both in the mask and in the simple preprocessing.
 		This removes background contours, without making our image unreadable.
-
+	\begin{figure*}[htp]
+		\centering
+		\subfigure[Original Frame]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame2}}\quad
+		\subfigure[After Simple Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/PostPreprocessed2}}
+		
+		\subfigure[Border Removal Mask (Black pixels will not be removed)]{\includegraphics[width=.45\linewidth]{ImagesForReport/backgroundMask2}}\quad
+		\subfigure[Resulting Image]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundRemoved2}}
+		
+		\caption{Performance of the Border Removal Mask.}
+		\label{fig:BorderRemoval}
+		%??? Make captions in center
+	\end{figure*}
 
 	\subsection{Reflection Removal}
 		Bright light sources may reflect of the surface on which the equation is written.
-		This occurs especially often, when using a white board.
+		This occurs especially often, when using a white board, but also on paper (see fig. \ref{fig:BrightnessRemoval}).
 		Unfortunately the adaptive Threshold function cannot differentiate between the writing and the bright reflexes.
 		Fortunately the reflected light sources all have in common, that they are significantly brighter than the average image.
 		It is therefore possible to create a fairly simple mask which simply removes all pixels, which are significantly brighter than the average pixel of the image.
 		After applying this mask, the image no longer contains contours caused by reflected light sources.%??? significantly
 		
+		\begin{figure*}[htp]
+			\centering
+			\subfigure[Original Frame]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame}}\quad
+			\subfigure[After Simple Preprocessing and Background Removal]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundRemoved}}
+			
+			\subfigure[Brightness Removal Mask (Black pixels will not be removed)]{\includegraphics[width=.45\linewidth]{ImagesForReport/BrightnessMask}}\quad
+			\subfigure[Resulting Image]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundFiltered}}
+			
+			\caption{Performance of the Brightness Removal Mask.}
+			\label{fig:BrightnessRemoval}
+			%??? Make captions in center
+		\end{figure*}
 		
 	\subsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
 		A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
@@ -263,39 +353,23 @@ reproduce and finally solve the written equations.
 
 	Initially we have to find fractions first. We find fraction bars, which are contours with the following criteria:
 	\begin{itemize}
-	\item - their width is more than twice as big as their height
-	\stop{itemize}
-	\begin{itemize}
-	\item - they do not contain any holes
-	\stop{itemize}
-	\begin{itemize}
-	\item - their ratio of contour area to minimum bounding box area exceeds 0.7
-	\stop{itemize}
-	\begin{itemize}
-	\item - their ratio of contour area to their convex hull area exceeds 0.7
-	\stop{itemize}
-	\begin{itemize}
-	\item - they have a horizontal orientation
-	\stop{itemize}
-	\begin{itemize}
-	\item - they contain contours above and below them inside a defined acceptance area
-	\stop{itemize}
+		\item - their width is more than twice as big as their height
+		\item - they do not contain any holes
+		\item - their ratio of contour area to minimum bounding box area exceeds 0.7
+		\item - their ratio of contour area to their convex hull area exceeds 0.7
+		\item - they have a horizontal orientation
+		\item - they contain contours above and below them inside a defined acceptance area
+	\end{itemize}
 
 	We chose these criteria based on experimental observations.
 
 	After sorting the fraction bars (ascending) by their width we apply the following algorithm to each bar iteratively, starting with the smallest one:
 	\begin{itemize}
-	\item - extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
-	\stop{itemize}
-	\begin{itemize}
-	\item - sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
-	\stop{itemize}
-	\begin{itemize}
-	\item - create a bounding box around the whole fraction
-	\stop{itemize}
-	\begin{itemize}
-	\item - create a contour object with the bounding box and reference to the Fraction object
-	\stop{itemize}
+		\item - extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
+		\item - sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
+		\item - create a bounding box around the whole fraction
+		\item - create a contour object with the bounding box and reference to the Fraction object
+	\end{itemize}
 
 	\subsubsection{Equal Sign}
 	A written "=" sign consists of two vertically stacked horizontal bars. We group both contours in a single contour object.
@@ -407,7 +481,7 @@ reproduce and finally solve the written equations.
 	
 	\subsection{Exponent}
 	
-	\subsection{Brackets}
+	%\subsection{Brackets}
 	
 \section{Symbol Classification}
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
