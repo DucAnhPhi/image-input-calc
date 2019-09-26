@@ -83,8 +83,7 @@ class Segmentation:
         if parentIndex != -1:
             parent = self.contourList[parentIndex]
             if cnt.is_inside_area(parent.x1, parent.x2, parent.y1, parent.y2):
-                parent.holes.append(cnt.contour)
-            isNested = True
+                isNested = True
         return isNested
 
     def handle_nested_contour(self, cnt, index):
