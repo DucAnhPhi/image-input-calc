@@ -596,6 +596,50 @@ AlexNet(
 	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
 
 \section{Conclusion}
+\pagebreak
+\section{Installation and Usage}
+\subsection{Installation}
+
+	\begin{enumerate}
+		\item Install Python 3.6 (if not already installed)
+		\item Download the project from \url{https://github.com/DucAnhPhi/image-input-calc}
+		\item (Optional) Set up a Python virtual environment for this project. It keeps the dependencies/libraries required by different projects in separate places (isolates them to avoid conflicts). \\
+		\\
+		Run the following commands in your terminal:
+		\begin{verbatim}
+		$ pip install virtualenv
+		$ cd path/to/image-input-calc
+		$ virtualenv -p python3.6 virtual_env
+		\end{verbatim}
+		To begin using the virtual environment, it needs to be activated.
+		\\
+		If you are on Linux or MacOS, run the following:
+
+		\begin{verbatim}
+		$ source virtual_env/bin/activate
+		\end{verbatim}
+
+		If you are on Windows, run the following:
+
+		\begin{verbatim}
+		$ virtual_env/Scripts/activate.bat
+		\end{verbatim}
+
+		\item Install all project dependencies with:
+		\begin{verbatim}
+		$ pip install -r requirements.txt
+		\end{verbatim}
+	\end{enumerate}
+
+
+
+
+\subsection{Usage}
+In the project directory, run the program with:
+
+\begin{verbatim}
+$ python3 app.py
+\end{verbatim}
 
 \newpage
 \printbibliography[heading=bibintoc, title={Sources}]
