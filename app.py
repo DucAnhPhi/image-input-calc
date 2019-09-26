@@ -43,9 +43,11 @@ class App:
         contourList = [Contour(contour=cnt, imgShape=frame.shape, frameBinary=binarized)
                        for cnt in contours]
 
+
         # filter, classify and group segmented contours
         sg = Segmentation(contourList, hierarchy, frame.shape)
         sg.group_and_classify()
+
 
         filtered = sg.get_contours()
 
@@ -62,6 +64,9 @@ class App:
 
         solutions = [self.solver.solve([cnt.unwrap() for cnt in line], frame)
                      for line in lines]
+
+
+        Draw().print_lines(lines, frame, name=name)
 
         return preprocessed  # orderedImage
 
@@ -128,28 +133,37 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    # def run(self, source):
-    #     if (source == "" or source == "webcam" or source == "Webcam"):
-    #         print("Using Webcam")
-    #         App().run_with_webcam()
+    def run(self, source):
+        if (source == "" or source == "webcam" or source == "Webcam"):
+            print("Using Webcam")
+            App(solver).run_with_webcam()
 
-    #     if (source == "TrainingSamples"):
-    #         for i in range(0, 42):
-    #             name = ("ToClassify2/Image_" + str(292 + i) + "_")
-    #             source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
-    #             print("Opening Image")
-    #             print(source)
-    #             App().run_with_img(source, name)
-    #     sourceEnding = source.split(".", 1)[1]
+        if (source == "NumberSamples"):
+            for i in range(4):
+                name = "ToClassify/Tim" + str(i) + "_"
+                source = ("NumberImages\\TimNumbers"+str(i)+".JPG")#("NumberImages\Numbers" + str(i) + ".JPG")
+                print("Opening Image")
+                print(source)
 
-    #     if sourceEnding == "MOV":
-    #         print("Opening Video Clip")
-    #         App().run_with_video(source)
+                App(solver).run_with_img(source, name)
 
-    #     if (sourceEnding == "jpg" or sourceEnding == "JPG"):
-    #         print("Opening Image")
-    #         print(source)
-    #         App().run_with_img(source)
+        if (source == "TrainingSamples"):
+            for i in range(0, 42):
+                name = ("ToClassify2/Image_" + str(292 + i) + "_")
+                source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
+                print("Opening Image")
+                print(source)
+                App(solver).run_with_img(source, name)
+        sourceEnding = source.split(".", 1)[1]
+
+        if sourceEnding == "MOV":
+            print("Opening Video Clip")
+            App(solver).run_with_video(source)
+
+        if (sourceEnding == "jpg" or sourceEnding == "JPG" or sourceEnding == "jpeg" or sourceEnding == "JPEG"):
+            print("Opening Image")
+            print(source)
+            App(solver).run_with_img(source)
 
 
 if __name__ == '__main__':
@@ -158,5 +172,6 @@ if __name__ == '__main__':
     # App().run("sample.MOV")
 
     # App(solver).run_with_webcam()
-    App(solver).run_with_img()
+
+    App(solver).run("NumberSamples")
     # App(solver).run_with_video('sample.MOV')

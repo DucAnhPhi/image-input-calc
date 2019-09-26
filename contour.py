@@ -193,6 +193,10 @@ class Contour:
                                    self.holes], color=(255, 255, 255))
         mask = blankImg[self.y1:self.y2, self.x1:self.x2]
         mask = cv.cvtColor(mask, cv.COLOR_BGR2GRAY)
+
+        if self.frameBinary is None:
+            print(type(self.frameBinary))
+
         subImg = self.frameBinary[self.y1:self.y2, self.x1:self.x2]
         subImg = cv.bitwise_and(subImg, subImg, mask=mask)
         subImg = self.resize_keep_ratio(subImg)

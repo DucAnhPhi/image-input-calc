@@ -154,3 +154,15 @@ class Draw:
 
 
         return inIm
+
+    def print_lines(self, lines, frame, name="ToClassify/Test_Line_"):
+        images = []
+        for i in range(len(lines)):
+
+            #Images = [cnt.get_subimage_for_classifier() for cnt in lines[i]]
+            for j in range(len(lines[i])):
+                if not (lines[i][j].frameBinary is None):
+                    image=lines[i][j].get_subimage_for_classifier()
+                    image=np.reshape(image,(32,32,1))
+                    cv.imwrite((name + str(i) + "_" + "Symbol" + str(j) + ".png"), image)
+                    print("Saved image " + (name + str(i) + "_" + "Symbol" + str(j) + ".png"))
