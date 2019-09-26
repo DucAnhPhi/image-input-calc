@@ -163,6 +163,8 @@ class Draw:
             for j in range(len(lines[i])):
                 if not (lines[i][j].frameBinary is None):
                     image=lines[i][j].get_subimage_for_classifier()
+
                     image=np.reshape(image,(32,32,1))
+                    image = np.where(image == 0, 0, 255)
                     cv.imwrite((name + str(i) + "_" + "Symbol" + str(j) + ".png"), image)
                     print("Saved image " + (name + str(i) + "_" + "Symbol" + str(j) + ".png"))
