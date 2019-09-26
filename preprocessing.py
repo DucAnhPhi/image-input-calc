@@ -32,10 +32,14 @@ class PreProcessing:
         kernel = np.ones((3, 3), np.uint8)
         return cv.morphologyEx(img, cv.MORPH_GRADIENT, kernel)
 
-    def binarize(self, img):
+    def adapt_binarize(self, img):
         # adaptive gaussian thresholding
-        binarized = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-                                         cv.THRESH_BINARY, 11, 2)
+        adaptBinarized = cv.adaptiveThreshold(img, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                              cv.THRESH_BINARY, 11, 2)
+        return adaptBinarized
+
+    def binarize(self, img):
+        _, binarized = cv.threshold(img, 127, 255, cv.THRESH_BINARY)
         return binarized
 
     def medium_binarize(self, img):
@@ -48,14 +52,14 @@ class PreProcessing:
     def preprocess(self, grayscale):
         preprocessed = self.gaussian_blur(grayscale)
         preprocessed = self.morph_open(preprocessed)
-        preprocessed = self.binarize(preprocessed)
+        preprocessed = self.adapt_binarize(preprocessed)
         preprocessed = self.erode(preprocessed)
         return preprocessed
 
     def custom_binarize(self, img):
         preprocessed = self.convert_gray(img)
         preprocessed = self.gaussian_blur(preprocessed)
-        preprocessed = self.binarize(preprocessed)
+        preprocessed = self.adapt_binarize(preprocessed)
         preprocessed = cv.bitwise_not(preprocessed)
         return preprocessed
 
@@ -64,7 +68,7 @@ class PreProcessing:
         preprocessed = self.gaussian_blur(preprocessed)
         preprocessed = self.morph_open(preprocessed)
         #preprocessed = self.morph_gradient(preprocessed)
-        preprocessed = self.binarize(preprocessed)
+        preprocessed = self.adapt_binarize(preprocessed)
         preprocessed = self.morph_close(preprocessed)
         return preprocessed
 
