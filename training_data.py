@@ -34,7 +34,7 @@ class DataCollection(Dataset):
 
         imgs, labels = self.get_hasy_data()
         self.append_mnist(imgs, labels, train)
-        #self.append_own(imgs, labels)
+        self.append_own(imgs, labels)
         self.data = imgs
         self.targets = labels
         self.size = len(imgs)
@@ -114,12 +114,11 @@ class DataCollection(Dataset):
         if not pillow:
             img = DataCollection.custom_preprocessing(img, invert)
         flip = transforms.RandomHorizontalFlip()
-        rotation1 = transforms.RandomRotation(20)
         rotation2 = transforms.RandomRotation(10)
         rotation3 = transforms.RandomRotation(5)
-        augmented = [rotation1(img), rotation2(img), rotation3(img), flip(img),
-                     rotation1(flip(img)), flip(rotation1(img)), rotation2(flip(img)),
-                     flip(rotation2(img)), rotation3(flip(img)), flip(rotation3(img))]
+        augmented = [rotation2(img), rotation3(img), flip(img),
+                     rotation2(flip(img)),flip(rotation2(img)), 
+		     rotation3(flip(img)), flip(rotation3(img))]
         for augmented_img in augmented:
             imgs.append(DataCollection.torch_preprocess(augmented_img))
             labels.append(label)
@@ -155,16 +154,15 @@ class DataCollection(Dataset):
         for label in tqdm(mnist_data.targets):
             labels.append(label.item())
 
-    def append_own(self, imgs, labels, path='ToClassify'):
+    def append_own(self, imgs, labels, path='own_training_data'):
         label_idx = 0
         for symbol in MATH_SYMBOLS:
             try:
                 images = os.listdir(os.path.join(path, symbol))
                 for image_file in images:
                     img = cv2.imread(os.path.join(path, symbol, image_file))
-                    img = np.reshape(img, (32, 32))
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                     pil_img = Image.fromarray(img, 'L')
-                    pil_img = PIL.ImageOps.invert(pil_img)
                     rotated1 = transforms.RandomRotation(10)(pil_img)
                     rotated2 = transforms.RandomRotation(5)(pil_img)
                     imgs.append(self.torch_preprocess(pil_img))
@@ -174,7 +172,7 @@ class DataCollection(Dataset):
                     labels.append(label_idx)
                     labels.append(label_idx)
                     if symbol == '+':
-                        DataCollection.data_augmentation(img, label_idx, imgs, labels, pillow=True, invert=False)
+                        DataCollection.data_augmentation(pil_img, label_idx, imgs, labels, pillow=True, invert=False)
             except FileNotFoundError:
                 print("No training data for {0}. Skipping".format(symbol))
             label_idx += 1
