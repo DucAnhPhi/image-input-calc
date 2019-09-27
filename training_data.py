@@ -114,12 +114,11 @@ class DataCollection(Dataset):
         if not pillow:
             img = DataCollection.custom_preprocessing(img, invert)
         flip = transforms.RandomHorizontalFlip()
-        rotation1 = transforms.RandomRotation(20)
         rotation2 = transforms.RandomRotation(10)
         rotation3 = transforms.RandomRotation(5)
-        augmented = [rotation1(img), rotation2(img), rotation3(img), flip(img),
-                     rotation1(flip(img)), flip(rotation1(img)), rotation2(flip(img)),
-                     flip(rotation2(img)), rotation3(flip(img)), flip(rotation3(img))]
+        augmented = [rotation2(img), rotation3(img), flip(img),
+                     rotation2(flip(img)),flip(rotation2(img)), 
+		     rotation3(flip(img)), flip(rotation3(img))]
         for augmented_img in augmented:
             imgs.append(DataCollection.torch_preprocess(augmented_img))
             labels.append(label)
