@@ -107,11 +107,6 @@ class Segmentation:
         if yDevToTop > yDevToCentroid and yDevToBottom > yDevToCentroid:
             currCnt.set_math_sign_type(MathSign.MULTIPLY)
 
-    def is_point(self, cnt):
-        isPoint = cnt.trueWidth <= self.lineThickness * 2
-        isPoint = isPoint and cnt.trueHeight <= self.lineThickness * 2
-        return isPoint
-
     def label_point(self, currCnt, preCnt, postCnt):
         valid = False
         between = preCnt != None and postCnt != None
@@ -119,8 +114,8 @@ class Segmentation:
             valid = currCnt.mathSign == None
             valid = valid and preCnt.mathSign == None
             valid = valid and postCnt.mathSign == None
-            valid = valid and not self.is_point(
-                preCnt) and not self.is_point(postCnt)
+            valid = valid and not preCnt.is_point(
+                self.lineThickness) and not postCnt.is_point(self.lineThickness)
 
         if valid:
             # label points which are between two cyphers
@@ -136,7 +131,7 @@ class Segmentation:
         if before:
             valid = currCnt.mathSign == None
             valid = valid and preCnt.mathSign == None
-            valid = valid and not self.is_point(preCnt)
+            valid = valid and not preCnt.is_point(self.lineThickness)
             valid = valid and cv.contourArea(
                 preCnt.contour) > cv.contourArea(currCnt.contour)
             yDevToCentroid = abs(currCnt.center[1] - preCnt.center[1])
@@ -157,7 +152,7 @@ class Segmentation:
                 if i < len(contours)-1:
                     postCnt = contours[i+1]
 
-                if self.is_point(currCnt):
+                if currCnt.is_point(self.lineThickness):
                     self.label_point(currCnt, preCnt, postCnt)
                 # else:
                 #     self.label_exponent(currCnt, preCnt, postCnt)
@@ -177,7 +172,7 @@ class Segmentation:
         if cnt.remove:
             return
         # only consider bars
-        if not cnt.is_bar():
+        if not cnt.is_bar(self.lineThickness):
             return
 
         if cnt.is_vertical_bar():
@@ -246,7 +241,8 @@ class Segmentation:
         self.contourList = [cnt for cnt in self.contourList if not cnt.remove]
 
     def check_small_contours(self):
-        tolerance = 0.7
+        # print(self.lineThickness)
+        tolerance = 1
         minThickness = self.lineThickness * tolerance
         # mark small contours for removal later
         for cnt in self.contourList:

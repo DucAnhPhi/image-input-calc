@@ -4,6 +4,7 @@ import string
 import random
 from preprocessing import PreProcessing
 from enums import Position
+from skimage import morphology, filters
 
 
 class Contour:
@@ -71,20 +72,22 @@ class Contour:
             is_inside = inside_x_range and inside_y_range
         return is_inside
 
-    def is_bar(self):
-        if self.trueWidth > self.trueHeight * 2:
-            if len(self.holes) == 0:
-                # calculate smoothness
-                area = cv.contourArea(self.contour)
-                minRectArea = self.trueHeight * self.trueWidth
-                smoothness = float(area)/minRectArea
-                # calculate curvature
-                hull = cv.convexHull(self.contour)
-                hullArea = cv.contourArea(hull)
-                curvature = float(area)/hullArea
-                if curvature > 0.7:
-                    if smoothness > 0.7 or self.trueWidth > self.trueHeight * 4:
-                        return True
+    def is_bar(self, lineThickness):
+        isBar = self.trueWidth > self.trueHeight * 2
+        isBar = isBar and len(self.holes) == 0
+        area = cv.contourArea(self.contour)
+        hull = cv.convexHull(self.contour)
+        hullArea = cv.contourArea(hull)
+        solidity = float(area) / hullArea
+        extent = float(area) / (self.trueHeight * self.trueWidth)
+        isBar = isBar and extent > 0.7 and solidity > 0.7
+        isBar = isBar or self.trueWidth > self.trueHeight * 4
+        return isBar
+
+    def is_point(self, lineThickness):
+        isPoint = self.trueWidth <= lineThickness * 3
+        isPoint = isPoint and self.trueHeight <= lineThickness * 3
+        return isPoint
 
     def is_vertical_bar(self):
         if self.width < self.height:
@@ -151,28 +154,18 @@ class Contour:
             shape=self.imgShape, dtype=np.uint8)
         cv.fillPoly(blankImg, pts=[self.contour, *
                                    self.holes], color=(255, 255, 255))
-        image = blankImg[self.y1:self.y2, self.x1:self.x2]
-        image = PreProcessing().convert_gray(image)
+        mask = blankImg[self.y1:self.y2, self.x1:self.x2]
+        mask = cv.cvtColor(mask, cv.COLOR_BGR2GRAY)
+        image = self.frameBinary[self.y1:self.y2, self.x1:self.x2]
+        image = cv.bitwise_and(image, image, mask=mask)
 
         return image
 
-    def skeletonize(self, image):
-        skel = np.zeros(image.shape, np.uint8)
-        size = np.size(image)
-
-        element = cv.getStructuringElement(cv.MORPH_CROSS, (3, 3))
-        done = False
-
-        while(not done):
-            eroded = cv.erode(image, element)
-            temp = cv.dilate(eroded, element)
-            temp = cv.subtract(image, temp)
-            skel = cv.bitwise_or(skel, temp)
-            image = eroded.copy()
-
-            zeros = size - cv.countNonZero(image)
-            if zeros == size or zeros == 0:
-                done = True
+    def skeletonize(self, img):
+        binary = np.where(img == 0, 0, 1)
+        skel = morphology.skeletonize(binary)
+        skel = np.where(skel == False, 0, 255)
+        skel = skel.astype('uint8')
         return skel
 
     def get_thickness(self):
@@ -180,6 +173,9 @@ class Contour:
 
         # sum up the image to get the area
         area = np.sum(image)
+
+        if area == 0:
+            return 0
 
         # skeletonize the image and sum up that image to get the total length
         skel = self.skeletonize(image)
@@ -191,14 +187,8 @@ class Contour:
         return thickness
 
     def get_subimage_for_classifier(self):
-        blankImg = np.zeros(
-            shape=self.imgShape, dtype=np.uint8)
-        cv.fillPoly(blankImg, pts=[self.contour, *
-                                   self.holes], color=(255, 255, 255))
-        mask = blankImg[self.y1:self.y2, self.x1:self.x2]
-        mask = cv.cvtColor(mask, cv.COLOR_BGR2GRAY)
-        subImg = self.frameBinary[self.y1:self.y2, self.x1:self.x2]
-        subImg = cv.bitwise_and(subImg, subImg, mask=mask)
+        subImg = self.get_image()
         subImg = self.resize_keep_ratio(subImg)
+        subImg = PreProcessing().binarize(subImg)
         subImg = np.asarray(subImg).reshape((1, 32, 32))
         return subImg
