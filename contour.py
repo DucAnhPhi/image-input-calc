@@ -5,6 +5,7 @@ import random
 from preprocessing import PreProcessing
 from enums import Position
 from skimage import morphology, filters
+import math
 
 
 class Contour:
@@ -85,9 +86,14 @@ class Contour:
         return isBar
 
     def is_point(self, lineThickness):
-        isPoint = self.trueWidth <= lineThickness * 3
-        isPoint = isPoint and self.trueHeight <= lineThickness * 3
-        return isPoint
+        _, radius = cv.minEnclosingCircle(self.contour)
+        radius = int(radius)
+        contourArea = cv.contourArea(self.contour)
+        minCircleArea = math.pi * radius**2
+        isRound = (float(contourArea) / minCircleArea) > 0.8
+        isSmall = self.trueWidth <= lineThickness * \
+            3 and self.trueHeight <= lineThickness * 3
+        return isRound or isSmall
 
     def is_vertical_bar(self):
         if self.width < self.height:
