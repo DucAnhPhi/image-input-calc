@@ -77,11 +77,8 @@ class Contour:
         isBar = self.trueWidth > self.trueHeight * 2
         isBar = isBar and len(self.holes) == 0
         area = cv.contourArea(self.contour)
-        hull = cv.convexHull(self.contour)
-        hullArea = cv.contourArea(hull)
-        solidity = float(area) / hullArea
         extent = float(area) / (self.trueHeight * self.trueWidth)
-        isBar = isBar and extent > 0.7 and solidity > 0.7
+        isBar = isBar and extent > 0.7
         isBar = isBar or self.trueWidth > self.trueHeight * 4
         return isBar
 
