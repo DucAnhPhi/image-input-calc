@@ -23,12 +23,12 @@ class DataCollection(Dataset):
 
     def __init__(self, data_root='HASY', data_subfolder=os.path.join('classification-task', 'fold-1'),
                  train_file='train.csv', test_file='test.csv', train=True, use_hasy=True, use_mnist=True, use_own=True,
-                 own_path='all_symbols'):
+                 own_path='all_symbols', no_strokes=False):
         super(DataCollection, self).__init__()
         self.train = train
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
-        self.no_labels = len(MATH_SYMBOLS)
+        self.no_labels = len(MATH_SYMBOLS)-2 if no_strokes else len(MATH_SYMBOLS)
         self.img_dims = IMAGE_DIMS
         self.train_file = train_file
         self.test_file = test_file
@@ -39,7 +39,7 @@ class DataCollection(Dataset):
         if use_mnist:
             self.append_mnist(imgs, labels, train)
         if use_own:
-            self.append_own(imgs, labels, train, path=own_path)
+            self.append_own(imgs, labels, train, path=own_path, no_strokes=no_strokes)
         self.data = imgs
         self.targets = labels
         self.size = len(imgs)
@@ -159,7 +159,7 @@ class DataCollection(Dataset):
         for label in tqdm(mnist_data.targets):
             labels.append(label.item())
 
-    def append_own(self, imgs, labels, train, path='all_symbols'):
+    def append_own(self, imgs, labels, train, path='all_symbols', no_strokes=False):
         label_idx = 0
         for symbol in MATH_SYMBOLS:
             try:
@@ -167,6 +167,8 @@ class DataCollection(Dataset):
                     symbol = 'div'
                 if symbol == '(':
                     symbol = 'brckts'
+                    if no_strokes:
+                        label_idx -= 2
                 if train:
                     full_path = os.path.join(path, symbol)
                 else:
