@@ -74,10 +74,10 @@ class App:
 
     def show_results(self, frame, result):
 
-        # frame = Draw().scale_image(frame, 0.25)
-        # result = Draw().scale_image(result, 0.25)
+        frame = Draw().scale_image(frame, 0.25)
+        result = Draw().scale_image(result, 0.25)
         cv.imshow('frame', frame)
-        # cv.imshow('preprocessed', result)
+        cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
 
     def run_with_webcam(self):
@@ -135,35 +135,45 @@ class App:
         cap.release()
         cv.destroyAllWindows()
 
-    # def run(self, source):
-    #     if (source == "" or source == "webcam" or source == "Webcam"):
-    #         print("Using Webcam")
-    #         App().run_with_webcam()
+    def run(self, source):
+        if (source == "" or source == "webcam" or source == "Webcam"):
+            print("Using Webcam")
+            App(solver).run_with_webcam()
 
-    #     if (source == "TrainingSamples"):
-    #         for i in range(0, 42):
-    #             name = ("ToClassify2/Image_" + str(292 + i) + "_")
-    #             source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
-    #             print("Opening Image")
-    #             print(source)
-    #             App().run_with_img(source, name)
-    #     sourceEnding = source.split(".", 1)[1]
+        if (source == "TrainingSamples"):
+            for i in range(0, 42):
+                name = ("ToClassify2/Image_" + str(292 + i) + "_")
+                source = ("SampleImages\IMG_0"+str(292+i)+".JPG")
+                print("Opening Image")
+                print(source)
+                App(solver).run_with_img(source, name)
+                pass
 
-    #     if sourceEnding == "MOV":
-    #         print("Opening Video Clip")
-    #         App().run_with_video(source)
+        if (source == "RunExperiment"):
+            for i in range(9,13):
+                source = ("Experiment"+str(i)+".JPG")
+                print("Opening Image")
+                print(source)
+                App(solver).run_with_img(source)
+                pass
+        sourceEnding = source.split(".", 1)[1]
 
-    #     if (sourceEnding == "jpg" or sourceEnding == "JPG"):
-    #         print("Opening Image")
-    #         print(source)
-    #         App().run_with_img(source)
+        if sourceEnding == "MOV":
+            print("Opening Video Clip")
+            App(solver).run_with_video(source)
+
+        if (sourceEnding == "jpg" or sourceEnding == "JPG"):
+            print("Opening Image")
+            print(source)
+            App(solver).run_with_img(source)
 
 
 if __name__ == '__main__':
     solver = Solver()
+    App(solver).run("RunExperiment")
     # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
     # App().run("sample.MOV")
 
     # App(solver).run_with_webcam()
-    App(solver).run_with_img()
+    # App(solver).run_with_img()
     # App(solver).run_with_video('sample.MOV')
