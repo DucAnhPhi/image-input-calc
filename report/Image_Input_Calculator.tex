@@ -82,6 +82,20 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	The second issue our program has to address, is the recognition of each segmented character. To do so, we can apply methods from machine learning. Luckily, the recognition of handwritten symbols is a well-known problem that has been approached by various researchers before. LeCun et al \cite{lecun1998} for instance discussed different methods to recognized handwritten digits in 1998. With this work, they made a huge contribution by providing this MNIST database of handwritten digits \cite{mnist} that is used for many toy examples in machine learning. In fact, the task that is solved around the MNIST dataset does not differ very much from our own classification task. Symbols that can appear in a calculator input will mainly be digits from 0 to 9. Additionally, mathematical operators, brackets, latin symbols and greek symbols could be found in a mathematical formula. For this work however, we will focus on recognizing only digits and simple mathematical operators like plus, minus, multiplication-, and division symbols, as well as brackets.
 	
 	After these two major steps are complete, there is only one task left. Reconstructing the formula with the recognized symbols, and aligning them in the order in which they appeared on the input image to finally evaluate the term and present the result.
+	
+	\subsection{Classification with neural networks}	
+	The state-of-the-art for automatically recognizing the content of an image file is to solve this issue with \textit{artificial neural networks}. In theory, this design pattern bases on the neuron structure of the human brain as described by neuroscientists. According to this concept, a neural network consists of different layers with a certain amount of nodes which are also referred to as \textit{neurons}. Each neuron receives an input of different parameters that either come from the previous neuron layer or they are given as initial input. A non-linear function is applied to this input that creates an output value. This value is lead to the next layer where it acts as an input again. The first layer of a neural network is often referred to as the \textit{input layer}, while the last layer is called the \textit{output layer}. Between these layer lies a freely chosen number arbitrarily large \textit{hidden layers} (see figure \ref{fig:simple-nn}).
+	
+	\begin{figure}[h!]
+		\includegraphics[width=0.5\textwidth]{ImagesForReport/simple-nn.png}
+		\caption{A simple artificial neural network}
+		\label{fig:simple-nn}
+	\end{figure}
+	
+	Classifying an image means to have a neural network predict how likely the image shows an object from an acquainted catalog, so-called \textit{labels}. As an input, the neural network receives an array including this image's color values. Therefore, the amount of neurons in the input layer needs to be conform with the size and the number of color channels of the input image. The first layer will now produce a certain number of output values that are passed to the next layer. How many output values are generated and to which neurons of the next layer they are passed, depends on the network architecture. When the input meets the last layer of the network, the output layer will calculate for each known label the probability on which the image displays something that can be described with this label. This means, the final output of the network is a vector mapping the probabilities to the known labels. To make a distinct classification of the image content, one would assign the label with the highest probability to the image. Furthermore, it is also possible to design a network that takes not only a single but a set of images as an input and predicts labels for all images. Thus, it will not return a vector with probabilities, but a matrix.
+	
+	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. 
+	
 	\section{Read and Interpret Visual Information}
 	
 	\subsection{Data Collection}
@@ -619,8 +633,8 @@ AlexNet(
 	It can then not be fully removed and a part of the border may remain (see fig \ref{fig:PartialBorder}).
 	\begin{figure*}[htp]
 		\centering
-		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder1}}\quad
-		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
+		%\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder1}}\quad
+		%\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
 		
 		\caption{Many of the background contours are removed.
 		However, the paper on the left side of the image is only partially removed and the eraser is to far away from the border to be removed.}
