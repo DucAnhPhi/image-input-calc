@@ -44,16 +44,16 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\maketitle
 	
 	\begin{abstract}
-		This paper discusses a program that can solve a variety of handwritten mathematical equations, using state of the art computer vision and machine learning methods.
+		This paper discusses a program that can solve a variety of handwritten mathematical equations, using state-of-the-art computer vision and machine learning methods.
 		Given a single image or a stream of images, the program is able to detect, recognize and compute written equations in real time.
 		We came up with a series of steps to tackle this challenge.
-		Initially we remove noise with a preprocessing step.
-		Then each handwritten character is segmented from the image and their size, shape and positional information is used to infer their mathematical structure.
+		Initially, we remove noise with a preprocessing step.
+		Then, each handwritten character is segmented from the image and its size, shape and positional information is used to infer its position in the equation.
 		This also allows simple characters (e.g. points and bars) to be classified.
 		The remaining characters are recognized using an \textit{AlexNet} Artificial Neural Network.
-		With the inferred mathematical structure and the classified characters we can reconstruct the equation as a String and pass it to the Symbolic Math Solver \texttt{SymPy}.
-		While similar projects exist, this project goes into detail, how this can be done.
-		And, being open source, demonstrates, how such a problem may be tackled and gives a sophisticated basis for many other projects on a variety of topics.
+		Knowing the position and the class of the characters, allows us to reconstruct the equation as a string and pass it to the Symbolic Math Solver \texttt{SymPy}.
+		While similar projects exist, this project goes into detail, how this can be done. %???
+		And, being open source, demonstrates, how such a problem may be tackled and gives a basis for many other projects on a variety of topics.
 		
 		
 		
@@ -66,16 +66,16 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\section{Motivation}
 	
 	Computers are superior to humans in many everyday disciplines.
-	A Calculator, for instance, uses less time to calculate the solution of most simple mathematical problems than it does for the user to enter the equation.
+	A Calculator, for instance, can produce the solution to most simple mathematical problems faster than the user can enter it.
 	This has inspired us to search for a solution to this flaw in a common household item.
 	If we want to improve upon calculators, we will not have to increase the speed at which computers calculate.
 	Instead the focus should lie on improving the efficiency of entering an equation into the calculator.\\
-	We decided to make a calculator able to find the solution of equations, when given an image of the equation.
-	In the following paper we will explain, how such a calculator can be designed.\\
+	We decided to make a calculator able to find the solution to an equation, when given an image of it.
+	In this paper, we explain how such a calculator can be designed.\\
 	We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
 	
 	\section{Introduction}
-	The creation of an automatic image input calculator for handwritten formula mainly combines two common computer-scientific problems. 
+	The creation of an automatic image input calculator for handwritten formulae brings together two common computer-scientific problems. 
 	
 	For once, several operations from visual computing need to be applied to the image. The application has to segment the input image into one segment per character. It is important that the ordering of these symbols is preserved during this step. Otherwise, it would not be possible to reconstruct the original formula.
 	
@@ -86,7 +86,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\subsection{Data Collection}
 	The user can have the program analyse images from a variety of sources.
-	Using the library \texttt{OpenCV}, it is capable of reading image files, video files and may also use a webcam if present.
+	The library \texttt{OpenCV} is capable of reading image files, video files and may also use a webcam, if present.
 	This enables a smooth user experience and allows realtime analysis of an equation.
 	
 	
@@ -96,29 +96,29 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%The user could hold a sheet of written equations in front of the webcam and see the computed results almost immediately.
 	
 	\subsection{Preprocessing}
-	Our program receives at first a simple unaltered image.
-	From this image it is difficult to detect significant features, such as the symbols that make up the equation.
+	Our program receives the original unaltered image.
+	It is difficult to detect significant features, such as the symbols that make up the equation from such an image.
 	Therefore, it is necessary to do some preprocessing, before further steps make sense.\\
-	We are facing several issues in this.
+	This raises several issues.
 	Some improvements we could make include:\\
 	\begin{itemize}
 		% !!!
-		\item Correction for different Quality of Camera, Lighting, etc.:
-		The incoming images vary to a great extent due to changes of lighting and may come from different cameras.
+		\item Correction for different quality of camera, lighting, etc.:
+		The incoming images vary significantly due to changes of lighting and may come from different cameras.
 		Correcting for this, is not a simple task.
-		A future improvement of this project would improve greatly by having an adaptive preprocessing step.
+%		A future improvement of this project would improve greatly by having an adaptive preprocessing step.
 		% !!!
-		\item Simplification of the input dimensions: Explicitly we want our image to be a black-white image, with the only two colours being black (0) and white (255).
-		\item Connectedness of the symbols: For later steps it is useful to not segment any symbols. In the same manner we do not wish for two different symbols to be connected.
-		\item Removal of Noise: Often the background (e.g. paper or whiteboard) is not uniform and this can create spots on the image. (The human eye is very good at filtering these out.)
-		\item Background Contour removal: Often times when taking an image of a contour there will be other objects in the image (e.g. pencils, the border of the paper, etc.).
-		\item Correction for Reflected Bright Spots: Especially, when taking images from white boards, the program has to contend with light sources reflected of the background.
+		\item Simplification of the input dimensions: Explicitly we want our image to be a binary black-white image, with the colours black (0) and white (255).
+		\item Connectedness of the symbols: For later steps, it is useful to not segment any symbols. In the same manner, we do not wish for two different symbols to be connected.
+		\item Removal of noise: Often the background (e.g. paper or whiteboard) is not uniform and this can create spots in the image. (The human eye is very good at filtering these out.)
+		\item Background contour removal: Oftentimes when taking an image of a contour there will be other objects in the image (e.g. pencils, the border of the paper, etc.).
+		\item Correction for reflected bright spots: Especially, when using images from white boards, the program has to contend with reflected light sources.
 	\end{itemize}
 		%!!! ??? Add more
 		We correct for (most of) these issues in three separate steps:\\
-		At first we use a few select image processing steps to deal with most of the issues.\\
-		In a second step we remove the contours that can be attributed to background objects.
-		Lastly we correct for reflected light sources. %!!! Add to master
+		First we use a few select image processing steps to deal with most of the issues.
+		In a second step, we remove the contours that can be attributed to background objects.
+		Lastly, we correct for reflected light sources. %!!! Add to master
 
 	\subsubsection{Simple Preprocessing}%??? !!! Add stepwise Images, after Preprocessing is complete
 	
@@ -133,7 +133,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		\subfigure[Adaptive Gaussian Thresholding]{\includegraphics[width=.45\linewidth]{ImagesForReport/AdaptiveGaussianThresholding}}\quad
 		\subfigure[Dilation]{\includegraphics[width=.45\linewidth]{ImagesForReport/Eroding}}
 		
-		\caption{Various Steps performed during the Simple Preprocessing Process}
+		\caption{Various steps performed during the simple Pre-Processing Process}
 		\label{fig:SimplePreprocessing}
 	\end{figure*}
 
@@ -186,22 +186,25 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 %	\end{figure}
 
 
-		The image our program receives as input is likely not easily analyzed.
-		We therefore manipulate the image with a few select operations, before continuing with our algorithm.
-		It should be noted here, that there is a great variety of different algorithms that work well.
-		The algorithm we will be presenting here is the one, we found to work well for our purpose.\\
-		It operates in five steps (as can be seen in fig: \ref{fig:SimplePreprocessing}):
+		The image our program receives as input is likely not easily analyzed as is.
+		We therefore pre-process the image with a few select operations before continuing with our algorithm.
+		It should be noted here that there is a great variety of different algorithms that work well.
+		The algorithm we will be presenting here is the one we found to work well for our purpose.\\
+		It operates in five steps (see fig: \ref{fig:SimplePreprocessing}):
 		\begin{itemize}
-			\item Grayscaling: At first we grayscale our image. Here we reduce the BGR (blue, green, red) image into an image with a single dimension per pixel. This is useful, because this simplifies our image and allows us to more easily analyse the image.
-			\item Gaussian Blur: Here we apply a Gaussian blur kernel on the image to smooth it out. This reduces the noise.
-			\item Morphological Opening: We apply a filter that removes a specific type of noise: Small dots. This is done by applying an erosion followed by a dilation filter. %??? is this the right filter
-			\item Adaptive Gaussian Threshold: We add a filter that applies a threshold. Any pixel below this threshold gets set to 0 any pixel above it gets set to 255. %??? check
+			\item Grayscaling: At first, we grayscale our image.
+			Here, we reduce the BGR (blue, green, red) image into one with a single dimension per pixel.
+			This is useful, because it simplifies the image and allows us to more easily analyse it.
+			\item Gaussian Blur: Here, we apply a Gaussian blur kernel on the image to smooth it out. This reduces the noise.
+			\item Morphological Opening: We apply a filter that removes a specific type of noise: small dots. This is done by applying an erosion followed by a dilation filter. %??? is this the right filter
+			\item Adaptive Gaussian Threshold: We add a filter that applies a threshold. 
+			Any pixel below this threshold gets set to 0 and any pixel above it gets set to 255. %??? check
 			This threshold differentiates the symbols from the background.
-			We will later explain in more precision how this filter works. %??? !!! Do it
-			\item Dilation: After the previous steps it is possible that some of the symbols have deteriorated into several parts.
+			We will later explain in more detail how this filter works. %??? !!! Do it
+			\item Dilation: After the previous steps, it is possible that some of the symbols have decomposed into several parts.
 			This allows for easier contour detection.
-			However, that makes the contour more difficult to be recognised by the classifier, which is why this step will be undone later. %??? Errosion is Dilation correct?
-			(Because our image is inverted, the code uses an erosion function.) %??? fix
+			However, this makes the contour more difficult for the classifier to recognise, which is why this step will be undone later. %??? Errosion is Dilation correct?
+%			(Because our image is inverted, the code uses an erosion function.) %??? fix
 			Therefore, it is useful at this point to thicken the contours.
 		\end{itemize}
 	%	\begin{lstlisting}
@@ -216,10 +219,10 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 			
 	
 	\subsubsection{Border Removal}%??? !!! Add before vs after Images, after Preprocessing is complete
-		After the steps above, we determine a fairly good image.
+		After these pre-processing steps, we have a fairly good image.
 		However, very often the shape of background objects register as contours.
-		Our mission in the following section is to be able to remove the contours of background objects.
-		For this we make use of a simple observation: Symbols tend to be separate from other contours, while background contours tend to be flaky and can be roughly traced to the border of an image, see fig .%???
+		THis section explains how to remove the contours of background objects.
+		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to be flaky and can be roughly traced to the border of an image, see fig .%???
 		Using this knowledge we can create a mask, which removes the background contours.\\
 		We determine the mask in the following steps:
 		\begin{itemize}
@@ -249,11 +252,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\end{figure*}
 	
 	\subsubsection{Reflection Removal}
-	Bright light sources may reflect of the surface on which the equation is written.
-	This occurs especially often, when using a white board, but also on paper (see fig. \ref{fig:BrightnessRemoval}).
-	Unfortunately the adaptive Threshold function cannot differentiate between the writing and the bright reflexes.
-	Fortunately the reflected light sources all have in common, that they are significantly brighter than the average image.
-	It is therefore possible to create a fairly simple mask which simply removes all pixels, which are significantly brighter than the average pixel of the image.
+	Bright light sources may reflect off the surface on which the equation is written.
+	This occurs especially often when using a white board, but also on paper (see fig. \ref{fig:BrightnessRemoval}).
+	Unfortunately, the adaptive threshold function cannot differentiate between the writing and the bright reflections.
+	Fortunately, the reflected light sources all have a commontrait:
+	They are significantly brighter than the average image.
+	It is therefore possible to create a fairly simple mask which simply removes all pixels which are significantly brighter than the average pixel of the image.
 	After applying this mask, the image no longer contains contours caused by reflected light sources.%??? significantly
 	
 	\begin{figure*}[htp]
@@ -261,17 +265,17 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		\subfigure[Original Frame]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame}}\quad
 		\subfigure[After Simple Preprocessing and Background Removal]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundRemoved}}
 		
-		\subfigure[Brightness Removal Mask (Black pixels will not be removed)]{\includegraphics[width=.45\linewidth]{ImagesForReport/BrightnessMask}}\quad
+		\subfigure[Reflection Removal Mask (Black pixels will not be removed)]{\includegraphics[width=.45\linewidth]{ImagesForReport/BrightnessMask}}\quad
 		\subfigure[Resulting Image]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundFiltered}}
 		
-		\caption{Performance of the Brightness Removal Mask.}
+		\caption{Performance of the Reflection Removal Mask.}
 		\label{fig:BrightnessRemoval}
 		%??? Make captions in center
 	\end{figure*}
 	
 	\subsubsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
 	A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
-	The "Adaptive Threshold" function \cite{adaThresh}, found in the openCV library is very useful in this case. %???
+	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful in this case. %???
 	This function operates like most threshold functions, in that it compares a pixel to a threshold $T$.
 	If the pixel is found to have a value higher than the threshold $T$, we set it to 255.
 	Otherwise the pixel is set to a value of 0 \cite{cvAdaThresh}
@@ -294,31 +298,33 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	&\mathrm{with} \hspace{1cm}\alpha = 1/\Big(\sum G_{(\Delta x,\Delta y)}\Big)\\
 	&\mathrm{with} \hspace{1cm}\sigma = 0.3 \cdot ((11-1)/2-1) + 0.8 = 2
 	\end{align}
-	Here $\alpha$ is the normalisation factor and $\sigma$ is the recommended standard deviation for a box size of 11.
-	
+	Here $\alpha$ is the normalisation factor and $\sigma$ is the  standard deviation (recommended by \texttt{OpenCV}) for a box size of 11.\\
+	The values mentioned above were found to work well with most of the images tested.
+	If a particularly large or small image would be tested, we would need to adapt these values
 	%??? maybe add this	\subsection{Small Contour Filter Mask}
 	
 	
 	
 	\subsection{Segmentation}
-	In the segmentation step we extract written characters from the image.
+	In the segmentation step, we extract written characters from the image.
 	These extracted pixels are then further evaluated - they make up the building blocks of our program.
 	In the following and sections to come, we are going to detect, group, order and classify these segments, in order to
 	reproduce and finally solve the written equations.
 	
 	\subsubsection{Contour Detection}
-	After the preprocessing is done, we can deploy an algorithm to detect contours from the image. In simple terms, a contour is the boundary of an object in the image.
-	OpenCV defines a contour as a "curve joining all the continuous points (along the boundary), having the same color or intensity".
+	After the preprocessing is done, we can deploy an algorithm to detect contours from the image.
+	In simple terms, a contour is the boundary of an object in the image.
+	The library\texttt{OpenCV} defines a contour as a ``curve joining all the continuous points (along the boundary), having the same color or intensity".
 	These contours are essential for later shape analysis, object detection and recognition.
 	
 	The underlying algorithm we used for contour detection is from the paper Suzuki et. al. (1985).
-	The paper presents a border following technique for binary images. "It derives a sequence of the coordinates [...]
+	This paper presents a border following technique for binary images. "It derives a sequence of the coordinates [...]
 	from the border between a connected component of 1-pixels (1-component) and a connected component of 0-pixels (background or hole)."
-	Not only does the algorithm reliably detect contours, it also gives us hierarchical information among them.
+	Not only does the algorithm reliably detect contours, but also it gives us hierarchical information about them.
 	
-	This is important for making sense of nested contours later.
+	This will be important for making sense of nested (contours completely inside of other contours) contours later.
 	
-	\subsubsection{Remove Small Contours}
+	\subsubsection{Removing Small Contours}
 	Not all segmented contours represent handwritten signs.
 	Some are noise which passed the preprocessing. Usually this noise is rather small, e.g. points or thin lines.
 	With the assumption that handwritten signs have approximately equal line thickness we can confidently remove all contours which have a significantly smaller line thickness.
