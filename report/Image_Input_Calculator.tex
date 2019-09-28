@@ -64,7 +64,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\newpage
 	\section{Motivation}
-	
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	Computers are superior to humans in many everyday disciplines.
 	A Calculator, for instance, can produce the solution to most simple mathematical problems faster than the user can enter it.
 	This has inspired us to search for a solution to this flaw in a common household item.
@@ -75,6 +75,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
 	
 	\section{Introduction}
+		\small{Author: Fenja Kollasch, Duc Anh Phi} \newline \newline
 	The creation of an automatic image input calculator for handwritten formulae brings together two common computer-scientific problems. 
 	
 	For once, several operations from visual computing need to be applied to the image. The application has to segment the input image into one segment per character. It is important that the ordering of these symbols is preserved during this step. Otherwise, it would not be possible to reconstruct the original formula.
@@ -94,11 +95,54 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	Classifying an image means to have a neural network predict how likely the image shows an object from an acquainted catalog, so-called \textit{labels}. As an input, the neural network receives an array including this image's color values. Therefore, the amount of neurons in the input layer needs to be conform with the size and the number of color channels of the input image. The first layer will now produce a certain number of output values that are passed to the next layer. How many output values are generated and to which neurons of the next layer they are passed, depends on the network architecture. When the input meets the last layer of the network, the output layer will calculate for each known label the probability on which the image displays something that can be described with this label. This means, the final output of the network is a vector mapping the probabilities to the known labels. To make a distinct classification of the image content, one would assign the label with the highest probability to the image. Furthermore, it is also possible to design a network that takes not only a single but a set of images as an input and predicts labels for all images. Thus, it will not return a vector with probabilities, but a matrix.
 	
-	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. 
+	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. The error calculated through the difference between prediction and ground truth now gets \textit{backpropagated} through the network by regarding the gradient at the previous neurons and adapting the weights at the neuron's cost function to minimize the error. This is an iterative process, which is why a training cycle usually has multiple \textit{epochs} where the whole training data set is passed forward and backward. Furthermore it has been proven beneficial to not lead the whole set at once through the network, but to take smaller batches that include randomly chosen samples from the training set. There are various optimization algorithms for the backward pass, as well as different metrics so estimate the error between ground truth and prediction.
 	
 	\section{Read and Interpret Visual Information}
+	The whole application flow is summarized in the figure below:\\
+	\begin{figure}[htp]
+		\includegraphics[width=1\textwidth]{ImagesForReport/fulldiagram.jpg}
+		\caption{Application Flow}
+		\label{fig:FullFlow}
+	\end{figure}
+	\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
+	\section{Theory}
+	\subsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
+	\small{Author: Timothy Jay Herbst} \newline \newline
+	A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
+	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful in this case. %???
+	This function operates like most threshold functions, in that it compares a pixel to a threshold $T$.
+	If the pixel is found to have a value higher than the threshold $T$, we set it to 255.
+	Otherwise the pixel is set to a value of 0 \cite{cvAdaThresh}
+	%		\begin{align}
+	%			newImg(x,y)=
+	%			\left
+	%			\begin{cases}
+	%			255  \hspace{1cm}&\mathrm{if} \hspace{0.5cm} img(x,y)>T \\
+	%			0  &\mathrm{else}
+	%			\end{cases}
+	%			\right.
+	%		\end{align}
+	This way it is possible, to easily "classify" a pixel as writing (0) or not (255).\\
+	What makes this function work so well, is that for every pixel the threshold $T(x,y)$ is calculated separately.
+	While there are several different ways, how we can calculate this, it was found to work best for our problem, by a simple process [2]:\\
+	The threshold $T(x,y)$ is set to the gaussian weighted sum of every pixel within a window with side length 11 (extends 5=(11-1)/2 pixels out from (x,y)):
+	\begin{align}
+	T(x,y)=&\sum_{\Delta x=-5}^{5}\sum_{\Delta y=-5}^{5} -2 + G_{(\Delta x,\Delta y)} \cdot img(x+\Delta x,y+\Delta y)\\
+	\mathrm{with}& \hspace{1cm} G_{(\Delta x,\Delta y)} = \alpha \cdot \mathrm{exp}(-(\Delta x ^2 +\Delta y^2)/(2*\sigma)^2)\\ %??? check
+	&\mathrm{with} \hspace{1cm}\alpha = 1/\Big(\sum G_{(\Delta x,\Delta y)}\Big)\\
+	&\mathrm{with} \hspace{1cm}\sigma = 0.3 \cdot ((11-1)/2-1) + 0.8 = 2
+	\end{align}
+	Here $\alpha$ is the normalisation factor and $\sigma$ is the  standard deviation (recommended by \texttt{OpenCV}) for a box size of 11.\\
+	The values mentioned above were found to work well with most of the images tested.
+	If a particularly large or small image would be tested, we would need to adapt these values
+	%??? maybe add this	\subsection{Small Contour Filter Mask}
+	
+	
+	\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
+	\section{Design of the Image Input Calculator}
 	
 	\subsection{Data Collection}
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	The user can have the program analyse images from a variety of sources.
 	The library \texttt{OpenCV} is capable of reading image files, video files and may also use a webcam, if present.
 	This enables a smooth user experience and allows realtime analysis of an equation.
@@ -110,6 +154,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%The user could hold a sheet of written equations in front of the webcam and see the computed results almost immediately.
 	
 	\subsection{Preprocessing}
+	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
 	Our program receives the original unaltered image.
 	It is difficult to detect significant features, such as the symbols that make up the equation from such an image.
 	Therefore, it is necessary to do some preprocessing, before further steps make sense.\\
@@ -135,7 +180,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		Lastly, we correct for reflected light sources. %!!! Add to master
 
 	\subsubsection{Simple Preprocessing}%??? !!! Add stepwise Images, after Preprocessing is complete
-	
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	\begin{figure*}[htp]
 		\centering
 		\subfigure[Original Frame]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame}}\quad
@@ -233,6 +278,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 			
 	
 	\subsubsection{Border Removal}%??? !!! Add before vs after Images, after Preprocessing is complete
+		\small{Author: Timothy Jay Herbst} \newline \newline
 		After these pre-processing steps, we have a fairly good image.
 		However, very often the shape of background objects register as contours.
 		THis section explains how to remove the contours of background objects.
@@ -266,6 +312,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\end{figure*}
 	
 	\subsubsection{Reflection Removal}
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	Bright light sources may reflect off the surface on which the equation is written.
 	This occurs especially often when using a white board, but also on paper (see fig. \ref{fig:BrightnessRemoval}).
 	Unfortunately, the adaptive threshold function cannot differentiate between the writing and the bright reflections.
@@ -287,45 +334,18 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		%??? Make captions in center
 	\end{figure*}
 	
-	\subsubsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
-	A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
-	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful in this case. %???
-	This function operates like most threshold functions, in that it compares a pixel to a threshold $T$.
-	If the pixel is found to have a value higher than the threshold $T$, we set it to 255.
-	Otherwise the pixel is set to a value of 0 \cite{cvAdaThresh}
-	%		\begin{align}
-	%			newImg(x,y)=
-	%			\left
-	%			\begin{cases}
-	%			255  \hspace{1cm}&\mathrm{if} \hspace{0.5cm} img(x,y)>T \\
-	%			0  &\mathrm{else}
-	%			\end{cases}
-	%			\right.
-	%		\end{align}
-	This way it is possible, to easily "classify" a pixel as writing (0) or not (255).\\
-	What makes this function work so well, is that for every pixel the threshold $T(x,y)$ is calculated separately.
-	While there are several different ways, how we can calculate this, it was found to work best for our problem, by a simple process [2]:\\
-	The threshold $T(x,y)$ is set to the gaussian weighted sum of every pixel within a window with side length 11 (extends 5=(11-1)/2 pixels out from (x,y)):
-	\begin{align}
-	T(x,y)=&\sum_{\Delta x=-5}^{5}\sum_{\Delta y=-5}^{5} -2 + G_{(\Delta x,\Delta y)} \cdot img(x+\Delta x,y+\Delta y)\\
-	\mathrm{with}& \hspace{1cm} G_{(\Delta x,\Delta y)} = \alpha \cdot \mathrm{exp}(-(\Delta x ^2 +\Delta y^2)/(2*\sigma)^2)\\ %??? check
-	&\mathrm{with} \hspace{1cm}\alpha = 1/\Big(\sum G_{(\Delta x,\Delta y)}\Big)\\
-	&\mathrm{with} \hspace{1cm}\sigma = 0.3 \cdot ((11-1)/2-1) + 0.8 = 2
-	\end{align}
-	Here $\alpha$ is the normalisation factor and $\sigma$ is the  standard deviation (recommended by \texttt{OpenCV}) for a box size of 11.\\
-	The values mentioned above were found to work well with most of the images tested.
-	If a particularly large or small image would be tested, we would need to adapt these values
-	%??? maybe add this	\subsection{Small Contour Filter Mask}
 	
 	
 	
 	\subsection{Segmentation}
+		\small{Author: Duc Anh Phi} \newline \newline
 	In the segmentation step, we extract written characters from the image.
 	These extracted pixels are then further evaluated - they make up the building blocks of our program.
 	In the following and sections to come, we are going to detect, group, order and classify these segments, in order to
 	reproduce and finally solve the written equations.
 	
 	\subsubsection{Contour Detection}
+	\small{Author: Duc Anh Phi} \newline \newline
 	After the preprocessing is done, we can deploy an algorithm to detect contours from the image.
 	In simple terms, a contour is the boundary of an object in the image.
 	The library\texttt{OpenCV} defines a contour as a ``curve joining all the continuous points (along the boundary), having the same color or intensity".
@@ -339,6 +359,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	This will be important for making sense of nested (contours completely inside of other contours) contours later.
 	
 	\subsubsection{Removing Small Contours}
+	\small{Author: Duc Anh Phi} \newline \newline
 	Not all segmented contours represent handwritten signs.
 	Some are noise which passed the preprocessing. Usually this noise is rather small, e.g. points or thin lines.
 	With the assumption that handwritten signs have approximately equal line thickness we can confidently remove all contours which have a significantly smaller line thickness.
@@ -347,7 +368,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	To make sure not to include the line thickness of noise, contours of median size are selected. Then we compute the line thickness for each of these selected contours.
 	The median out of these computed values is our boundary line thickness.
 	
-	\paragraph{Compute Line Thickness} The algorithm for computing the line thickness of a contour was taken from \url{https://cs.stackexchange.com/questions/59475/width-of-a-string-line-in-an-image}
+	\paragraph{Compute Line Thickness} 	\small{(Author: Duc Anh Phi)} The algorithm for computing the line thickness of a contour was taken from \url{https://cs.stackexchange.com/questions/59475/width-of-a-string-line-in-an-image}
 	\begin{enumerate}
 		\item We start with a binary image (see fig. \ref{fig:linethickness}), so the pixel values are going to be either zero (black) or 255 (white).
 		\item Summing up the image gives us the sum of all white pixels, as black pixel are zero. In other words the sum gives us the area of the whole white line.
@@ -373,6 +394,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\end{figure*}
 	
 	\subsubsection{Group Contours}
+	\small{Author: Duc Anh Phi} \newline \newline
 	Some contours belong together to form a mathematical symbol or structure. In the following we replace them with their grouped version.
 	
 	\paragraph{Handle Nested Contours}
@@ -415,6 +437,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	
 	\subsection{Line Assigning and Ordering}
+	\small{Author: Duc Anh Phi} \newline \newline
 	At this stage we have a list of (grouped) contour objects. We now face the problem of bringing them in a correct mathematical order, based on their position in the image.
 	This task seems trivial for one equation - simply sort the contours by their x-coordinate.
 	However, we aim to solve multiple equations, which are each written in a separate new line.
@@ -434,6 +457,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	For the Line Assigning we have developed several algorithms, of which we will be discussing the most interesting, the ones able to tackle a particular problem and the most efficient ones.
 	
 	\subsubsection{Determining the Direction of Writing}
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	When writing an equation, most people tend to write roughly along an "invisible line".
 	Therefore, when taking an image of said equation, we can expect it to adhere roughly to the line.
 	We can use this to determine the order of the symbols.\\
@@ -457,6 +481,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%This could be implemented, by determining a radius of acceptance $R$.
 	
 	\subsubsection{Assigning Lines to Proposed Line Positions}
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	Our aim is to accurately order the contours into lines.
 	A possible method for doing this is by proposing the position of lines.
 	Then we check for each proposed line, whether or not a given contour is a good fit (if it is within a certain radius of the line).\\
@@ -484,11 +509,14 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%!!! ??? Add images
 	
 	\subsection{Recognition}
+	\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
 	\subsubsection{Preclassification}
+	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
 	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network. This is very beneficial for two main reasons. The classification problem becomes easier as there are less classes to differentiate from. Additionally it saves computational time, as less contours have to be passed through the network.
 	We have already performed some classification before, in the segmentation step. Contours were classified as fraction bars, based on local rules. The same goes for equal signs. In the following we will be discussing some of the possible preclassifications that performed well.
 	
 	\paragraph{Dots, Commas and Multiplication Symbols}
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	A difficulty with detecting handwritten equations is the common usage of points or point-like symbols.
 	This makes it nearly impossible to account for all possible interpretations of this.
 	Therefore we have focused on the two most common cases:
@@ -506,9 +534,11 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	If the contour is closer to the mid point than the lower end of the contour for both of its neighbours, then the contour is classified as a multiplication dot.\\
 
 \subsubsection{Extract Subimages for the Neural Network}
+\small{Author:, Duc Anh Phi} \newline \newline
 In our preprocessing step we alter the contours in a way to remove noise. The resulting contours are thicker due to dilation in the preprocessing. Thus these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions as the network was not trained on these “thicker” contours.
 As a solution to this problem we use the thicker contours as a mask. We apply that mask to the binarized original image. The result is a proper representation of what was written without the noise.
 \subsubsection{Symbol Classification}
+\small{Author: Fenja Kollasch} \newline \newline
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
 	
 	Therefore, we need to solve a typical classification problem. It is similar to the classification of the \textit{MNIST} image data set including 60000 images of handwritten digits. Additional to the digits from 0 to 9, our classifier also needs to recognize the symbols \textit{+}, \textit{(}, and \textit{)}, as well as the letters \textit{x} and \textit{y}. All kinds of dashes like the ones used in an equal sign or a minus symbol will not be recognized by machine learning techniques but will be handled by manual classification.
@@ -534,8 +564,12 @@ After the preprocessing routine is complete, each handwritten character is extra
 			
 			Not all symbols in this dataset are relevant for our classifier. Therefore, we filter the images according to their labels and thus simply include the ones that are necessary for our training procedure. Our first approach was to take only the digits and plus symbols from this dataset. Unfortunately, many of the digit images were cropped or of poor quality. In the end, we decided to take only the plus symbols from the dataset what leaves us with roughly 100 images after the filtering. Since MNIST contains 60000 images of digits, we have a critical overflow of digit characters in comparison to the plus symbols. To reduce this gap, we make use of data augmentation and apply a number of transformation to all non-digit characters. By rotating, flipping and combinations of rotation and flipping we generate four extra images per non-digit symbol and remain now with 405 training images.
 			
-		\subparagraph{Custom training images}
+		\subparagraph{Custom training images}	\small{(Author: Timothy Jay Herbst, Fenja Kollasch)}
 		Furthermore, we generated some training images ourselves by writing down symbols and capture them the same way in which our application will capture the mathematical formula during usage.
+		All training equations were written on paper.
+		A variety of different writing utensils of different colors and thicknesses were used.
+		Images were then separated using the methods that may be found on the branch gathertrainingdata2. %??? link
+		
 		
 	\paragraph{Training}
 		A \textit{Jupyter notebook} is provided for the complete training routine. First of all, the combined dataset is loaded for test and training data. This dataset includes images from MNIST, HASY, and our own images as well. Since the class that holds our dataset inherits from \texttt{PyTorch}'s class \texttt{Dataset}, we are allowed to use a \texttt{DataLoader} for training. The \texttt{DataLoader} class makes it possible to iterate in a comfortable way over the minibatched dataset. We use minibatches of the size of 16 samples per batch. The training is running over 10 epochs.
@@ -614,11 +648,20 @@ AlexNet(
 	Before the extracted symbols are given as an input for the automatic classifier, we check manually if they picture a symbol that our classifier can not recognize. This applies for opening and closing brackets, minus symbols, equal signs, commas, and multiplication dots.
 	
 	\subsection{Calculations}
+	\small{Author: Duc Anh Phi} \newline \newline
+	
+	\section{Experiments}
+	\subsection{Comparing Preclassification and Neural Networks}
+	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
+	
+	\subsection{Confusion Matrix}
+	\small{Author: Fenja Kollasch} \newline \newline
 	
 	\section{Discussion}
-	In this section, we will discuss the progression of this project regarding the result.
+%	In this section, we will discuss the progression of this project regarding the result.
 	
 	\subsection{Pre-Processing}
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	Transforming the original image into a usable binary image worked relatively smoothly.
 	The main issues which arise during this part are caused by the large variety of images.
 	These vary in brightness, background color and medium of writing to name a few.
@@ -658,9 +701,15 @@ AlexNet(
 	
 	
 	\subsection{Classification problems}
+	\small{Author: Fenja Kollasch} \newline \newline
 	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
 	
+	\subsection{Comparing Preclassification and Neural Networks}
+	\small{Author: Timothy Jay Herbst} \newline \newline
+	
 	\section{Conclusion}
+		\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
+		
 	
 	\pagebreak
 	\section{Installation and Usage}
