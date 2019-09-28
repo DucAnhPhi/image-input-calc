@@ -603,6 +603,38 @@ AlexNet(
 	
 	\section{Discussion}
 	In this section, we will discuss the progression of this project regarding the result.
+	
+	\subsection{Pre-Processing}
+	Transforming the original image into a usable binary image worked relatively smoothly.
+	The main issues which arise during this part are caused by the large variety of images.
+	These vary in brightness, background color and medium of writing to name a few.
+	However, it was possible to develop a method which consistently gives good results.\\
+	This step had to have a very low false negative rate.
+	In other words, we had to allow for a small amount of noise rather than accidently have symbols or parts of symbols disappear.
+	The simple pre-processing step performed well on this task.\\
+	Images were already usable after preprocessing.
+	However, often contours could be found which did not belong to the equation itself.
+	These contours can almost always be classified as either objects which are not text (for instance the border of a piece of paper) or as simple noise (caused for instance by the texture of the paper).
+	They can be countered for separately.\\
+	
+	Unwanted contours caused by background objects are often close to or connect to the border of the image.
+	They could often be removed with background removal mask.
+	While this often worked, this failed when the colour of the background object does not differ strongly from the background colour.
+	This causes the border of the object to be inconsistent which may leave some part of the border in the image.\\
+	
+	Contours created by noise tend to be small and appear either statistically isolated or in large clusters.\\
+	Isolated pixels of noise are often caused by small aberrations in the texture of the writing medium like paper.\\
+	Noisy Pixels which appear in larger groups can often be attributed to reflections of light sources.
+	This happens more often on white boards.\\
+	Both types offer only minor variations of the brightness of the writing medium and can therefore be countered by using a mask which removes all pixels which are of higher than average brightness in the original image.\\
+	While this method is in no way sufficient to detect text, it gives us a fair indicator as to which pixels are not part of the equation.
+	This doesn't work if the equation is brighter than the medium it is written on (e.g. a chalk board).
+	A simple inversion of the brightness of the original image might be able to solve this problem.
+	However, reflected light sources (whose brightness may well be bright than the text) would present a problem.
+	
+	
+	
+	
 	\subsection{Classification problems}
 	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
 	
