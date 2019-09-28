@@ -83,6 +83,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	The second issue our program has to address, is the recognition of each segmented character. To do so, we can apply methods from machine learning. Luckily, the recognition of handwritten symbols is a well-known problem that has been approached by various researchers before. LeCun et al \cite{lecun1998} for instance discussed different methods to recognized handwritten digits in 1998. With this work, they made a huge contribution by providing this MNIST database of handwritten digits \cite{mnist} that is used for many toy examples in machine learning. In fact, the task that is solved around the MNIST dataset does not differ very much from our own classification task. Symbols that can appear in a calculator input will mainly be digits from 0 to 9. Additionally, mathematical operators, brackets, latin symbols and greek symbols could be found in a mathematical formula. For this work however, we will focus on recognizing only digits and simple mathematical operators like plus, minus, multiplication-, and division symbols, as well as brackets.
 	
 	After these two major steps are complete, there is only one task left. Reconstructing the formula with the recognized symbols, and aligning them in the order in which they appeared on the input image to finally evaluate the term and present the result.
+	The whole application flow is summarized in the figure below:\\
+	\begin{figure}[htp]
+		\includegraphics[width=1\textwidth]{ImagesForReport/fulldiagram.jpg}
+		\caption{Application Flow}
+		\label{fig:FullFlow}
+	\end{figure}
 	\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
 	\section{Theory}
 	\subsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
