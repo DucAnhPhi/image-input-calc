@@ -39,7 +39,7 @@ class DataCollection(Dataset):
         if use_mnist:
             self.append_mnist(imgs, labels, train)
         if use_own:
-            self.append_own(imgs, labels, path=own_path)
+            self.append_own(imgs, labels, train, path=own_path)
         self.data = imgs
         self.targets = labels
         self.size = len(imgs)
@@ -159,7 +159,7 @@ class DataCollection(Dataset):
         for label in tqdm(mnist_data.targets):
             labels.append(label.item())
 
-    def append_own(self, imgs, labels, path='all_symbols'):
+    def append_own(self, imgs, labels, train, path='all_symbols'):
         label_idx = 0
         for symbol in MATH_SYMBOLS:
             try:
@@ -167,23 +167,28 @@ class DataCollection(Dataset):
                     symbol = 'div'
                 if symbol == '(':
                     symbol = 'brckts'
-                images = os.listdir(os.path.join(path, symbol))
+                if train:
+                    full_path = os.path.join(path, symbol)
+                else:
+                    full_path = os.path.join(path, symbol, 'test')
+                images = os.listdir(full_path)
                 for image_file in images:
-                    img = cv2.imread(os.path.join(path, symbol, image_file))
-                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    pil_img = Image.fromarray(img, 'L')
-                    rotated1 = transforms.RandomRotation(10)(pil_img)
-                    rotated2 = transforms.RandomRotation(5)(pil_img)
-                    augmented = [pil_img, rotated1, rotated2]
-                    for pic in augmented:
-                        imgs.append(self.torch_preprocess(pic))
-                        labels.append(label_idx)
-                        if symbol == 'brckts':
-                            imgs.append(self.torch_preprocess(pic.transpose(Image.FLIP_LEFT_RIGHT)))
-                            labels.append(label_idx+1)
+                    if image_file != 'test':
+                        img = cv2.imread(os.path.join(full_path, image_file))
+                        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                        pil_img = Image.fromarray(img, 'L')
+                        rotated1 = transforms.RandomRotation(10)(pil_img)
+                        rotated2 = transforms.RandomRotation(5)(pil_img)
+                        augmented = [pil_img, rotated1, rotated2]
+                        for pic in augmented:
+                            imgs.append(self.torch_preprocess(pic))
+                            labels.append(label_idx)
+                            if symbol == 'brckts':
+                                imgs.append(self.torch_preprocess(pic.transpose(Image.FLIP_LEFT_RIGHT)))
+                                labels.append(label_idx+1)
 
-                    if symbol == '+' or symbol == '-':
-                        DataCollection.data_augmentation(pil_img, label_idx, imgs, labels, pillow=True, invert=False)
+                        if symbol == '+' or symbol == '-':
+                            DataCollection.data_augmentation(pil_img, label_idx, imgs, labels, pillow=True, invert=False)
             except FileNotFoundError:
                 print("No training data for {0}. Skipping".format(symbol))
             label_idx += 1
