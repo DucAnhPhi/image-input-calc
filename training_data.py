@@ -184,11 +184,15 @@ class DataCollection(Dataset):
                             imgs.append(self.torch_preprocess(pic))
                             labels.append(label_idx)
                             if symbol == 'brckts':
-                                imgs.append(self.torch_preprocess(pic.transpose(Image.FLIP_LEFT_RIGHT)))
+                                flipped_pic = pic.transpose(Image.FLIP_LEFT_RIGHT)
+                                imgs.append(self.torch_preprocess(flipped_pic))
                                 labels.append(label_idx+1)
 
-                        if symbol == '+' or symbol == '-':
+                        if symbol == '+' or symbol == '-' or symbol == 'brckts':
                             DataCollection.data_augmentation(pil_img, label_idx, imgs, labels, pillow=True, invert=False)
+                        if symbol == 'brckts':
+                            DataCollection.data_augmentation(flipped_pic, label_idx+1, imgs, labels, pillow=True,
+                                                             invert=False)
             except FileNotFoundError:
                 print("No training data for {0}. Skipping".format(symbol))
             label_idx += 1
