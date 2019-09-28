@@ -609,28 +609,36 @@ AlexNet(
 	The main issues which arise during this part are caused by the large variety of images.
 	These vary in brightness, background color and medium of writing to name a few.
 	However, it was possible to develop a method which consistently gives good results.\\
-	This step had to have a very low false negative rate.
-	In other words, we had to allow for a small amount of noise rather than accidently have symbols or parts of symbols disappear.
-	The simple pre-processing step performed well on this task.\\
-	Images were already usable after preprocessing.
-	However, often contours could be found which did not belong to the equation itself.
-	These contours can almost always be classified as either objects which are not text (for instance the border of a piece of paper) or as simple noise (caused for instance by the texture of the paper).
-	They can be countered for separately.\\
+	The simple pre-processing step performs well on a variety of images.
+	It does however, develop problems on very large and small images, because it operates with a fixed kernel size.
+	A solution for this would be to have the kernel size adapt with the size of the image or scaling the image.
+	However, when scaling the image we found that it could happen that the equation would dissapear if written less clearly.\\
+	The border removal process performs well when removing contours caused by objects that are not the equation.
+	It does fail sometimes, however, if the colour of the background object does not differ strongly from the background colour.
+	Then the border of the object may not be a consistent line.
+	It can then not be fully removed and a part of the border may remain (see fig \ref{fig:PartialBorder}).
+	\begin{figure*}[htp]
+		\centering
+		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder1}}\quad
+		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
+		
+		\caption{Many of the background contours are removed.
+		However, the paper on the left side of the image is only partially removed and the eraser is to far away from the border to be removed.}
+		\label{fig:PartialBorder}
+	\end{figure*}
+	Also if an object is fully within the image, it is not likely to disappear in this step.
+	It will, however, disappear in during the line ordering step because it is the only contour in that line and therefore can't be part of an equation.\\
 	
-	Unwanted contours caused by background objects are often close to or connect to the border of the image.
-	They could often be removed with background removal mask.
-	While this often worked, this failed when the colour of the background object does not differ strongly from the background colour.
-	This causes the border of the object to be inconsistent which may leave some part of the border in the image.\\
+	The brightness removal process allows for the removal of reflected light sources.
+	It also helps remove small sources of noise from the background of an image if the background is brighter than the image is on average.
+	If the image were on average darker than the equation, it would cause the writing to disappear.
+	However, we were never able to observe this on a whiteboard or paper.
+	This step makes it impossible to detect an equation on e.g. a blackboard, because here the writing is brighter than the background.
 	
-	Contours created by noise tend to be small and appear either statistically isolated or in large clusters.\\
-	Isolated pixels of noise are often caused by small aberrations in the texture of the writing medium like paper.\\
-	Noisy Pixels which appear in larger groups can often be attributed to reflections of light sources.
-	This happens more often on white boards.\\
-	Both types offer only minor variations of the brightness of the writing medium and can therefore be countered by using a mask which removes all pixels which are of higher than average brightness in the original image.\\
-	While this method is in no way sufficient to detect text, it gives us a fair indicator as to which pixels are not part of the equation.
-	This doesn't work if the equation is brighter than the medium it is written on (e.g. a chalk board).
-	A simple inversion of the brightness of the original image might be able to solve this problem.
-	However, reflected light sources (whose brightness may well be bright than the text) would present a problem.
+	
+	
+	
+	
 	
 	
 	
@@ -690,5 +698,30 @@ $ python3 app.py
 %??? !!! Create bibliography
 %	[1] $https://www.tutorialspoint.com/opencv/opencv_adaptive_threshold.htm$ \\
 %	[2] $https://docs.opencv.org/2.4/modules/imgproc/doc/miscellaneous_transformations.html?highlight=adaptivethreshold$
+
+
+
+%This step had to have a very low false negative rate.
+%In other words, we had to allow for a small amount of noise rather than accidently have symbols or parts of symbols disappear.
+%The simple pre-processing step performed well on this task.\\
+%Images were already usable after preprocessing.
+%However, often contours could be found which did not belong to the equation itself.
+%These contours can almost always be classified as either objects which are not text (for instance the border of a piece of paper) or as simple noise (caused for instance by the texture of the paper).
+%They can be countered for separately.\\
+
+%Unwanted contours caused by background objects are often close to or connect to the border of the image.
+%They could often be removed with background removal mask.
+%While this often worked, this failed when the colour of the background object does not differ strongly from the background colour.
+%This causes the border of the object to be inconsistent which may leave some part of the border in the image.\\
+
+%Contours created by noise tend to be small and appear either statistically isolated or in large clusters.\\
+%Isolated pixels of noise are often caused by small aberrations in the texture of the writing medium like paper.\\
+%Noisy Pixels which appear in larger groups can often be attributed to reflections of light sources.
+%This happens more often on white boards.\\
+%Both types offer only minor variations of the brightness of the writing medium and can therefore be countered by using a mask which removes all pixels which are of higher than average brightness in the original image.\\
+%While this method is in no way sufficient to detect text, it gives us a fair indicator as to which pixels are not part of the equation.
+%This doesn't work if the equation is brighter than the medium it is written on (e.g. a chalk board).
+%A simple inversion of the brightness of the original image might be able to solve this problem.
+%However, reflected light sources (whose brightness may well be bright than the text) would present a problem.
 
 \end{document}          
