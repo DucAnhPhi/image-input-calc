@@ -12,9 +12,9 @@ from tqdm import tqdm
 from preprocessing import PreProcessing
 
 MATH_SYMBOLS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                '+']
+                '+', '-', '/', '(', ')']
 SYMBOL_CODES = [
-                196]
+    196]
 
 IMAGE_DIMS = (1, 32, 32)
 
@@ -54,7 +54,8 @@ class DataCollection(Dataset):
                 for label_idx, symbol in enumerate(SYMBOL_CODES):
                     if symbol == label_id:
                         label_idx += 10
-                        img = cv2.imread(os.path.join(self.data_subfolder, label['path']))
+                        img = cv2.imread(os.path.join(
+                            self.data_subfolder, label['path']))
                         imgs.append(self.preprocess(img))
                         labels.append(label_idx)
                         self.data_augmentation(img, label_idx, imgs, labels)
@@ -117,8 +118,8 @@ class DataCollection(Dataset):
         rotation2 = transforms.RandomRotation(10)
         rotation3 = transforms.RandomRotation(5)
         augmented = [rotation2(img), rotation3(img), flip(img),
-                     rotation2(flip(img)),flip(rotation2(img)), 
-		     rotation3(flip(img)), flip(rotation3(img))]
+                     rotation2(flip(img)), flip(rotation2(img)),
+                     rotation3(flip(img)), flip(rotation3(img))]
         for augmented_img in augmented:
             imgs.append(DataCollection.torch_preprocess(augmented_img))
             labels.append(label)
@@ -172,8 +173,8 @@ class DataCollection(Dataset):
                     labels.append(label_idx)
                     labels.append(label_idx)
                     if symbol == '+':
-                        DataCollection.data_augmentation(pil_img, label_idx, imgs, labels, pillow=True, invert=False)
+                        DataCollection.data_augmentation(
+                            pil_img, label_idx, imgs, labels, pillow=True, invert=False)
             except FileNotFoundError:
                 print("No training data for {0}. Skipping".format(symbol))
             label_idx += 1
-

@@ -32,7 +32,7 @@ class Solver:
         for el in temp:
             if isinstance(el, str):
                 equation.append(el)
-            elif el.mathSign == MathSign.FRACTION_HOR or el.mathSign == MathSign.FRACTION_VERT:
+            elif el.mathSign == MathSign.FRACTION_HOR:
                 cv.drawContours(
                     frame, [el.contour], -1, (0, 255, 0), 2)
                 equation.append('/')
@@ -40,10 +40,10 @@ class Solver:
                 cv.drawContours(
                     frame, [el.contour], -1, (0, 0, 255), 2)
                 equation.append('=')
-            elif el.mathSign == MathSign.MINUS:
-                cv.drawContours(
-                    frame, [el.contour], -1, (255, 0, 0), 2)
-                equation.append('-')
+            # elif el.mathSign == MathSign.MINUS:
+            #     cv.drawContours(
+            #         frame, [el.contour], -1, (255, 0, 0), 2)
+            #     equation.append('-')
             elif el.mathSign == MathSign.COMMA:
                 cv.drawContours(
                     frame, [el.contour], -1, (255, 0, 255), 2)
