@@ -327,11 +327,11 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	To make sure not to include the line thickness of noise, contours of median size are selected. Then we compute the line thickness for each of these selected contours.
 	The median out of these computed values is our boundary line thickness.
 	
-	\paragraph{Compute Line Thickness}
+	\paragraph{Compute Line Thickness} The algorithm for computing the line thickness of a contour was taken from \url{https://cs.stackexchange.com/questions/59475/width-of-a-string-line-in-an-image}
 	\begin{enumerate}
-		\item We start with a binary image, so the pixel values are going to be either zero (black) or 255 (white).
+		\item We start with a binary image (see fig. \ref{fig:linethickness}), so the pixel values are going to be either zero (black) or 255 (white).
 		\item Summing up the image gives us the sum of all white pixels, as black pixel are zero. In other words the sum gives us the area of the whole white line.
-		\item After skeletonizing the image, the white line becomes almost one pixel thick.\\
+		\item After skeletonizing the image, the white line becomes one pixel thick (see fig. \ref{fig:linethickness}). The resulting skeleton is a thin approximation of the original image.\\
 		Summing up the skeleton is going to give us the approximate length of the line.
 		\begin{align}
 		Area = Sum/255
@@ -341,6 +341,16 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		Thickness = Area / Length
 		\end{align}
 	\end{enumerate}
+
+	\begin{figure*}[h!]
+		\centering
+		\subfigure[Original Contour]{\includegraphics[width=.45\linewidth]{ImagesForReport/orig.jpg}}\quad
+		\subfigure[After Skeletonizing]{\includegraphics[width=.45\linewidth]{ImagesForReport/skeleton.jpg}}
+		
+		\caption{Computing the Line Thickness}
+		\label{fig:linethickness}
+	%??? Make captions in center
+	\end{figure*}
 	
 	\subsubsection{Group Contours}
 	Some contours belong together to form a mathematical symbol or structure. In the following we replace them with their grouped version.
@@ -355,26 +365,23 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Fractions are problematic as they have an inherit order to them – especially nested fractions.
 	These orders have to be taken into account. Additionally fractions have multiple (at least 2) expressions stacked vertically, which may span several lines.
 	This can cause problems, when evaluating multiple lines of equations, because the nominator and denominator may be accidentally assigned to the wrong line.
-	The solution to these problems is to simplify fractions to single contours (their bounding boxes) while still preserving positional information about each grouped element.
-
+	The solution to these problems is to simplify fractions to single contours (their bounding boxes) while still preserving positional information about each grouped element.\\
 	Initially we have to find fractions first. We find fraction bars, which are contours with the following criteria:
 	\begin{itemize}
-		\item - their width is more than twice as big as their height
-		\item - they do not contain any holes
-		\item - their ratio of contour area to minimum bounding box area exceeds 0.7
-		\item - their ratio of contour area to their convex hull area exceeds 0.7
-		\item - they have a horizontal orientation
-		\item - they contain contours above and below them inside a defined acceptance area
+		\item their width is more than twice as big as their height
+		\item they do not contain any holes
+		\item their ratio of contour area to minimum bounding box area exceeds 0.7
+		\item their ratio of contour area to their convex hull area exceeds 0.7
+		\item they have a horizontal orientation
+		\item they contain contours above and below them inside a defined acceptance area
 	\end{itemize}
-
-	We chose these criteria based on experimental observations.
-
+	We chose these criteria based on experimental observations.\\\\
 	After sorting the fraction bars (ascending) by their width we apply the following algorithm to each bar iteratively, starting with the smallest one:
 	\begin{itemize}
-		\item - extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
-		\item - sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
-		\item - create a bounding box around the whole fraction
-		\item - create a contour object with the bounding box and reference to the Fraction object
+		\item extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
+		\item sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
+		\item create a bounding box around the whole fraction
+		\item create a contour object with the bounding box and reference to the Fraction object
 	\end{itemize}
 
 	\paragraph{Equal Sign}
@@ -458,11 +465,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\subsection{Recognition}
 	\subsubsection{Preclassification}
-	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network.
-	This is very beneficial for the program, since the classification problem becomes more difficult, the more classes there are.
-	Additionally it is very difficult for the classifier to detect contours caused by noise, because it does not have any positional information.\\
-	A partial classification is also necessary for the line ordering, for instance when considering division bars.\\
-	In the following we will be discussing some of the possible preclassifications that performed well.
+	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network. This is very beneficial for two main reasons. The classification problem becomes easier as there are less classes to differentiate from. Additionally it saves computational time, as less contours have to be passed through the network.
+	We have already performed some classification before, in the segmentation step. Contours were classified as fraction bars, based on local rules. The same goes for equal signs. In the following we will be discussing some of the possible preclassifications that performed well.
 	
 	\paragraph{Dots, Commas and Multiplication Symbols}
 	A difficulty with detecting handwritten equations is the common usage of points or point-like symbols.
@@ -480,7 +484,10 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	If the contour is closer to the lower end of the contour than the mid point for both of its neighbours, then the contour is classified as a comma.\\
 	
 	If the contour is closer to the mid point than the lower end of the contour for both of its neighbours, then the contour is classified as a multiplication dot.\\
-	
+
+\subsubsection{Extract Subimages for the Neural Network}
+In our preprocessing step we alter the contours in a way to remove noise. The resulting contours are thicker due to dilation in the preprocessing. Thus these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions as the network was not trained on these “thicker” contours.
+As a solution to this problem we use the thicker contours as a mask. We apply that mask to the binarized original image. The result is a proper representation of what was written without the noise.
 \subsubsection{Symbol Classification}
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
 	
@@ -594,6 +601,7 @@ AlexNet(
 	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
 	
 	\section{Conclusion}
+	
 	\pagebreak
 	\section{Installation and Usage}
 	\subsection{Installation}
