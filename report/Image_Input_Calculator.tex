@@ -638,6 +638,24 @@ AlexNet(
 	\section{Experiments}
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
+	In the following experiment we will be testing the Image-Input-Calculator and also give some motivation as to why it uses several preclassification functions.
+	For this we will compare how well the calculator performs using three different types of classifiers:\\
+	The first classifier is capable of classifying a contour to all symbols that might be in the equation we are analysing.
+	Those are the digits "0" through "9","+","-","/", "(" and ")".
+	The only time at which we use the preclassification processes are for deciding whether a dot is a multiplication symbols "$\cdot$", a comma "," or dot "." which separates digits larger and smaller than 1 or if the dot is not part of the equation at all.\\
+	The second classifier uses as many preclassifying methods as we were able to develop.
+	This means it is able to classify a contour to any digit "0" through "9", "+" and both "(" and ")".\\ %??? add accuracy on MNIST and Mixed
+	To compare how well they classify, we have created several images of equations with varying amounts of digits.
+	Both classifiers have been tested on the same equations and it has been determined, how often a contour was correctly or incorrectly classified.
+	These results can be seen in table ??? !!!.
+	
+	
+	%???!!!
+	
+	When looking at how many equations were correctly classified compared to how long the equation is, one can see ??? !!!
+	
+	
+	
 	
 	\subsection{Confusion Matrix}
 	\small{Author: Fenja Kollasch} \newline \newline
@@ -694,7 +712,17 @@ AlexNet(
 	
 	\section{Conclusion}
 		\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
-		
+	The Image-Input-Calculator works reasonably well under difficult circumstances.
+	However, it lacks consistency under good circumstances.
+	This is particularly problematic considering that a single misclassification will likely produce a wrong result.
+	It has difficulties distinguishing between ??? !!!.
+	This is due to the difference between simply classifying an image and analysing an image, which may vary quite strongly from the ideal.
+	The classifier significantly improved ???!!!check when using certain manual classifications to simplify the possible output of the classifier.
+	Another method how the classifier could have improved would be with more training data.
+	Even though many online libraries provide a variety of different symbols (which were used), these could only be of so much use, because of the difference between the provided image and a contour which had to undergo the preprocessing steps that are necessary to find the contours.
+	On this count, however, the Calculator shines, in that it uses several new methods to detect the significant contours.
+	To further improve on this a U-Net ???!!!check could have provided a semantic segmentation between pixels and background.
+	
 	
 	\pagebreak
 	\section{Installation and Usage}
