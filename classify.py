@@ -19,7 +19,7 @@ class MathSymbolClassifier:
             self.classifiers.append(classifier)
 
 
-    def classify(self, imgs):
+    def classify(self, imgs, return_label_idxs=False):
         img_tensor = torch.Tensor(imgs)
         all_best_predicitions = None
         all_labels = []
@@ -39,4 +39,6 @@ class MathSymbolClassifier:
         final_labels = all_labels[0]
         for i in range(1, len(self.classifiers)):
             final_labels = np.where(classifier_compare == i, all_labels[i], final_labels)
+        if return_label_idxs:
+            return final_labels
         return [td.MATH_SYMBOLS[label] for label in final_labels]
