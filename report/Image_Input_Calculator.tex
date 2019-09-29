@@ -741,6 +741,14 @@ AlexNet(
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	
+	\subsection{Segmentation}
+	We segment written characters from the image using visual computing methods. This works reasonably well as shown in the results(!REFERENCE). However it can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power for training but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
+	
+	Handling noise is a big issue. We leveraged visual computing methods and also came up with a set of rules for removing noise. We assumed it would be sufficient, unfortunately it has its problems.
+	
+	Our whole system is based on rules which are tightly coupled. Changing/adjusting a rules can have (unknown) consequences of influence the effectiveness of other rules. This not only makes it difficult to improve on the existing base it also makes the whole system less robust (domino effect). EXAMPLE
+	
+	
 	\section{Conclusion}
 		\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
 	The Image-Input-Calculator works reasonably well under difficult circumstances.
