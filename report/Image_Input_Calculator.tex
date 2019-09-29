@@ -111,10 +111,9 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\subsection{Image processing}
 	The plain image of an equation that our program takes as an input is not suitable for automatic classification. The single written characters need to be extracted while the order and placing of each character must be remembered. Furthermore, a number of image transformations is applied to clean the image from noise and make it easier to get recognized by the network. To perform the symbol segmentation and preprocess the images correctly, we use concepts from visual computing and image processing.	
 	
-	\subsubsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
+	\subsubsection{Adaptive Threshold}
 	\small{Author: Timothy Jay Herbst} \newline \newline
-	A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
-	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful in this case. %???
+	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful during Preprocessing. %???
 	This function operates like most threshold functions, in that it compares a pixel to a threshold $T$.
 	If the pixel is found to have a value higher than the threshold $T$, we set it to 255.
 	Otherwise the pixel is set to a value of 0 \cite{cvAdaThresh}
@@ -140,7 +139,6 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Here $\alpha$ is the normalisation factor and $\sigma$ is the  standard deviation (recommended by \texttt{OpenCV}) for a box size of 11.\\
 	The values mentioned above were found to work well with most of the images tested.
 	If a particularly large or small image would be tested, we would need to adapt these values
-	%??? maybe add this	\subsection{Small Contour Filter Mask}
 	
 	
 	\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
@@ -184,7 +182,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		In a second step, we remove the contours that can be attributed to background objects.
 		Lastly, we correct for reflected light sources. %!!! Add to master
 
-	\subsubsection{Simple Preprocessing}%??? !!! Add stepwise Images, after Preprocessing is complete
+	\subsubsection{Simple Preprocessing}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	\begin{figure*}[htp]
 		\centering
@@ -263,8 +261,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 			\item Morphological Opening: We apply a filter that removes a specific type of noise: small dots. This is done by applying an erosion followed by a dilation filter. %??? is this the right filter
 			\item Adaptive Gaussian Threshold: We add a filter that applies a threshold. 
 			Any pixel below this threshold gets set to 0 and any pixel above it gets set to 255. %??? check
-			This threshold differentiates the symbols from the background.
-			We will later explain in more detail how this filter works. %??? !!! Do it
+			This threshold differentiates the symbols from the background well.
 			\item Dilation: After the previous steps, it is possible that some of the symbols have decomposed into several parts.
 			This allows for easier contour detection.
 			However, this makes the contour more difficult for the classifier to recognise, which is why this step will be undone later. %??? Errosion is Dilation correct?
@@ -282,12 +279,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%	\end{lstlisting}
 			
 	
-	\subsubsection{Border Removal}%??? !!! Add before vs after Images, after Preprocessing is complete
+	\subsubsection{Border Removal}%??? !!! Add red mask
 		\small{Author: Timothy Jay Herbst} \newline \newline
 		After these pre-processing steps, we have a fairly good image.
 		However, very often the shape of background objects register as contours.
 		THis section explains how to remove the contours of background objects.
-		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to be flaky and can be roughly traced to the border of an image, see fig .%???
+		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to be flaky and can be roughly traced to the border of an image, see fig \ref{fig:BorderRemoval}.
 		Using this knowledge we can create a mask, which removes the background contours.\\
 		We determine the mask in the following steps:
 		\begin{itemize}
@@ -296,8 +293,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 			\item Strong Dilation: We now repeatedly dilate the image. Our goal here is to connect all contours which are close to each other.
 			Unfortunately this makes our contours unreadable.
 			This is not a problem since in this step we simply want to determine the contours we want to keep.
-			\item Floodfill Border: We then floodfill the border.
-			This removes any contour which connects to the border. 
+			\item Floodfill Border: All pixels, which connect only over black pixels to the border get removed from the mask.
+			Thereby most contours caused by objects near the border, get removed.
 			\item Remove Border: Since we changed the image size by adding a border, we now have to remove it.
 		\end{itemize}
 		In this manner we determine the mask.
@@ -311,7 +308,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		\subfigure[Border Removal Mask (Black pixels will not be removed)]{\includegraphics[width=.45\linewidth]{ImagesForReport/backgroundMask2}}\quad
 		\subfigure[Resulting Image]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundRemoved2}}
 		
-		\caption{Performance of the Border Removal Mask.}
+		\caption{Performance of the Border Removal Mask.
+		Please note that some contours caused by objects remain, because they don't connect well with the border of the image.}
 		\label{fig:BorderRemoval}
 		%??? Make captions in center
 	\end{figure*}
@@ -321,10 +319,11 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Bright light sources may reflect off the surface on which the equation is written.
 	This occurs especially often when using a white board, but also on paper (see fig. \ref{fig:BrightnessRemoval}).
 	Unfortunately, the adaptive threshold function cannot differentiate between the writing and the bright reflections.
-	Fortunately, the reflected light sources all have a commontrait:
+	Fortunately, the reflected light sources all have a common trait:
 	They are significantly brighter than the average image.
 	It is therefore possible to create a fairly simple mask which simply removes all pixels which are significantly brighter than the average pixel of the image.
 	After applying this mask, the image no longer contains contours caused by reflected light sources.%??? significantly
+	A positive side effect is, that noise caused by imperfections on paper get removed because of their brightness.
 	
 	\begin{figure*}[htp]
 		\centering
@@ -397,7 +396,6 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		
 		\caption{Computing the Line Thickness}
 		\label{fig:linethickness}
-	%??? Make captions in center
 	\end{figure*}
 	
 	\subsubsection{Group Contours}
@@ -462,7 +460,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Because of this, it is very useful to be able to determine the direction of such an "invisible line".
 	In the following we will be discussing a method how to determine this line.
 	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10^\circ$.
-	All of the following algorithms are capable of dealing with such small deviations.\\
+	A good algorithm was found to solve for this problem.
+	Since this was not a significant problem in the image and the code had certain difficulties it was removed.
 	
 	
 	
@@ -501,7 +500,6 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%!!! ??? Add images
 	
 	\pagebreak\subsection{Recognition}
-	\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
 	\subsubsection{Preclassification}
 	
 	\begin{figure}[h!]
@@ -757,8 +755,8 @@ AlexNet(
 	It can then not be fully removed and a part of the border may remain (see fig \ref{fig:PartialBorder}).
 	\begin{figure*}[htp]
 		\centering
-		%\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder1}}\quad
-		%\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
+		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder1}}\quad%??? work on this
+		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
 		
 		\caption{Many of the background contours are removed.
 		However, the paper on the left side of the image is only partially removed and the eraser is to far away from the border to be removed.}
