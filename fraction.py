@@ -24,10 +24,11 @@ class Fraction:
 
         # look for contours inside acceptance area
         for nb in contourList:
-            if nb.contourId == bar.contourId:
+            invalid = nb.contourId == bar.contourId
+            invalid = invalid or nb.remove
+            if invalid:
                 continue
-            if nb.remove:
-                continue
+
             if nb.is_inside_area(minX, maxX, minY, center):
                 self.nominator.append(nb)
                 # update boundary coordinates
