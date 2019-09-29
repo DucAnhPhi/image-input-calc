@@ -70,7 +70,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	If we want to improve upon calculators, we will not have to increase the speed at which computers calculate.
 	Instead the focus should lie on improving the efficiency of entering an equation into the calculator.\\
 	We decided to make a calculator able to find the solution to an equation, when given an image of it.
-	In this paper, we explain how such a calculator can be designed.\\ Similar projects have been successfully implemented \url{http://www.willforfang.com/computer-vision/2016/4/9/artificial-intelligence-for-handwritten-mathematical-expression-evaluation}. Our project places its focus more on the complex task of using real and often noisy images.
+	In this paper, we explain how such a calculator can be designed.\\ Similar projects have been successfully implemented \cite{willforfang}. Our project places its focus more on the complex task of using real and often noisy images.
 	We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
 	
 	\section{Introduction}
@@ -92,11 +92,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\subsection{Classification with neural networks}	
 	The state-of-the-art for automatically recognizing the content of an image file is to solve this issue with \textit{artificial neural networks}. In theory, this design pattern bases on the neuron structure of the human brain as described by neuroscientists. According to this concept, a neural network consists of different layers with a certain amount of nodes which are also referred to as \textit{neurons}. Each neuron receives an input of different parameters that either come from the previous neuron layer or they are given as initial input. A non-linear function is applied to this input that creates an output value. This value is lead to the next layer where it acts as an input again. The first layer of a neural network is often referred to as the \textit{input layer}, while the last layer is called the \textit{output layer}. Between these layer lies a freely chosen number arbitrarily large \textit{hidden layers} (see figure \ref{fig:simple-nn}).
 	
-	%\begin{figure}[h!]
-	%	\includegraphics[width=0.5\textwidth]{ImagesForReport/simple-nn.png}
-	%	\caption{A simple artificial neural network}
-	%	\label{fig:simple-nn}
-%	\end{figure}
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.5\textwidth]{ImagesForReport/simple-nn.png}
+		\caption{A simple artificial neural network}
+		\label{fig:simple-nn}
+	\end{figure}
 	
 	Classifying an image means to have a neural network predict how likely the image shows an object from an acquainted catalog, so-called \textit{labels}. As an input, the neural network receives an array including this image's color values. Therefore, the amount of neurons in the input layer needs to be conform with the size and the number of color channels of the input image. The first layer will now produce a certain number of output values that are passed to the next layer. How many output values are generated and to which neurons of the next layer they are passed, depends on the network architecture. When the input meets the last layer of the network, the output layer will calculate for each known label the probability on which the image displays something that can be described with this label. This means, the final output of the network is a vector mapping the probabilities to the known labels. To make a distinct classification of the image content, one would assign the label with the highest probability to the image. Furthermore, it is also possible to design a network that takes not only a single but a set of images as an input and predicts labels for all images. Thus, it will not return a vector with probabilities, but a matrix.
 	
@@ -357,23 +358,25 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\subsubsection{Removing Small Contours}
 	\small{Author: Duc Anh Phi} \newline \newline
 	Not all segmented contours represent handwritten signs.
-	Some are noise which passed the preprocessing. Usually this noise is rather small, e.g. points or thin lines.
-	With the assumption that handwritten signs have approximately equal line thickness we can confidently remove all contours which have a significantly smaller line thickness.
-	For this to work well, we have to find a good boundary line thickness.
+	Some are noise which passed the preprocessing. Usually, this noise is rather small, e.g. points or thin lines.
+	With the assumption that handwritten signs have approximately equal line thickness, we can confidently remove all contours which have a significantly smaller line thickness.
+	For this to work well, we have to find a good threshold line thickness.
 	Computing the average line thickness is costly and might be inaccurate for images with lots of small noise.
-	To make sure not to include the line thickness of noise, contours of median size are selected. Then we compute the line thickness for each of these selected contours.
-	The median out of these computed values is our boundary line thickness.
+	To make sure not to include the line thickness of noise, contours of median size are selected. Then, we compute the line thickness for each of these selected contours.
+	The median out of these computed values is our threshold line thickness.
 	
-	\paragraph{Compute Line Thickness} 	\small{(Author: Duc Anh Phi)} The algorithm for computing the line thickness of a contour was taken from \url{https://cs.stackexchange.com/questions/59475/width-of-a-string-line-in-an-image}
+	\paragraph{Compute Line Thickness}
+	\small{(Author: Duc Anh Phi)}\\
+	The algorithm for computing the line thickness of a contour was taken from \url{https://cs.stackexchange.com/questions/59475/width-of-a-string-line-in-an-image}
 	\begin{enumerate}
-		\item We start with a binary image (see fig. \ref{fig:linethickness}), so the pixel values are going to be either zero (black) or 255 (white).
-		\item Summing up the image gives us the sum of all white pixels, as black pixel are zero. In other words the sum gives us the area of the whole white line.
-		\item After skeletonizing the image, the white line becomes one pixel thick (see fig. \ref{fig:linethickness}). The resulting skeleton is a thin approximation of the original image.\\
-		Summing up the skeleton is going to give us the approximate length of the line.
+		\item We start with a binary image (see fig. \ref{fig:linethickness}), with pixel values either zero (black) or 255 (white).
+		\item Summing up the image gives us the sum of all white pixels, as black pixel are zero. In other words, the sum gives us the area of the whole white line (in pixel times 255).
+		\item After skeletonizing the image, the white line becomes one pixel thick (see fig. \ref{fig:linethickness}). The resulting skeleton is a 1-pixel-thin approximation of the original image.\\
+		Summing up the skeleton gives us the approximate length of the line.
 		\begin{align}
 		Area = Sum/255
 		\end{align}
-		\item With the line area and length, we calculate its thickness like so:
+		\item With the line area and length, we calculate its thickness as:
 		\begin{align}
 		Thickness = Area / Length
 		\end{align}
@@ -391,20 +394,20 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\subsubsection{Group Contours}
 	\small{Author: Duc Anh Phi} \newline \newline
-	Some contours belong together to form a mathematical symbol or structure. In the following we replace them with their grouped version.
+	Some contours belong together to form a mathematical symbol or structure. In the following, we replace the individual contours with their grouped versions.
 	
-	\paragraph{Handle Nested Contours}
-	For example a handwritten '8' usually consists of 3 contours: The outer frame and the inner two holes, which are detected as separate contours.
-	To not confuse these holes as distinct math symbols we group them together in a single, custom contour object.
-	A contour object has the parent or most outer contour stored in its “contour” property.
+	\paragraph{Handling Nested Contours}
+	For example, a handwritten '8' usually consists of 3 contours: The outer frame and the inner two holes, which are detected as separate contours.
+	To not confuse these holes as distinct math symbols, we group them together in a single, custom contour object.
+	A contour object has the parent or outermost contour stored in its “contour” property.
 	The contours representing holes are stored in the “holes” property.
 	
 	\paragraph{Fractions}
-	Fractions are problematic as they have an inherit order to them – especially nested fractions.
-	These orders have to be taken into account. Additionally fractions have multiple (at least 2) expressions stacked vertically, which may span several lines.
-	This can cause problems, when evaluating multiple lines of equations, because the nominator and denominator may be accidentally assigned to the wrong line.
-	The solution to these problems is to simplify fractions to single contours (their bounding boxes) while still preserving positional information about each grouped element.\\
-	Initially we have to find fractions first. We find fraction bars, which are contours with the following criteria:
+	Fractions are problematic, as they have an inherent order to them – especially nested fractions.
+	This order must be taken into account. Additionally, fractions have multiple (at least 2) expressions stacked vertically, which may span several lines.
+	This can cause problems, when evaluating multiple lines of equations, because the numerator or denominator may be accidentally assigned to the wrong line.
+	The solution to these problems is to simplify fractions to single contours (their bounding boxes), while still preserving positional information about each grouped element.\\
+	Initially, we have to find the fractions. We find fraction bars, which are contours with the following criteria:
 	\begin{itemize}
 		\item their width is more than twice as big as their height
 		\item they do not contain any holes
@@ -413,17 +416,17 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		\item they have a horizontal orientation
 		\item they contain contours above and below them inside a defined acceptance area
 	\end{itemize}
-	We chose these criteria based on experimental observations.\\\\
+	We chose these criteria based on experimentation.\\\\
 	After sorting the fraction bars (ascending) by their width we apply the following algorithm to each bar iteratively, starting with the smallest one:
 	\begin{itemize}
-		\item extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “nominator” or “denominator” property.
-		\item sort each contour in the “nominator” or “denominator” property by their x-coordinates – this way we ensure a correct order
+		\item extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “numerator” or “denominator” property.
+		\item sort each contour in the “numerator” or “denominator” property by their x-coordinates – in this way, we ensure a correct order
 		\item create a bounding box around the whole fraction
-		\item create a contour object with the bounding box and reference to the Fraction object
+		\item create a contour object based on the bounding box and the Fraction object
 	\end{itemize}
 
 	\paragraph{Equal Sign}
-	A written "=" sign consists of two vertically stacked horizontal bars. We group both contours in a single contour object.
+	A written “=” sign consists of two vertically stacked horizontal bars. We group both contours in a single contour object.
 	The bars of an equal sign will be detected in a similar manner as the fraction bars.
 	They can, however, be distinguished by the contours around them.
 	While a fraction bar will always have symbols above and below it, equal sign bars always appear in pairs
@@ -432,25 +435,25 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	A new contour object is created with the bounding box as its "contour" property.
 	
 	
-	\subsection{Line Assigning and Ordering}
+	\subsection{Line Assignment and Ordering}
 	\small{Author: Duc Anh Phi} \newline \newline
-	At this stage we have a list of (grouped) contour objects. We now face the problem of bringing them in a correct mathematical order, based on their position in the image.
-	This task seems trivial for one equation - simply sort the contours by their x-coordinate.
+	At this stage, we have a list of (grouped) contour objects. We now face the problem of bringing them into correct mathematical order, based on their position in the image.
+	This task seems trivial for one equation: simply sort the contours by their x-coordinate.
 	However, we aim to solve multiple equations, which are each written in a separate new line.
-	So looking at the x-axis is not enough, we have to take the y-axis into account too.\\* When observing lines of equations, we noticed that all symbols within the same line have a similar y-coordinate value. However, that value will jump a lot between lines. With this observation we developed the following algorithm to separate lines:
+	So, looking at the x-axis is not enough. We have to take the y-axis into account, too.\\* When observing lines of equations, we noticed that all symbols within the same line have a similar y-coordinate value. However, that value will change particularly between lines. With this observation, we developed the following algorithm to separate lines:
 	\\
 	\begin{enumerate}
-		\item Initially contours are sorted by their y-coordinate. This way, contours, which are in the same horizontal line, are closer to each other.
-		\item Afterwards the average y-distance between neighboring contours is calculated:\\
+		\item Initially, contours are sorted by their y-coordinate. In this way, contours which are in the same horizontal line are closer to each other.
+		\item Afterwards, the average y-distance between neighboring contours is calculated:\\
 		\begin{align}
 		Average Neighbor Y Deviation = 1/N &\sum\limits_{k=2}^{N} \left|y_{k} - y_{k-1}\right|
 		\end{align}
-		We use this y-deviation as a boundary value to determine whether a new line starts.
-		\item In the sorted list of contours each contour (except for the first) is compared to its predecessor for calculating the y-coordinate deviation between both. If the calculated value is within the y-deviation boundary, both belong to the same line. However, if the calculated value is greater than our reference y-deviation, a new line starts with the current contour.
+		We use this y-deviation as a threshold value to determine whether a new line has started.
+		\item In the sorted list of contours, each contour (except for the first) is compared to its predecessor for calculating the y-coordinate deviation between them. If the calculated value is within the y-deviation threshold, both belong to the same line. However, if the calculated value is greater than the reference y-deviation, a new line starts with the current contour.
 		\item After extracting lines, each contour in a line is then sorted by their x-coordinate.
 	\end{enumerate}
 	
-	For the Line Assigning we have developed several algorithms, of which we will be discussing the most interesting, the ones able to tackle a particular problem and the most efficient ones.
+	For the Line Assignment we have developed several algorithms. In the following, we discuss the most interesting, the ones able to tackle a particular problem and the most efficient ones.
 	
 	\subsubsection{Determining the Direction of Writing}
 	\small{Author: Timothy Jay Herbst} \newline \newline
@@ -531,8 +534,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 
 \subsubsection{Extract Subimages for the Neural Network}
 \small{Author:, Duc Anh Phi} \newline \newline
-In our preprocessing step we alter the contours in a way to remove noise. The resulting contours are thicker due to dilation in the preprocessing. Thus these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions as the network was not trained on these “thicker” contours.
-As a solution to this problem we use the thicker contours as a mask. We apply that mask to the binarized original image. The result is a proper representation of what was written without the noise.
+In our preprocessing step, we alter the contours in a way to remove noise. The resulting contours are thicker, due to dilation in the preprocessing. Thus, these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions, as the network was not trained on these “thicker” contours.
+As a solution to this problem, we use the thicker contours as a mask. We apply this mask to the binarized original image. The result is a proper representation of what was written without the noise.
 \subsubsection{Symbol Classification}
 \small{Author: Fenja Kollasch} \newline \newline
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
@@ -737,6 +740,7 @@ AlexNet(
 	
 	\pagebreak
 	\section{Installation and Usage}
+	\small{Author: Duc Anh Phi)\\
 	\subsection{Installation}
 	
 	\begin{enumerate}
