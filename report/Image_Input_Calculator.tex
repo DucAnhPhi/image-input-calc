@@ -108,7 +108,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. The error calculated through the difference between prediction and ground truth now gets \textit{backpropagated} through the network by regarding the gradient at the previous neurons and adapting the weights at the neuron's cost function to minimize the error. This is an iterative process, which is why a training cycle usually has multiple \textit{epochs} where the whole training data set is passed forward and backward. Furthermore it has been proven beneficial to not lead the whole set at once through the network, but to take smaller batches that include randomly chosen samples from the training set. There are various optimization algorithms for the backward pass, as well as different metrics to estimate the error between ground truth and prediction.
 
-	\subsection{Image processing}
+	\subsection{Image processing and segmentation}
 	The plain image of an equation that our program takes as an input is not suitable for automatic classification. The single written characters need to be extracted while the order and placing of each character must be remembered. Furthermore, a number of image transformations is applied to clean the image from noise and make it easier to get recognized by the network. To perform the symbol segmentation and preprocess the images correctly, we use concepts from visual computing and image processing.	
 	
 	\subsubsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
@@ -142,6 +142,20 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	If a particularly large or small image would be tested, we would need to adapt these values
 	%??? maybe add this	\subsection{Small Contour Filter Mask}
 	
+	\subsubsection{Contour detection}
+	A significant part of the symbol segmentation is the detection of contours	. In simple terms, a contour is the boundary of an object in the image. The library\texttt{OpenCV} defines a contour as a ``curve joining all the continuous points (along the boundary), having the same color or intensity".
+	These contours are essential for later shape analysis, object detection and recognition. 
+	
+	On binary images, contours can be detected by collecting pixels having a different color than their neighbors. Since a pixel can only have one of two color values (black or white), we can use a naive approach. By iterating over all pixels in the image, one could compare the color of pixel $p =(i, j)$ to the color of pixels $(i-1, j-1)$, $(i-1, j)$, $(i-1, j+1)$, $(i, j+1)$, $(i+1, j+1)$, $(i+1, j)$, $(i+1, j-1)$, and $(i, j-1)$. If one of these pixels has a different color than $p$, $p$ is part of the contour. 
+	
+	Beside this naive approach there exist different algorithms working with the same principle but using more sophisticated methods of regarding the pixels than looping over the image.
+	
+	By taking the contours of an image fragment, we have successfully segmented a connected symbol. However, there might be symbols in the picture consisting from multiple contours, such as equal signs or the digit \texttt{8}. Therefore, it may be necessary to group some contours that display a single symbol. In contrary, some of the extracted contours may not belong to symbols but are results from noise or misplaced strokes on the written equation. These contours should not be regarded. By filtering out all contours with a thickness below a certain threshold, most of misplaced contours will be ignored.
+	
+	\subsubsection{Skeletonization}
+	As one can derive from the previous section, computing the thickness of a symbol is a necessary step during the segmentation. The thickness can be computed by dividing the area from the contour image that is filled with white pixels through the length of the symbol. To moreover estimate the length of the symbol, the symbol needs to be \textit{skeletonized}, what means reducing the contour temporally to a thickness of 1 pixel. By counting the pixels in the skeletonized contour, one can receive the symbol length.
+	
+	Skeletonizing works by iteratively removing the contours of the shape and recalculating the new contours. The contours get removed until there is only one connected contour left. This will be the 1 pixel thick contour of the symbol.
 	
 	\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 	\section{Design of the Image Input Calculator}
@@ -352,9 +366,6 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\subsubsection{Contour Detection}
 	\small{Author: Duc Anh Phi} \newline \newline
 	After the preprocessing is done, we can deploy an algorithm to detect contours from the image.
-	In simple terms, a contour is the boundary of an object in the image.
-	The library\texttt{OpenCV} defines a contour as a ``curve joining all the continuous points (along the boundary), having the same color or intensity".
-	These contours are essential for later shape analysis, object detection and recognition.
 	
 	The underlying algorithm we used for contour detection is from \cite{suzuki1985}.
 	This paper presents a border following technique for binary images. "It derives a sequence of the coordinates [...]
@@ -683,7 +694,11 @@ AlexNet(
 	Before the extracted symbols are given as an input for the automatic classifier, we check manually if they picture a symbol that our classifier can not recognize. This applies for opening and closing brackets, minus symbols, equal signs, commas, and multiplication dots.
 	
 	\subsection{Calculations}
-	\small{Author: Duc Anh Phi} \newline \newline
+	\small{Author: Fenja Kollasch} \newline \newline
+	After all the previous steps, the application should have been able to extract all written symbols by finding their contours and to remember the correct order and line placement in which they appeared originally. Furthermore, each symbol should have been recognized either from the network or in a manual way. With this information, the original equations can be reconstructed to Python strings containing the same semantic information.
+	
+	Now the last step is solving these equations. Fortunately, the \texttt{SymPy} framework is able to solve an equation that is given as a string. Thus, we give the reconstructed equations as an input to \texttt{SymPy}. \texttt{SymPy} parses the expression and calculates the result of the expression.
+	
 	
 	\section{Experiments}
 	\subsection{Comparing Preclassification and Neural Networks}
@@ -705,10 +720,23 @@ AlexNet(
 	When looking at how many equations were correctly classified compared to how long the equation is, one can see ??? !!!
 	
 	
-	
-	
 	\subsection{Confusion Matrix}
 	\small{Author: Fenja Kollasch} \newline \newline
+	The qualitative performance of the automatic classifier can be evaluated by regarding the confusion matrix of the models. During the training process we produced multiple models. We took four approaches that produced the most reliable classifiers and run them with labeled test data that was not used during the training of any of the used models. The test data contains a combination of MNIST, HASY, and our own images, as well as the training data of all models does. The result of this experiment were the following confusion matrices:
+	\begin{figure}[h!]
+		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_all.png}
+		\caption{Confusion matrix for a classifier that was trained with the digits from 0-9, +, -, /, (, )}
+	\end{figure}
+	\newpage
+	\begin{figure}[h!]
+		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_single.png}
+		\caption{Confusion matrix for a classifier that was trained with the digits from 0-9, +}
+	\end{figure}
+	\newpage
+	\begin{figure}[h!]
+		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_ensemble.png}
+		\caption{Confusion matrix for a classifier that ensembles three different models}
+	\end{figure}
 	
 	\section{Discussion}
 %	In this section, we will discuss the progression of this project regarding the result.
