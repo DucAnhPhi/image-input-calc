@@ -696,9 +696,10 @@ AlexNet(
 	Those are the digits "0" through "9","+","-","/", "(" and ")".
 	The only time at which we use the preclassification processes are for deciding whether a dot is a multiplication symbols "$\cdot$", a comma "," or dot "." which separates digits larger and smaller than 1 or if the dot is not part of the equation at all.\\
 	The second classifier uses as many preclassifying methods as we were able to develop.
-	This means it is able to classify a contour to any digit "0" through "9", "+" and both "(" and ")".\\ %??? add accuracy on MNIST and Mixed
+	This means it is able to classify a contour to any digit "0" through "9" and "+".
+	It is not possible for this classifier to correctly identify "(" and ")".\\ %??? add accuracy on MNIST and Mixed
 	To compare how well they classify, we have created several images of equations with varying amounts of digits.
-	Both classifiers have been tested on the same equations and it has been determined, how often a contour was correctly or incorrectly classified.
+	Both classifiers have been tested on equations of the same style and it has been determined, how often contours were correctly or incorrectly classified.
 	These results can be seen in table \ref{tab:Exp1}.
 	
 	
@@ -799,26 +800,37 @@ AlexNet(
 	
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst} \newline \newline
-	Comparing the Preclassification with the Neural Network shows that there must be some difference between the data in our equation and the online datasets that were used.
+	Comparing the preclassification with the Neural Network shows that there must be some difference between the data in our equation and the online datasets that were used.
 	The classifier performed significantly better (around 98\% accuracy) on the training data than our data (78.1\% and 85.9\%).
 	This could be improved upon by creating more training data for the classifier.\\
-	The presence of the Preclassification drastically improved the quality of the Calculator.
+	The presence of the preclassification drastically improved the quality of the Calculator.
 	Because an equation can only be solved correctly if all symbols are classified, an improvement on the classifier causes an exponential improvement on the Calculator.
-	In this case, the presence of a preclassifier increases the accuracy of the Calculator by a factor of three.
+	In this case, the presence of a preclassifier increases the accuracy of the Calculator by a factor of three.\\
+	Although the preclassifier is occasionally wrong, it is more reliable than the classifier.
+	It's main advantage, however, lies in reducing the amount of labels the classifier has to learn.
 	
 	
-	\section{Conclusion}
+	\section{Conclusion and Outlook}
 		\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
-	The Image-Input-Calculator works reasonably well under difficult circumstances.
-	However, it lacks consistency under good circumstances.
-	This is particularly problematic considering that a single misclassification will likely produce a wrong result.
-	It has difficulties distinguishing between ??? !!!.
-	This is due to the difference between simply classifying an image and analysing an image, which may vary quite strongly from the ideal.
-	The classifier significantly improved ???!!!check when using certain manual classifications to simplify the possible output of the classifier.
-	Another method how the classifier could have improved would be with more training data.
-	Even though many online libraries provide a variety of different symbols (which were used), these could only be of so much use, because of the difference between the provided image and a contour which had to undergo the preprocessing steps that are necessary to find the contours.
-	On this count, however, the Calculator shines, in that it uses several new methods to detect the significant contours.
-	To further improve on this a U-Net ???!!!check could have provided a semantic segmentation between pixels and background.
+	The Image-Input-Calculator is very reliable when it comes to detecting the pixels belonging to the equation.
+	It can consistently retrieve symbols from an image.\\
+	It does unfortunately have difficulties reliably classifying symbols.
+	We presume this is due to some difference between our written symbols and the training libraries used.
+	It was possible to improve upon the results by using manual classification criteria for some of the symbols.
+	This produced correct equations far more consistently.
+	Unfortunately with the best trained models, the Calculator cannot detect brackets at the moment.\\
+	Future improvements would include increasing the amount of training data, which would make the classifier work reliably with more labels.
+	
+	%The Image-Input-Calculator works reasonably well under difficult circumstances.
+	%However, it lacks consistency under good circumstances.
+	%This is particularly problematic considering that a single misclassification will likely produce a wrong result.
+
+	%This is due to the difference between simply classifying an image and analysing an image, which may vary quite strongly from the ideal.
+	%The classifier significantly improved ???!!!check when using certain manual classifications to simplify the possible output of the classifier.
+	%Another method how the classifier could have improved would be with more training data.
+	%Even though many online libraries provide a variety of different symbols (which were used), these could only be of so much use, because of the difference between the provided image and a contour which had to undergo the preprocessing steps that are necessary to find the contours.
+	%On this count, however, the Calculator shines, in that it uses several new methods to detect the significant contours.
+	%To further improve on this a U-Net ???!!!check could have provided a semantic segmentation between pixels and background.
 	
 	
 	\pagebreak
