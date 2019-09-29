@@ -79,7 +79,6 @@ class App:
         cv.imshow('frame', frame)
         cv.imshow('preprocessed', result)
         # Segmentation().print_lineList_images(preprocessed,orderedLineList)
-        cv.waitKey()
 
     def run_with_webcam(self):
         cap = cv.VideoCapture(0)
@@ -152,7 +151,7 @@ class App:
 
         if (source == "RunExperiment"):
             for i in range(1,5):
-                source = ("Experiment"+str(i)+".JPG")
+                source = ("Experiments/Experiment"+str(i)+".JPG")
                 print("Opening Image")
                 print(source)
                 App(solver).run_with_img(source)
