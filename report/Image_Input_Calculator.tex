@@ -108,7 +108,10 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. The error calculated through the difference between prediction and ground truth now gets \textit{backpropagated} through the network by regarding the gradient at the previous neurons and adapting the weights at the neuron's cost function to minimize the error. This is an iterative process, which is why a training cycle usually has multiple \textit{epochs} where the whole training data set is passed forward and backward. Furthermore it has been proven beneficial to not lead the whole set at once through the network, but to take smaller batches that include randomly chosen samples from the training set. There are various optimization algorithms for the backward pass, as well as different metrics to estimate the error between ground truth and prediction.
 
-	\subsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
+	\subsection{Image processing}
+	The plain image of an equation that our program takes as an input is not suitable for automatic classification. The single written characters need to be extracted while the order and placing of each character must be remembered. Furthermore, a number of image transformations is applied to clean the image from noise and make it easier to get recognized by the network. To perform the symbol segmentation and preprocess the images correctly, we use concepts from visual computing and image processing.	
+	
+	\subsubsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
 	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful in this case. %???
