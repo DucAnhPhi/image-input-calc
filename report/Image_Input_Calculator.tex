@@ -70,7 +70,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	If we want to improve upon calculators, we will not have to increase the speed at which computers calculate.
 	Instead the focus should lie on improving the efficiency of entering an equation into the calculator.\\
 	We decided to make a calculator able to find the solution to an equation, when given an image of it.
-	In this paper, we explain how such a calculator can be designed.\\ Similar projects have been successfully implemented \url{http://www.willforfang.com/computer-vision/2016/4/9/artificial-intelligence-for-handwritten-mathematical-expression-evaluation}. Our project places its focus more on the complex task of using real and often noisy images.
+	In this paper, we explain how such a calculator can be designed.\\ Similar projects have been successfully implemented \cite{inspired-blog}. Our project places its focus more on the complex task of using real and often noisy images.
 	We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
 	
 	\section{Introduction}
@@ -88,19 +88,24 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\end{figure}
 
 	\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
-	\pagebreak\section{Theory}
+	\pagebreak\section{Previous work}
+	As mentioned in the introduction, we are approaching a number of common problems in computer science. Therefore, an amount of related work exists. The motivation of this report declares that we took inspiration of a blog post \cite{inspired-blog} proposing an application with a similar workflow. 
+	
+	The recognition of handwritten symbols beyond digits has received attention as well. Shortly after the introduction of MNIST, the data set was extended to EMNIST \cite{emnist} including not only digits, but also handwritten characters. Meanwhile, one can find various data sets with handwritten symbols, even specialized on mathematical symbols \cite{chajri2016}. There are existing Kaggle challenges for solving this classification issue \cite{kaggle} which as a rich amount of solutions. So far, there have been many approaches on the topic by using machine learning as we did \cite{ramadhan2016} \cite{lee2016}. Additionally, there are different approaches where the classification of the symbols succeeds over the geometrical properties of the symbols \cite{golubitsky2010}. 
+	
+	\section{Theory}
 	\subsection{Classification with neural networks}	
 	The state-of-the-art for automatically recognizing the content of an image file is to solve this issue with \textit{artificial neural networks}. In theory, this design pattern bases on the neuron structure of the human brain as described by neuroscientists. According to this concept, a neural network consists of different layers with a certain amount of nodes which are also referred to as \textit{neurons}. Each neuron receives an input of different parameters that either come from the previous neuron layer or they are given as initial input. A non-linear function is applied to this input that creates an output value. This value is lead to the next layer where it acts as an input again. The first layer of a neural network is often referred to as the \textit{input layer}, while the last layer is called the \textit{output layer}. Between these layer lies a freely chosen number arbitrarily large \textit{hidden layers} (see figure \ref{fig:simple-nn}).
 	
-	%\begin{figure}[h!]
-	%	\includegraphics[width=0.5\textwidth]{ImagesForReport/simple-nn.png}
-	%	\caption{A simple artificial neural network}
-	%	\label{fig:simple-nn}
-%	\end{figure}
+	\begin{figure}[h!]
+		\includegraphics[width=0.5\textwidth]{ImagesForReport/simple-nn.png}
+		\caption{A simple artificial neural network}
+		\label{fig:simple-nn}
+	\end{figure}
 	
 	Classifying an image means to have a neural network predict how likely the image shows an object from an acquainted catalog, so-called \textit{labels}. As an input, the neural network receives an array including this image's color values. Therefore, the amount of neurons in the input layer needs to be conform with the size and the number of color channels of the input image. The first layer will now produce a certain number of output values that are passed to the next layer. How many output values are generated and to which neurons of the next layer they are passed, depends on the network architecture. When the input meets the last layer of the network, the output layer will calculate for each known label the probability on which the image displays something that can be described with this label. This means, the final output of the network is a vector mapping the probabilities to the known labels. To make a distinct classification of the image content, one would assign the label with the highest probability to the image. Furthermore, it is also possible to design a network that takes not only a single but a set of images as an input and predicts labels for all images. Thus, it will not return a vector with probabilities, but a matrix.
 	
-	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. The error calculated through the difference between prediction and ground truth now gets \textit{backpropagated} through the network by regarding the gradient at the previous neurons and adapting the weights at the neuron's cost function to minimize the error. This is an iterative process, which is why a training cycle usually has multiple \textit{epochs} where the whole training data set is passed forward and backward. Furthermore it has been proven beneficial to not lead the whole set at once through the network, but to take smaller batches that include randomly chosen samples from the training set. There are various optimization algorithms for the backward pass, as well as different metrics so estimate the error between ground truth and prediction.
+	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. The error calculated through the difference between prediction and ground truth now gets \textit{backpropagated} through the network by regarding the gradient at the previous neurons and adapting the weights at the neuron's cost function to minimize the error. This is an iterative process, which is why a training cycle usually has multiple \textit{epochs} where the whole training data set is passed forward and backward. Furthermore it has been proven beneficial to not lead the whole set at once through the network, but to take smaller batches that include randomly chosen samples from the training set. There are various optimization algorithms for the backward pass, as well as different metrics to estimate the error between ground truth and prediction.
 
 	\subsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
 	\small{Author: Timothy Jay Herbst} \newline \newline
