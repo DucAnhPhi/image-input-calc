@@ -412,31 +412,16 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	This order must be taken into account. Additionally, fractions have multiple (at least 2) expressions stacked vertically, which may span several lines.
 	This can cause problems, when evaluating multiple lines of equations, because the numerator or denominator may be accidentally assigned to the wrong line.
 	The solution to these problems is to simplify fractions to single contours (their bounding boxes), while still preserving positional information about each grouped element.\\
-	Initially, we have to find the fractions. We find fraction bars, which are contours with the following criteria:
+	Initially, we have to find the fractions. How we find fraction bars is shown in \ref{fractionbar}. After sorting the fraction bars (ascending) by their width we apply the following algorithm to each bar iteratively, starting with the smallest one:
 	\begin{itemize}
-		\item their width is more than twice as big as their height
-		\item they do not contain any holes
-		\item their ratio of contour area to minimum bounding box area exceeds 0.7
-		\item their ratio of contour area to their convex hull area exceeds 0.7
-		\item they have a horizontal orientation
-		\item they contain contours above and below them inside a defined acceptance area
-	\end{itemize}
-	We chose these criteria based on experimentation.\\\\
-	After sorting the fraction bars (ascending) by their width we apply the following algorithm to each bar iteratively, starting with the smallest one:
-	\begin{itemize}
-		\item extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “numerator” or “denominator” property.
+		\item extract contours above and below the fraction bar (inside the acceptance area) and create a custom fraction object, which references them in the “numerator” or “denominator” property. The acceptance area is inferred from the bar width.
 		\item sort each contour in the “numerator” or “denominator” property by their x-coordinates – in this way, we ensure a correct order
 		\item create a bounding box around the whole fraction
 		\item create a contour object based on the bounding box and the Fraction object
 	\end{itemize}
 
 	\paragraph{Equal Sign}
-	A written “=” sign consists of two vertically stacked horizontal bars. We group both contours in a single contour object.
-	The bars of an equal sign will be detected in a similar manner as the fraction bars.
-	They can, however, be distinguished by the contours around them.
-	While a fraction bar will always have symbols above and below it, equal sign bars always appear in pairs
-	and either have a single contour above it or below it, but never both.
-	Once an equal bar is found, we create a bounding box around itself and its counter part.
+	A written “=” sign consists of two vertically stacked horizontal bars. We group both contours in a single contour object. How we find equal bars is shown in \ref{equalbars}. Once an equal bar is found, we create a bounding box around itself and its counter part.
 	A new contour object is created with the bounding box as its "contour" property.
 	
 	
@@ -516,26 +501,53 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
 	\subsubsection{Preclassification}
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
-	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network. This is very beneficial for two main reasons. The classification problem becomes easier as there are less classes to differentiate from. Additionally it saves computational time, as less contours have to be passed through the network.
-	We have already performed some classification before, in the segmentation step. Contours were classified as fraction bars, based on local rules. The same goes for equal signs. In the following we will be discussing some of the possible preclassifications that performed well.
+	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network. This is very beneficial for two main reasons. The classification problem becomes easier as there are less classes to differentiate from. Additionally it saves computational time, as less contours have to be passed through the network. As a drawback the rule based classification might be less accurate.\\
+	We assume that symbols need to have a simple shape while sill being distinct, in order to be accurately classified by certain local rules.\\
+	We came up with these rules based on experimentation.
 	
-	\paragraph{Dots, Commas and Multiplication Symbols}
+	\paragraph{Identify Bars and Points}
+	\small{Author: Duc Anh Phi} \newline \newline
+	There are mainly two shapes of interest which are used as a basis for further classification: points and bars. They are significant as many math symbols are based on them, e.g. fraction bars, minus signs, multiply signs, equal signs and commas. After the shape is found, we can distinguish mathematical symbols from their position in relation to other symbols. We defined the following rules:
+	
+	\subparagraph{Bars}\label{bars}
+	\begin{itemize}
+		\item The width of its minimum bounding box is more than twice as big as its corresponding height.
+		\item It does not contain any nested contours (holes)
+		\item The ratio of its contour area to its minimum bounding box area should exceed 0.7. This ratio ensures that the contour is rather "flat". However we add a tolerance for "long" contours, e.g. contours whose ratio of width to height exceeds 4. These long contours do not have to fulfill the "flatness" criterion, to be regarded as bars. This tolerance comes from the observation, that keeping a straight line gets more difficult, as the line increases in length. 
+	\end{itemize}
+
+	\subparagraph{Points}
+	\begin{itemize}
+		\item The ratio of its contour area to its minimum bounding circle area exceeds 0.8. This ratio ensures that the contour is rather "round". However, we add a tolerance for "small" contours, e.g. contours whose length or width is smaller than 3 times the threshold line thickness \ref{fig:linethickness}. These small contours do not have to fulfill the "roundness" criterion, to be regarded as points. Written points are not always round, especially when writing quickly.
+	\end{itemize}
+
+	\paragraph{Preclassify bar-shaped Math Symbols}
+	\small{Author: Duc Anh Phi} \newline \newline
+	In the following we show how bar-shaped symbols are classified.
+	\subparagraph{Fraction Bars}\label{fractionbar}
+	We distinguish between vertical and horizontal fraction bars.
+	Vertical fraction bars are defined as bars with vertical orientation. Analogous, horizontal fraction bars must have a horizontal orientation. Additionally horizontal fraction bars contain contours above and below them, inside a defined acceptance area. This area is inferred from the bar width.
+	
+	\subparagraph{Minus Sign}
+	Minus signs are similar to horizontal fraction bars except they do not contain any contours above or below them (inside a defined acceptance area).
+
+	\subparagraph{Equal Bars}\label{equalbars}
+	While a fraction bar will always have symbols above and below it, equal sign bars always appear in pairs. They either have a single contour (their counter part) above or below them, but never both.
+	
+	\paragraph{Preclassify point-shaped Math Symbols}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	A difficulty with detecting handwritten equations is the common usage of points or point-like symbols.
 	This makes it nearly impossible to account for all possible interpretations of this.
 	Therefore we have focused on the two most common cases:
 	The multiplication dot ("$\cdot$") and the comma or dot indicating a partial number (e.g. "$3,14$" or "$3.14$").\\
 	Other important times where a dot appears in an equation, which unfortunately we were unable to cover, include points included in letters (e.g. "$i=\sqrt{-1}$"), the time derivative of a variable (e.g. "$\dot{x}=v$") and the dots included in a definition symbol ("$:=$" or "$=:$").\\  % ??? cite https://en.wikipedia.org/wiki/List_of_mathematical_symbols
-	To find determine whether or not a contour is such a symbol, we at first can determine it's size.
-	If it has a significantly larger width or height than the line thickness (for instance twice as large), we may rule out that this symbol is a dot of any kind.
-	The size however, does not give a good indication as to what type of dot this may be.
-	The different types of dots can only be distinguished by their position in relation to other symbols.
 	As the line has already been ordered, we are able to take a look at the preceding and following contour.
-	If the contour in question is either the first or last contour in a line, we can rule out, that it is a multiplication dot or a comma, as these never appear at the beginning or end of a line.
-	Next we compare its position relative to its neighbouring contours.\\
-	If the contour is closer to the lower end of the contour than the mid point for both of its neighbours, then the contour is classified as a comma.\\
 	
-	If the contour is closer to the mid point than the lower end of the contour for both of its neighbours, then the contour is classified as a multiplication dot.\\
+	\subparagraph{Comma}
+	If the distance between the contour's center to the lower end of the preceding contour is shorter than the distance between the centers of both, then the contour is classified as a comma.\\
+	
+	\subparagraph{Multiplication Dot}
+	If the distance between the contour's center and the preceding contour's center is shorter than the distance between the contour's center to the lower end of the predecessor, then the contour is classified as a multiplication dot.\\
 
 \subsubsection{Extract Subimages for the Neural Network}
 \small{Author:, Duc Anh Phi} \newline \newline
