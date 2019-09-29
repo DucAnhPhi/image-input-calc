@@ -150,8 +150,8 @@ class App:
                 pass
 
         if (source == "RunExperiment"):
-            for i in range(9,13):
-                source = ("Experiment"+str(i)+".JPG")
+            for i in range(5,9):
+                source = ("Experiments/Experiment"+str(i)+".JPG")
                 print("Opening Image")
                 print(source)
                 App(solver).run_with_img(source)
@@ -171,8 +171,9 @@ class App:
 if __name__ == '__main__':
     solver = Solver()
     App(solver).run("RunExperiment")
-    # App().run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
-    # App().run("sample.MOV")
+
+    # App(solver).run("TrainingSamples")#("SampleImages\IMG_0"+str(292+i)+".JPG"))#"sample.MOV")
+    # App(solver).run("sample.MOV")
 
     # App(solver).run_with_webcam()
     # App(solver).run_with_img()
