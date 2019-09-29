@@ -561,7 +561,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 \subsubsection{Extract Subimages for the Neural Network}
 \small{Author:, Duc Anh Phi} \newline \newline
 In our preprocessing step, we alter the contours in a way to remove noise. The resulting contours are thicker, due to dilation in the preprocessing. Thus, these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions, as the network was not trained on these “thicker” contours.
-As a solution to this problem, we use the thicker contours as a mask. We apply this mask to the binarized original image. The result is a proper representation of what was written without the noise.
+As a solution to this problem, we use the thicker contours as a mask. We apply this mask to the binarized original image, performing a bitwise AND operation. The result is a proper representation of what was written without the noise.
 \begin{figure*}[h!]
 	\centering
 	\subfigure[Mask]{\includegraphics[width=.3\linewidth]{ImagesForReport/mask.jpg}}\quad
@@ -788,11 +788,9 @@ AlexNet(
 	
 		
 	\subsection{Segmentation}
-	We segment written characters from the image using visual computing methods. This works reasonably well as shown in the results(!REFERENCE). However it can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power for training but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
+	\small{Author: Duc Anh Phi} \newline \newline
+	We segment written characters from the image using visual computing methods. Unfortunately this segmentation process can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power (for training the models) but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
 	
-	Handling noise is a big issue. We leveraged visual computing methods and also came up with a set of rules for removing noise. We assumed it would be sufficient, unfortunately it has its problems.
-	
-	Our whole system is based on rules which are tightly coupled. Changing/adjusting a rules can have (unknown) consequences of influence the effectiveness of other rules. This not only makes it difficult to improve on the existing base it also makes the whole system less robust (domino effect). EXAMPLE
 	
 	
 	
@@ -829,6 +827,8 @@ AlexNet(
 	%Even though many online libraries provide a variety of different symbols (which were used), these could only be of so much use, because of the difference between the provided image and a contour which had to undergo the preprocessing steps that are necessary to find the contours.
 	%On this count, however, the Calculator shines, in that it uses several new methods to detect the significant contours.
 	%To further improve on this a U-Net ???!!!check could have provided a semantic segmentation between pixels and background.
+	
+	Our whole system is based on rules which are tightly coupled. Changing/adjusting a rules can have (unknown) consequences of influence the effectiveness of other rules. This not only makes it difficult to improve on the existing base it also makes the whole system less robust (domino effect).
 	
 	
 	\pagebreak
