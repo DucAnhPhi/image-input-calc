@@ -32,7 +32,7 @@ class MathSymbolClassifier:
             all_labels.append(labels)
             best_predicition = np.max(predicition, axis=1)[None,:]
             if all_best_predicitions is None:
-                all_best_predicitions = best_predicition
+                all_best_predicitions = best_predicition.T
             else:
                 all_best_predicitions = np.concatenate((all_best_predicitions, best_predicition.T), axis=1)
         classifier_compare = np.argmax(all_best_predicitions, axis=1)
