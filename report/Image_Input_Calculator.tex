@@ -598,12 +598,14 @@ After the preprocessing routine is complete, each handwritten character is extra
 			Mathematical symbols need to get recognized as well. To include these symbols in our training process we extended our training data with a subset of the HASYv2\cite{hasy} dataset. This dataset contains 168233 images in total which can be labeled with one of 369 classes including all numbers and latin letters. 
 			
 			Not all symbols in this dataset are relevant for our classifier. Therefore, we filter the images according to their labels and thus simply include the ones that are necessary for our training procedure. Our first approach was to take only the digits and plus symbols from this dataset. Unfortunately, many of the digit images were cropped or of poor quality. In the end, we decided to take only the plus symbols from the dataset what leaves us with roughly 100 images after the filtering. Since MNIST contains 60000 images of digits, we have a critical overflow of digit characters in comparison to the plus symbols. To reduce this gap, we make use of data augmentation and apply a number of transformation to all non-digit characters. By rotating, flipping and combinations of rotation and flipping we generate four extra images per non-digit symbol and remain now with 405 training images.
-			
-		\subparagraph{Custom training images}	\small{(Author: Timothy Jay Herbst, Fenja Kollasch)}
+			\newline			\newline
+			\indent\small{(Author: Timothy Jay Herbst, Fenja Kollasch)}
+			\vspace{-0.5 cm}
+		\subparagraph{Custom training images}	
 		Furthermore, we generated some training images ourselves by writing down symbols and capture them the same way in which our application will capture the mathematical formula during usage.
 		All training equations were written on paper.
 		A variety of different writing utensils of different colors and thicknesses were used.
-		Images were then separated using the methods that may be found on the branch gathertrainingdata2. %??? link
+		Images were then separated using the methods that may be found on the branch \texttt{gathertrainingdata2}. %??? link
 		
 		
 	\paragraph{Training}
@@ -689,7 +691,7 @@ AlexNet(
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
 	In the following experiment we will be testing the Image-Input-Calculator and also give some motivation as to why it uses several preclassification functions.
-	For this we will compare how well the calculator performs using three different types of classifiers:\\
+	For this we will compare how well the calculator performs using two different types of classifiers:\\
 	The first classifier is capable of classifying a contour to all symbols that might be in the equation we are analysing.
 	Those are the digits "0" through "9","+","-","/", "(" and ")".
 	The only time at which we use the preclassification processes are for deciding whether a dot is a multiplication symbols "$\cdot$", a comma "," or dot "." which separates digits larger and smaller than 1 or if the dot is not part of the equation at all.\\
@@ -697,12 +699,37 @@ AlexNet(
 	This means it is able to classify a contour to any digit "0" through "9", "+" and both "(" and ")".\\ %??? add accuracy on MNIST and Mixed
 	To compare how well they classify, we have created several images of equations with varying amounts of digits.
 	Both classifiers have been tested on the same equations and it has been determined, how often a contour was correctly or incorrectly classified.
-	These results can be seen in table ??? !!!.
+	These results can be seen in table \ref{tab:Exp1}.
+	
+	
+	
+	\begin{center}
+		\begin{tabular}{|c|| c | c|} 
+			\hline
+			 Classifier & Numbers \& "+" & No Preclassification \\
+			\hline\hline
+			Correctly Classified Symbols & 152 & 121 \\ 
+			\hline
+			Wrongly Classified Symbols& 25 & 34\\
+			\hline
+			Wrongly Preclassified Symbols & 2 & - \\
+			\hline
+			Correct Equations & 10 & 2\\
+			\hline
+			Wrong Equations & 30 & 20\\
+			\hline
+			Symbol Accuracy & 85.9\% & 78.1\% \\
+			\hline
+			Equation Accuracy & 33\% & 10\% \\
+			\hline
+		\end{tabular}\label{tab:Exp1}
+	\end{center}
+	
 	
 	
 	%???!!!
 	
-	When looking at how many equations were correctly classified compared to how long the equation is, one can see ??? !!!
+	%When looking at how many equations were correctly classified compared to how long the equation is, one can see ??? !!!
 	
 	
 	
@@ -757,15 +784,27 @@ AlexNet(
 	\small{Author: Fenja Kollasch} \newline \newline
 	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
 	
-	\subsection{Comparing Preclassification and Neural Networks}
-	\small{Author: Timothy Jay Herbst} \newline \newline
 	
+	
+	
+		
 	\subsection{Segmentation}
 	We segment written characters from the image using visual computing methods. This works reasonably well as shown in the results(!REFERENCE). However it can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power for training but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
 	
 	Handling noise is a big issue. We leveraged visual computing methods and also came up with a set of rules for removing noise. We assumed it would be sufficient, unfortunately it has its problems.
 	
 	Our whole system is based on rules which are tightly coupled. Changing/adjusting a rules can have (unknown) consequences of influence the effectiveness of other rules. This not only makes it difficult to improve on the existing base it also makes the whole system less robust (domino effect). EXAMPLE
+	
+	
+	
+	\subsection{Comparing Preclassification and Neural Networks}
+	\small{Author: Timothy Jay Herbst} \newline \newline
+	Comparing the Preclassification with the Neural Network shows that there must be some difference between the data in our equation and the online datasets that were used.
+	The classifier performed significantly better (around 98\% accuracy) on the training data than our data (78.1\% and 85.9\%).
+	This could be improved upon by creating more training data for the classifier.\\
+	The presence of the Preclassification drastically improved the quality of the Calculator.
+	Because an equation can only be solved correctly if all symbols are classified, an improvement on the classifier causes an exponential improvement on the Calculator.
+	In this case, the presence of a preclassifier increases the accuracy of the Calculator by a factor of three.
 	
 	
 	\section{Conclusion}
