@@ -748,22 +748,34 @@ AlexNet(
 	
 	\subsection{Confusion Matrix}
 	\small{Author: Fenja Kollasch} \newline \newline
-	The qualitative performance of the automatic classifier can be evaluated by regarding the confusion matrix of the models. During the training process we produced multiple models. We took four approaches that produced the most reliable classifiers and run them with labeled test data that was not used during the training of any of the used models. The test data contains a combination of MNIST, HASY, and our own images, as well as the training data of all models does. The result of this experiment were the following confusion matrices:
-	\begin{figure}[h!]
+	The qualitative performance of the automatic classifier can be evaluated by regarding the confusion matrix of the models. During the training process we produced multiple models. We took four approaches that produced the most reliable classifiers and run them with labeled test data that was not used during the training of any of the used models. The test data contains a combination of MNIST, HASY, and our own images, as well as the training data of all models does. It contains 12817 data samples in total. The result of this experiment were the following confusion matrices. The x axis displays the prediction of our classifier while the y axis shows the actual label.
+	
+	\begin{figure}[H]
 		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_all.png}
 		\caption{Confusion matrix for a classifier that was trained with the digits from 0-9, +, -, /, (, )}
-	\end{figure}
-	\newpage
-	\begin{figure}[h!]
-		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_single.png}
-		\caption{Confusion matrix for a classifier that was trained with the digits from 0-9, +}
-	\end{figure}
-	\newpage
-	\begin{figure}[h!]
-		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_ensemble.png}
-		\caption{Confusion matrix for a classifier that ensembles three different models}
+		\label{fig:mat-all}
 	\end{figure}
 	
+	\begin{figure}[H]
+		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_single.png}
+		\caption{Confusion matrix for a classifier that was trained with the digits from 0-9, +}
+		\label{fig:mat-single}
+	\end{figure}
+	
+	\begin{figure}[H]
+		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_ensemble.png}
+		\caption{Confusion matrix for a classifier that ensembles three different models}
+		\label{fig:mat-ensemble}
+	\end{figure}
+	
+	Figure \ref{fig:mat-all} shows the confusion matrix of a classifier using a model that was trained with a data split including images of all 15 labels that our classifier can resolve. On the first sight, it presents an acceptable result. All digits are recognized correctly almost all the time. With the operators however, the classifier makes more wrong predictions than with the numbers. Still we can see that it predicts the symbols most of the time correctly. Unfortunately, in case of application, the predictions are more unreliable than one can assume from this matrix. This is probably the case because the number of MNIST images in training and test data highly outweighs the number of images that were generated from our application.
+	
+	Figure \ref{fig:mat-single} displays the matrix of a classifier where the models was trained only on digits and the plus symbol. We can see that this classifier performs well on those data samples, but is not able to recognize $-, /, ($ or $)$. Therefore, we receive a lot of false positives for various digits. An interesting fact is however that this classifier performs better in a real use case. The application is able to preclassify the mentioned operators. By not leading them to the classificator, the network does not get confused with the unknown symbols.
+	
+	Finally, figure \ref{fig:mat-ensemble} shows the results for a classifier that ensembles three different models: The models that were used in the previously mentioned classifier and an additional third model that was trained on the digits from $0-9, +, ($, and $)$. As the other classifiers, this one performs quite well on the digits. The operators however cause a high confusion with this classifier. Especially the minus symbol is basically not recognizable but is often mistaken as a plus symbol. The division symbol causes a high confusion with the digit $1$.
+	
+	\newpage
+
 	\section{Discussion}
 %	In this section, we will discuss the progression of this project regarding the result.
 	
@@ -799,28 +811,15 @@ AlexNet(
 	However, we were never able to observe this on a whiteboard or paper.
 	This step makes it impossible to detect an equation on e.g. a blackboard, because here the writing is brighter than the background.
 	
-	
-	
-	
-	
-	
-	
-	
-	
 	\subsection{Classification problems}
 	\small{Author: Fenja Kollasch} \newline \newline
 	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
-	
-	
-	
-	
+
 		
 	\subsection{Segmentation}
 	\small{Author: Duc Anh Phi} \newline \newline
 	We segment written characters from the image using visual computing methods. Unfortunately this segmentation process can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power (for training the models) but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
-	
-	
-	
+
 	
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst} \newline \newline
