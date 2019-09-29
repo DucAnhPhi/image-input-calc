@@ -497,9 +497,17 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%!!! ??? Add more issues
 	%!!! ??? Add images
 	
-	\subsection{Recognition}
+	\pagebreak\subsection{Recognition}
 	\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
 	\subsubsection{Preclassification}
+	
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.75\textwidth]{ImagesForReport/preclassify.jpg}
+		\caption{Classification of Math Symbols without a Neural Network.}
+		\label{fig:preclassify}
+	\end{figure}
+
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
 	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network. This is very beneficial for two main reasons. The classification problem becomes easier as there are less classes to differentiate from. Additionally it saves computational time, as less contours have to be passed through the network. As a drawback the rule based classification might be less accurate.\\
 	We assume that symbols need to have a simple shape while sill being distinct, in order to be accurately classified by certain local rules.\\
@@ -553,6 +561,14 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 \small{Author:, Duc Anh Phi} \newline \newline
 In our preprocessing step, we alter the contours in a way to remove noise. The resulting contours are thicker, due to dilation in the preprocessing. Thus, these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions, as the network was not trained on these “thicker” contours.
 As a solution to this problem, we use the thicker contours as a mask. We apply this mask to the binarized original image. The result is a proper representation of what was written without the noise.
+\begin{figure*}[h!]
+	\centering
+	\subfigure[Mask]{\includegraphics[width=.3\linewidth]{ImagesForReport/mask.jpg}}\quad
+	\subfigure[Binary Subimage]{\includegraphics[width=.3\linewidth]{ImagesForReport/binary.jpg}}
+	\subfigure[Resulting Subimage]{\includegraphics[width=.3\linewidth]{ImagesForReport/result.jpg}}
+	
+	\caption{Extract Subimages}
+\end{figure*}
 \subsubsection{Symbol Classification}
 \small{Author: Fenja Kollasch} \newline \newline
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
