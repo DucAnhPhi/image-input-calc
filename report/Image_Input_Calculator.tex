@@ -111,10 +111,9 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\subsection{Image processing and segmentation}
 	The plain image of an equation that our program takes as an input is not suitable for automatic classification. The single written characters need to be extracted while the order and placing of each character must be remembered. Furthermore, a number of image transformations is applied to clean the image from noise and make it easier to get recognized by the network. To perform the symbol segmentation and preprocess the images correctly, we use concepts from visual computing and image processing.	
 	
-	\subsubsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
+	\subsubsection{Adaptive Threshold}
 	\small{Author: Timothy Jay Herbst} \newline \newline
-	A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
-	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful in this case. %???
+	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful during Preprocessing. %???
 	This function operates like most threshold functions, in that it compares a pixel to a threshold $T$.
 	If the pixel is found to have a value higher than the threshold $T$, we set it to 255.
 	Otherwise the pixel is set to a value of 0 \cite{cvAdaThresh}
@@ -140,7 +139,6 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Here $\alpha$ is the normalisation factor and $\sigma$ is the  standard deviation (recommended by \texttt{OpenCV}) for a box size of 11.\\
 	The values mentioned above were found to work well with most of the images tested.
 	If a particularly large or small image would be tested, we would need to adapt these values
-	%??? maybe add this	\subsection{Small Contour Filter Mask}
 	
 	\subsubsection{Contour detection}
 	A significant part of the symbol segmentation is the detection of contours	. In simple terms, a contour is the boundary of an object in the image. The library\texttt{OpenCV} defines a contour as a ``curve joining all the continuous points (along the boundary), having the same color or intensity".
@@ -198,7 +196,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		In a second step, we remove the contours that can be attributed to background objects.
 		Lastly, we correct for reflected light sources. %!!! Add to master
 
-	\subsubsection{Simple Preprocessing}%??? !!! Add stepwise Images, after Preprocessing is complete
+	\subsubsection{Simple Preprocessing}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	\begin{figure*}[htp]
 		\centering
@@ -277,8 +275,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 			\item Morphological Opening: We apply a filter that removes a specific type of noise: small dots. This is done by applying an erosion followed by a dilation filter. %??? is this the right filter
 			\item Adaptive Gaussian Threshold: We add a filter that applies a threshold. 
 			Any pixel below this threshold gets set to 0 and any pixel above it gets set to 255. %??? check
-			This threshold differentiates the symbols from the background.
-			We will later explain in more detail how this filter works. %??? !!! Do it
+			This threshold differentiates the symbols from the background well.
 			\item Dilation: After the previous steps, it is possible that some of the symbols have decomposed into several parts.
 			This allows for easier contour detection.
 			However, this makes the contour more difficult for the classifier to recognise, which is why this step will be undone later. %??? Errosion is Dilation correct?
@@ -296,12 +293,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%	\end{lstlisting}
 			
 	
-	\subsubsection{Border Removal}%??? !!! Add before vs after Images, after Preprocessing is complete
+	\subsubsection{Border Removal}%??? !!! Add red mask
 		\small{Author: Timothy Jay Herbst} \newline \newline
 		After these pre-processing steps, we have a fairly good image.
 		However, very often the shape of background objects register as contours.
 		THis section explains how to remove the contours of background objects.
-		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to be flaky and can be roughly traced to the border of an image, see fig .%???
+		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to be flaky and can be roughly traced to the border of an image, see fig \ref{fig:BorderRemoval}.
 		Using this knowledge we can create a mask, which removes the background contours.\\
 		We determine the mask in the following steps:
 		\begin{itemize}
@@ -310,8 +307,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 			\item Strong Dilation: We now repeatedly dilate the image. Our goal here is to connect all contours which are close to each other.
 			Unfortunately this makes our contours unreadable.
 			This is not a problem since in this step we simply want to determine the contours we want to keep.
-			\item Floodfill Border: We then floodfill the border.
-			This removes any contour which connects to the border. 
+			\item Floodfill Border: All pixels, which connect only over black pixels to the border get removed from the mask.
+			Thereby most contours caused by objects near the border, get removed.
 			\item Remove Border: Since we changed the image size by adding a border, we now have to remove it.
 		\end{itemize}
 		In this manner we determine the mask.
@@ -325,7 +322,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		\subfigure[Border Removal Mask (Black pixels will not be removed)]{\includegraphics[width=.45\linewidth]{ImagesForReport/backgroundMask2}}\quad
 		\subfigure[Resulting Image]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundRemoved2}}
 		
-		\caption{Performance of the Border Removal Mask.}
+		\caption{Performance of the Border Removal Mask.
+		Please note that some contours caused by objects remain, because they don't connect well with the border of the image.}
 		\label{fig:BorderRemoval}
 		%??? Make captions in center
 	\end{figure*}
@@ -335,10 +333,11 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Bright light sources may reflect off the surface on which the equation is written.
 	This occurs especially often when using a white board, but also on paper (see fig. \ref{fig:BrightnessRemoval}).
 	Unfortunately, the adaptive threshold function cannot differentiate between the writing and the bright reflections.
-	Fortunately, the reflected light sources all have a commontrait:
+	Fortunately, the reflected light sources all have a common trait:
 	They are significantly brighter than the average image.
 	It is therefore possible to create a fairly simple mask which simply removes all pixels which are significantly brighter than the average pixel of the image.
 	After applying this mask, the image no longer contains contours caused by reflected light sources.%??? significantly
+	A positive side effect is, that noise caused by imperfections on paper get removed because of their brightness.
 	
 	\begin{figure*}[htp]
 		\centering
@@ -408,7 +407,6 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		
 		\caption{Computing the Line Thickness}
 		\label{fig:linethickness}
-	%??? Make captions in center
 	\end{figure*}
 	
 	\subsubsection{Group Contours}
@@ -473,7 +471,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Because of this, it is very useful to be able to determine the direction of such an "invisible line".
 	In the following we will be discussing a method how to determine this line.
 	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10^\circ$.
-	All of the following algorithms are capable of dealing with such small deviations.\\
+	A good algorithm was found to solve for this problem.
+	Since this was not a significant problem in the image and the code had certain difficulties it was removed.
 	
 	
 	
@@ -512,7 +511,6 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%!!! ??? Add images
 	
 	\pagebreak\subsection{Recognition}
-	\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
 	\subsubsection{Preclassification}
 	
 	\begin{figure}[h!]
@@ -574,7 +572,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 \subsubsection{Extract Subimages for the Neural Network}
 \small{Author:, Duc Anh Phi} \newline \newline
 In our preprocessing step, we alter the contours in a way to remove noise. The resulting contours are thicker, due to dilation in the preprocessing. Thus, these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions, as the network was not trained on these “thicker” contours.
-As a solution to this problem, we use the thicker contours as a mask. We apply this mask to the binarized original image. The result is a proper representation of what was written without the noise.
+As a solution to this problem, we use the thicker contours as a mask. We apply this mask to the binarized original image, performing a bitwise AND operation. The result is a proper representation of what was written without the noise.
 \begin{figure*}[h!]
 	\centering
 	\subfigure[Mask]{\includegraphics[width=.3\linewidth]{ImagesForReport/mask.jpg}}\quad
@@ -609,12 +607,14 @@ After the preprocessing routine is complete, each handwritten character is extra
 			Mathematical symbols need to get recognized as well. To include these symbols in our training process we extended our training data with a subset of the HASYv2\cite{hasy} dataset. This dataset contains 168233 images in total which can be labeled with one of 369 classes including all numbers and latin letters. 
 			
 			Not all symbols in this dataset are relevant for our classifier. Therefore, we filter the images according to their labels and thus simply include the ones that are necessary for our training procedure. Our first approach was to take only the digits and plus symbols from this dataset. Unfortunately, many of the digit images were cropped or of poor quality. In the end, we decided to take only the plus symbols from the dataset what leaves us with roughly 100 images after the filtering. Since MNIST contains 60000 images of digits, we have a critical overflow of digit characters in comparison to the plus symbols. To reduce this gap, we make use of data augmentation and apply a number of transformation to all non-digit characters. By rotating, flipping and combinations of rotation and flipping we generate four extra images per non-digit symbol and remain now with 405 training images.
-			
-		\subparagraph{Custom training images}	\small{(Author: Timothy Jay Herbst, Fenja Kollasch)}
+			\newline			\newline
+			\indent\small{(Author: Timothy Jay Herbst, Fenja Kollasch)}
+			\vspace{-0.5 cm}
+		\subparagraph{Custom training images}	
 		Furthermore, we generated some training images ourselves by writing down symbols and capture them the same way in which our application will capture the mathematical formula during usage.
 		All training equations were written on paper.
 		A variety of different writing utensils of different colors and thicknesses were used.
-		Images were then separated using the methods that may be found on the branch gathertrainingdata2. %??? link
+		Images were then separated using the methods that may be found on the branch \texttt{gathertrainingdata2}. %??? link
 		
 		
 	\paragraph{Training}
@@ -704,20 +704,46 @@ AlexNet(
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
 	In the following experiment we will be testing the Image-Input-Calculator and also give some motivation as to why it uses several preclassification functions.
-	For this we will compare how well the calculator performs using three different types of classifiers:\\
+	For this we will compare how well the calculator performs using two different types of classifiers:\\
 	The first classifier is capable of classifying a contour to all symbols that might be in the equation we are analysing.
 	Those are the digits "0" through "9","+","-","/", "(" and ")".
 	The only time at which we use the preclassification processes are for deciding whether a dot is a multiplication symbols "$\cdot$", a comma "," or dot "." which separates digits larger and smaller than 1 or if the dot is not part of the equation at all.\\
 	The second classifier uses as many preclassifying methods as we were able to develop.
-	This means it is able to classify a contour to any digit "0" through "9", "+" and both "(" and ")".\\ %??? add accuracy on MNIST and Mixed
+	This means it is able to classify a contour to any digit "0" through "9" and "+".
+	It is not possible for this classifier to correctly identify "(" and ")".\\ %??? add accuracy on MNIST and Mixed
 	To compare how well they classify, we have created several images of equations with varying amounts of digits.
-	Both classifiers have been tested on the same equations and it has been determined, how often a contour was correctly or incorrectly classified.
-	These results can be seen in table ??? !!!.
+	Both classifiers have been tested on equations of the same style and it has been determined, how often contours were correctly or incorrectly classified.
+	These results can be seen in table \ref{tab:Exp1}.
+	
+	
+	
+	\begin{center}
+		\begin{tabular}{|c|| c | c|} 
+			\hline
+			 Classifier & Numbers \& "+" & No Preclassification \\
+			\hline\hline
+			Correctly Classified Symbols & 152 & 121 \\ 
+			\hline
+			Wrongly Classified Symbols& 25 & 34\\
+			\hline
+			Wrongly Preclassified Symbols & 2 & - \\
+			\hline
+			Correct Equations & 10 & 2\\
+			\hline
+			Wrong Equations & 30 & 20\\
+			\hline
+			Symbol Accuracy & 85.9\% & 78.1\% \\
+			\hline
+			Equation Accuracy & 33\% & 10\% \\
+			\hline
+		\end{tabular}\label{tab:Exp1}
+	\end{center}
+	
 	
 	
 	%???!!!
 	
-	When looking at how many equations were correctly classified compared to how long the equation is, one can see ??? !!!
+	%When looking at how many equations were correctly classified compared to how long the equation is, one can see ??? !!!
 	
 	
 	\subsection{Confusion Matrix}
@@ -757,8 +783,8 @@ AlexNet(
 	It can then not be fully removed and a part of the border may remain (see fig \ref{fig:PartialBorder}).
 	\begin{figure*}[htp]
 		\centering
-		%\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder1}}\quad
-		%\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
+		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder1}}\quad%??? work on this
+		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
 		
 		\caption{Many of the background contours are removed.
 		However, the paper on the left side of the image is only partially removed and the eraser is to far away from the border to be removed.}
@@ -785,29 +811,50 @@ AlexNet(
 	\small{Author: Fenja Kollasch} \newline \newline
 	A major issue appearing during development was the fact that the usability of our application highly depends on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major leaks in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models what made the training procedure tedious and decelerated our progress.
 	
+	
+	
+	
+		
+	\subsection{Segmentation}
+	\small{Author: Duc Anh Phi} \newline \newline
+	We segment written characters from the image using visual computing methods. Unfortunately this segmentation process can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power (for training the models) but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
+	
+	
+	
+	
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst} \newline \newline
+	Comparing the preclassification with the Neural Network shows that there must be some difference between the data in our equation and the online datasets that were used.
+	The classifier performed significantly better (around 98\% accuracy) on the training data than our data (78.1\% and 85.9\%).
+	This could be improved upon by creating more training data for the classifier.\\
+	The presence of the preclassification drastically improved the quality of the Calculator.
+	Because an equation can only be solved correctly if all symbols are classified, an improvement on the classifier causes an exponential improvement on the Calculator.
+	In this case, the presence of a preclassifier increases the accuracy of the Calculator by a factor of three.\\
+	Although the preclassifier is occasionally wrong, it is more reliable than the classifier.
+	It's main advantage, however, lies in reducing the amount of labels the classifier has to learn.
 	
-	\subsection{Segmentation}
-	We segment written characters from the image using visual computing methods. This works reasonably well as shown in the results(!REFERENCE). However it can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power for training but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
 	
-	Handling noise is a big issue. We leveraged visual computing methods and also came up with a set of rules for removing noise. We assumed it would be sufficient, unfortunately it has its problems.
-	
-	Our whole system is based on rules which are tightly coupled. Changing/adjusting a rules can have (unknown) consequences of influence the effectiveness of other rules. This not only makes it difficult to improve on the existing base it also makes the whole system less robust (domino effect). EXAMPLE
-	
-	
-	\section{Conclusion}
+	\section{Conclusion and Outlook}
 		\small{Author: Timothy Jay Herbst, Fenja Kollasch, Duc Anh Phi} \newline \newline
-	The Image-Input-Calculator works reasonably well under difficult circumstances.
-	However, it lacks consistency under good circumstances.
-	This is particularly problematic considering that a single misclassification will likely produce a wrong result.
-	It has difficulties distinguishing between ??? !!!.
-	This is due to the difference between simply classifying an image and analysing an image, which may vary quite strongly from the ideal.
-	The classifier significantly improved ???!!!check when using certain manual classifications to simplify the possible output of the classifier.
-	Another method how the classifier could have improved would be with more training data.
-	Even though many online libraries provide a variety of different symbols (which were used), these could only be of so much use, because of the difference between the provided image and a contour which had to undergo the preprocessing steps that are necessary to find the contours.
-	On this count, however, the Calculator shines, in that it uses several new methods to detect the significant contours.
-	To further improve on this a U-Net ???!!!check could have provided a semantic segmentation between pixels and background.
+	The Image-Input-Calculator is very reliable when it comes to detecting the pixels belonging to the equation.
+	It can consistently retrieve symbols from an image.\\
+	It does unfortunately have difficulties reliably classifying symbols.
+	We presume this is due to some difference between our written symbols and the training libraries used.
+	It was possible to improve upon the results by using manual classification criteria for some of the symbols.
+	This produced correct equations far more consistently.
+	Unfortunately with the best trained models, the Calculator cannot detect brackets at the moment.\\
+	Future improvements would include increasing the amount of training data, which would make the classifier work reliably with more labels.
+	
+	%The Image-Input-Calculator works reasonably well under difficult circumstances.
+	%However, it lacks consistency under good circumstances.
+	%This is particularly problematic considering that a single misclassification will likely produce a wrong result.
+
+	%This is due to the difference between simply classifying an image and analysing an image, which may vary quite strongly from the ideal.
+	%The classifier significantly improved ???!!!check when using certain manual classifications to simplify the possible output of the classifier.
+	%Another method how the classifier could have improved would be with more training data.
+	%Even though many online libraries provide a variety of different symbols (which were used), these could only be of so much use, because of the difference between the provided image and a contour which had to undergo the preprocessing steps that are necessary to find the contours.
+	%On this count, however, the Calculator shines, in that it uses several new methods to detect the significant contours.
+	%To further improve on this a U-Net ???!!!check could have provided a semantic segmentation between pixels and background.
 	
 	
 	\pagebreak
