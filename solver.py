@@ -1,5 +1,5 @@
 from sympy.parsing.sympy_parser import parse_expr
-from iic import MathSymbolClassifier
+from classify import MathSymbolClassifier
 from contour import Contour
 from enums import MathSign
 from enums import Position
@@ -8,7 +8,8 @@ import cv2 as cv
 
 class Solver:
     def __init__(self):
-        self.cl = MathSymbolClassifier()
+        models = {'model-all-symbols.ckpt':15, 'model-no_strokes.ckpt':13, 'combined-model-BEST.ckpt':15}
+        self.cl = MathSymbolClassifier(num_classes=15, models=models)
 
     def get_equation(self, contourList, frame):
         def add_brackets(cnt):
