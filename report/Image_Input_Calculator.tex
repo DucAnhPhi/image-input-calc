@@ -52,8 +52,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		This also allows simple characters (e.g. points and bars) to be classified.
 		The remaining characters are recognized using an \textit{AlexNet} Artificial Neural Network.
 		Knowing the position and the class of the characters, allows us to reconstruct the equation as a string and pass it to the Symbolic Math Solver \texttt{SymPy}.
-		While similar projects exist, this project goes into detail, how this can be done. %???
-		And, being open source, demonstrates, how such a problem may be tackled and gives a basis for many other projects on a variety of topics.
+		By being open source this project demonstrates, how such a problem may be tackled and could give a basis for many other projects on a variety of topics.
 		
 		
 		
@@ -71,41 +70,38 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	If we want to improve upon calculators, we will not have to increase the speed at which computers calculate.
 	Instead the focus should lie on improving the efficiency of entering an equation into the calculator.\\
 	We decided to make a calculator able to find the solution to an equation, when given an image of it.
-	In this paper, we explain how such a calculator can be designed.\\
+	In this paper, we explain how such a calculator can be designed.\\ Similar projects have been successfully implemented \url{http://www.willforfang.com/computer-vision/2016/4/9/artificial-intelligence-for-handwritten-mathematical-expression-evaluation}. Our project places its focus more on the complex task of using real and often noisy images.
 	We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
 	
 	\section{Introduction}
 		\small{Author: Fenja Kollasch, Duc Anh Phi} \newline \newline
-	The creation of an automatic image input calculator for handwritten formulae brings together two common computer-scientific problems. 
-	
-	For once, several operations from visual computing need to be applied to the image. The application has to segment the input image into one segment per character. It is important that the ordering of these symbols is preserved during this step. Otherwise, it would not be possible to reconstruct the original formula.
-	
-	The second issue our program has to address, is the recognition of each segmented character. To do so, we can apply methods from machine learning. Luckily, the recognition of handwritten symbols is a well-known problem that has been approached by various researchers before. LeCun et al \cite{lecun1998} for instance discussed different methods to recognized handwritten digits in 1998. With this work, they made a huge contribution by providing this MNIST database of handwritten digits \cite{mnist} that is used for many toy examples in machine learning. In fact, the task that is solved around the MNIST dataset does not differ very much from our own classification task. Symbols that can appear in a calculator input will mainly be digits from 0 to 9. Additionally, mathematical operators, brackets, latin symbols and greek symbols could be found in a mathematical formula. For this work however, we will focus on recognizing only digits and simple mathematical operators like plus, minus, multiplication-, and division symbols, as well as brackets.
-	
-	After these two major steps are complete, there is only one task left. Reconstructing the formula with the recognized symbols, and aligning them in the order in which they appeared on the input image to finally evaluate the term and present the result.
-	
-	\subsection{Classification with neural networks}	
-	The state-of-the-art for automatically recognizing the content of an image file is to solve this issue with \textit{artificial neural networks}. In theory, this design pattern bases on the neuron structure of the human brain as described by neuroscientists. According to this concept, a neural network consists of different layers with a certain amount of nodes which are also referred to as \textit{neurons}. Each neuron receives an input of different parameters that either come from the previous neuron layer or they are given as initial input. A non-linear function is applied to this input that creates an output value. This value is lead to the next layer where it acts as an input again. The first layer of a neural network is often referred to as the \textit{input layer}, while the last layer is called the \textit{output layer}. Between these layer lies a freely chosen number arbitrarily large \textit{hidden layers} (see figure \ref{fig:simple-nn}).
-	
-	\begin{figure}[h!]
-		\includegraphics[width=0.5\textwidth]{ImagesForReport/simple-nn.png}
-		\caption{A simple artificial neural network}
-		\label{fig:simple-nn}
-	\end{figure}
-	
-	Classifying an image means to have a neural network predict how likely the image shows an object from an acquainted catalog, so-called \textit{labels}. As an input, the neural network receives an array including this image's color values. Therefore, the amount of neurons in the input layer needs to be conform with the size and the number of color channels of the input image. The first layer will now produce a certain number of output values that are passed to the next layer. How many output values are generated and to which neurons of the next layer they are passed, depends on the network architecture. When the input meets the last layer of the network, the output layer will calculate for each known label the probability on which the image displays something that can be described with this label. This means, the final output of the network is a vector mapping the probabilities to the known labels. To make a distinct classification of the image content, one would assign the label with the highest probability to the image. Furthermore, it is also possible to design a network that takes not only a single but a set of images as an input and predicts labels for all images. Thus, it will not return a vector with probabilities, but a matrix.
-	
-	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. The error calculated through the difference between prediction and ground truth now gets \textit{backpropagated} through the network by regarding the gradient at the previous neurons and adapting the weights at the neuron's cost function to minimize the error. This is an iterative process, which is why a training cycle usually has multiple \textit{epochs} where the whole training data set is passed forward and backward. Furthermore it has been proven beneficial to not lead the whole set at once through the network, but to take smaller batches that include randomly chosen samples from the training set. There are various optimization algorithms for the backward pass, as well as different metrics so estimate the error between ground truth and prediction.
-	
-	\section{Read and Interpret Visual Information}
-	The whole application flow is summarized in the figure below:\\
-	\begin{figure}[htp]
+	They way our brain solves handwritten formulae is similar to our program. We see the equation \texttt{(input)}, more specifically each character \texttt{(segmentation)} and recognize them as what they represent \texttt{(recognition)}. The focus is on what is written, so other things like the background are disregarded \texttt{(preprocessing)}. We skim over the equations from left, to right, top to bottom \texttt{(ordering)} and compute the result in our head along the way \texttt{(solving)}. Usually all the steps before finally computing the result, like segmentation and recognition are done effortlessly by our brain - the actual solving takes more time. Interestingly this phenomena is reversed with a machine. Calculations are rapid and easy to implement. However, reconstructing the written formula, by reading and interpreting visual information takes much more effort. It entails challenges in the areas of visual computing and machine learning.\\\\
+	For once, several visual computing methods need to be applied to the image. The application has to segment the input image into one segment per character. These segments have to be put in an order which correctly represents the written formula. This ordering step is not trivial as there can be multiple lines of written equations with varying height and straightness. Each line can also contain fractions. They pose a problem, as their nominators and denominators could be assigned to the wrong line. Making things more complicated, fractions can be nested too.\\\\
+	Machine learning methods can be applied for the recognition of each segmented character. Luckily, the recognition of handwritten symbols is a well-known problem that has been approached by various researchers before. LeCun et al \cite{lecun1998} for instance discussed different methods to recognized handwritten digits in 1998. With this work, they made a huge contribution by providing this MNIST database of handwritten digits \cite{mnist} that is used for many toy examples in machine learning. In fact, the task that is solved around the MNIST dataset does not differ very much from our own classification task. Symbols that can appear in a calculator input will mainly be digits from 0 to 9. Additionally, mathematical operators, brackets, latin symbols and greek symbols could be found in a mathematical formula. For this work however, we will focus on recognizing only digits and simple mathematical operators like plus, minus, multiplication-, and division symbols, as well as brackets.\\\\
+	After these steps are completed, we end up with a reconstructed formula which we pass to a symbolic math solver, in our case \texttt{SymPy}, which is an open source python library. We then present the recognized equations with the computed results.\\\\
+	We implemented the program to harnesses the local webcam and use the stream of frames as the input. The whole process of preprocessing, segmenting and ordering each frame is computed and displayed in near real-time.
+	The whole application flow is summarized in the figure below:
+	\begin{figure}[h]
 		\includegraphics[width=1\textwidth]{ImagesForReport/fulldiagram.jpg}
 		\caption{Application Flow}
 		\label{fig:FullFlow}
 	\end{figure}
+
 	\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
-	\section{Theory}
+	\pagebreak\section{Theory}
+	\subsection{Classification with neural networks}	
+	The state-of-the-art for automatically recognizing the content of an image file is to solve this issue with \textit{artificial neural networks}. In theory, this design pattern bases on the neuron structure of the human brain as described by neuroscientists. According to this concept, a neural network consists of different layers with a certain amount of nodes which are also referred to as \textit{neurons}. Each neuron receives an input of different parameters that either come from the previous neuron layer or they are given as initial input. A non-linear function is applied to this input that creates an output value. This value is lead to the next layer where it acts as an input again. The first layer of a neural network is often referred to as the \textit{input layer}, while the last layer is called the \textit{output layer}. Between these layer lies a freely chosen number arbitrarily large \textit{hidden layers} (see figure \ref{fig:simple-nn}).
+	
+	%\begin{figure}[h!]
+	%	\includegraphics[width=0.5\textwidth]{ImagesForReport/simple-nn.png}
+	%	\caption{A simple artificial neural network}
+	%	\label{fig:simple-nn}
+%	\end{figure}
+	
+	Classifying an image means to have a neural network predict how likely the image shows an object from an acquainted catalog, so-called \textit{labels}. As an input, the neural network receives an array including this image's color values. Therefore, the amount of neurons in the input layer needs to be conform with the size and the number of color channels of the input image. The first layer will now produce a certain number of output values that are passed to the next layer. How many output values are generated and to which neurons of the next layer they are passed, depends on the network architecture. When the input meets the last layer of the network, the output layer will calculate for each known label the probability on which the image displays something that can be described with this label. This means, the final output of the network is a vector mapping the probabilities to the known labels. To make a distinct classification of the image content, one would assign the label with the highest probability to the image. Furthermore, it is also possible to design a network that takes not only a single but a set of images as an input and predicts labels for all images. Thus, it will not return a vector with probabilities, but a matrix.
+	
+	The just described \textit{forward pass} is used to make a label prediction for an input. However, if data is lead through an untrained network, the prediction is no better then a guess. To make a reliable network, it is necessary to \textit{train} it, usually by passing a high amount of labeled images and comparing the predictions to the labels. The error calculated through the difference between prediction and ground truth now gets \textit{backpropagated} through the network by regarding the gradient at the previous neurons and adapting the weights at the neuron's cost function to minimize the error. This is an iterative process, which is why a training cycle usually has multiple \textit{epochs} where the whole training data set is passed forward and backward. Furthermore it has been proven beneficial to not lead the whole set at once through the network, but to take smaller batches that include randomly chosen samples from the training set. There are various optimization algorithms for the backward pass, as well as different metrics so estimate the error between ground truth and prediction.
+
 	\subsection{Adaptive Threshold} %??? !!! Add before vs after Images, after Preprocessing is complete
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	A problem we face with the images, is that we do not know if a pixel is part of the writing or not.
