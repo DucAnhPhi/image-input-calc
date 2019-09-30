@@ -23,12 +23,12 @@ class DataCollection(Dataset):
 
     def __init__(self, data_root='HASY', data_subfolder=os.path.join('classification-task', 'fold-1'),
                  train_file='train.csv', test_file='test.csv', train=True, use_hasy=True, use_mnist=True, use_own=True,
-                 own_path='all_symbols', no_strokes=False):
+                 own_path='all_symbols', no_strokes=False, no_labels=15):
         super(DataCollection, self).__init__()
         self.train = train
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
-        self.no_labels = len(MATH_SYMBOLS)-2 if no_strokes else len(MATH_SYMBOLS)
+        self.no_labels = no_labels
         self.img_dims = IMAGE_DIMS
         self.train_file = train_file
         self.test_file = test_file
@@ -119,11 +119,12 @@ class DataCollection(Dataset):
         if not pillow:
             img = DataCollection.custom_preprocessing(img, invert)
         flip = transforms.RandomHorizontalFlip()
+        rotation1 = transforms.RandomRotation(10)
         rotation2 = transforms.RandomRotation(10)
         rotation3 = transforms.RandomRotation(5)
-        augmented = [rotation2(img), rotation3(img), flip(img),
-                     rotation2(flip(img)),flip(rotation2(img)), 
-		     rotation3(flip(img)), flip(rotation3(img))]
+        augmented = [rotation1(img), rotation2(img), rotation3(img), flip(img),
+                     rotation2(flip(img)),flip(rotation2(img)), rotation3(flip(img)),
+                     flip(rotation3(img))]
         for augmented_img in augmented:
             imgs.append(DataCollection.torch_preprocess(augmented_img))
             labels.append(label)

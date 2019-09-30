@@ -8,8 +8,8 @@ import cv2 as cv
 
 class Solver:
     def __init__(self):
-        models = {'model-all-symbols.ckpt':15, 'model-no_strokes.ckpt':13, 'combined-model-BEST.ckpt':15}
-        self.cl = MathSymbolClassifier(num_classes=15, models=models)
+        models = {'model-digits-plus.ckpt':11}
+        self.cl = MathSymbolClassifier(num_classes=11, models=models)
 
     def get_equation(self, contourList, frame):
         def add_brackets(cnt):
