@@ -8,7 +8,7 @@
 
 
 \documentclass[12pt]{article}
-
+\textwidth=15cm \textheight=15cm
 %\usepackage{biblatex}
 
 \usepackage{graphicx}         % fuer das Einbinden von Grafiken
@@ -833,19 +833,19 @@ AlexNet(
 	The qualitative performance of the automatic classifier can be evaluated by regarding the confusion matrix of the models. During the training process we produced multiple models. We took four approaches that produced the most reliable classifiers and run them with labeled test data that was not used during the training of any of the used models. The test data contains a combination of MNIST, HASY, and our own images, as well as the training data of all models does. It contains 12817 data samples in total. The result of this experiment were the following confusion matrices. The x axis displays the prediction of our classifier while the y axis shows the actual label.
 	
 	\begin{figure}[H]
-		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_all.png}
+		\includegraphics[width=0.8\textwidth]{ImagesForReport/confusion_matrix_all.png}
 		\caption{Confusion matrix for a classifier that was trained with the digits from 0-9, +, -, /, (, )}
 		\label{fig:mat-all}
 	\end{figure}
 	
 	\begin{figure}[H]
-		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_single.png}
+		\includegraphics[width=0.8\textwidth]{ImagesForReport/confusion_matrix_single.png}
 		\caption{Confusion matrix for a classifier that was trained with the digits from 0-9, +}
 		\label{fig:mat-single}
 	\end{figure}
 	
 	\begin{figure}[H]
-		\includegraphics[width=\textwidth]{ImagesForReport/confusion_matrix_ensemble.png}
+		\includegraphics[width=0.8\textwidth]{ImagesForReport/confusion_matrix_ensemble.png}
 		\caption{Confusion matrix for a classifier that ensembles three different models}
 		\label{fig:mat-ensemble}
 	\end{figure}
