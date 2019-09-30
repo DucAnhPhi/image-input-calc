@@ -6,9 +6,9 @@
 % write Libraries like \texttt{PyTorch}
 
 
-
-\documentclass[12pt]{article}
+\documentclass[11pt]{article}
 \textwidth=15cm
+
 %\usepackage{biblatex}
 
 \usepackage{graphicx}         % fuer das Einbinden von Grafiken
@@ -111,8 +111,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 
 	\subsection{Image processing and segmentation}
 	The plain image of an equation that our program takes as an input is not suitable for automatic classification. The single written characters need to be extracted while the order and placing of each character must be remembered. Furthermore, a number of image transformations is applied to clean the image from noise and make it easier to get recognized by the network. To perform the symbol segmentation and preprocess the images correctly, we use concepts from visual computing and image processing.	
-	
-	\vspace{1cm}
+
 	\subsubsection{Adaptive Threshold}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful during Preprocessing. %???
