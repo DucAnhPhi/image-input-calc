@@ -701,6 +701,51 @@ AlexNet(
 	
 	
 	\section{Experiments}
+	
+	\subsection{Testing the Preprocessing}
+	We tested our Preprocessing on a variety of different images (see fig: \ref{fig:PreprocessingExamples}).
+	For this we varied the writing medium (paper or whiteboard) and the pen used.
+	(We varied colour and thickness.)\\
+	We found that the Preprocessing worked well under even lighting conditions.
+	It is even able to filter out most background objects.
+	However, it does have difficulties if there is a very strong brightness gradient on the image.
+	Some of the whiteboard images have "hollowed" out text (see fig: \ref{fig:HollowWhiteboardImage}).
+	We believe this is due to the thickness of the writing.
+	The adaptive threshold filter sees the borders of the equation separately.
+	This could be countered by scaling the image down.
+	We did not implement this in the final version, because it would make thin writing disappear.
+	Additionally this should not cause problems, since the contours are rescaled before classification.
+	It does, however, make the preclassification more difficult, since we can no longer use the amount of nested contours as a reliable reference.
+	\begin{figure*}[htp]
+		\centering
+		\subfigure[Example of good Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/goodPreprocessingBefore}}\quad
+		\subfigure[After Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/goodPreprocessing}}
+		
+		\subfigure[Example of bad Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/badPrepreprocessingBefore}}\quad
+		\subfigure[After Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/badPreprocessing}}
+		
+		\subfigure[Example of good Preprocessing on a whiteboard with many background objects]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame2}}\quad
+		\subfigure[After Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
+		
+		\caption{Images before and after Preprocessing.
+		On the left one can see the original image and on the right the image after Preprocessing.
+		Noteworthy is, that even though the image in the first and second row are nearly identical, the image in the second row still has a lot of noise after Preprocessing.
+		This is due to the high brightness gradient and because of the darkness of certain parts of the image.}
+		\label{fig:PreprocessingExamples}
+	\end{figure*}
+	
+		\begin{figure*}[htp]
+		\centering
+		\subfigure*{\includegraphics[width=.45\linewidth]{ImagesForReport/hollowWhiteboardBefore}}\quad
+		\subfigure*{\includegraphics[width=.45\linewidth]{ImagesForReport/hollowWhiteboard}}
+		
+		
+		\caption{Whiteboard Image before and after Preprocessing.
+		Sometimes the text of a whiteboard image becomes hollow.
+		This is likely because the adaptive threshold filter does not have a large enough kernel size to successfully separate the outside borders of the equation if the text becomes particularly thick.}
+		\label{fig:HollowWhiteboardImage}
+	\end{figure*}
+	
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
 	In the following experiment we will be testing the Image-Input-Calculator and also give some motivation as to why it uses several preclassification functions.
