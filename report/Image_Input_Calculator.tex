@@ -7,7 +7,9 @@
 
 
 \documentclass[11pt]{article}
-\textwidth=15cm
+\addtolength{\oddsidemargin}{-2.5cm}
+\addtolength{\evensidemargin}{-2.5cm}
+\textwidth=18cm
 
 %\usepackage{biblatex}
 
@@ -336,7 +338,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		In this manner we determine the mask.
 		Our resulting image is determined, by having all pixels white, except those, that are black both in the mask and in the simple preprocessing.
 		This removes background contours, without making our image unreadable.
-	\begin{figure*}[htp]
+	\begin{figure*}[h!]
 		\centering
 		\subfigure[Original Frame]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame2}}\quad
 		\subfigure[After Simple Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/PostPreprocessed2}}
@@ -535,7 +537,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	%!!! ??? Add more issues
 	%!!! ??? Add images
 	
-	\pagebreak\subsection{Recognition}
+	\subsection{Recognition}
 	\subsubsection{Preclassification}
 	
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
@@ -597,12 +599,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\subparagraph{Multiplication Dot}
 	If the distance between the contour's center and the preceding contour's center is shorter than the distance between the contour's center to the lower end of the predecessor, then the contour is classified as a multiplication dot.\\
-
+\pagebreak
 \subsubsection{Extract Subimages for the Neural Network}
 \small{Author:, Duc Anh Phi} \newline \newline
 In our preprocessing step, we alter the contours in a way to remove noise. The resulting contours are thicker, due to dilation in the preprocessing. Thus, these contours do not accurately represent what was actually written. Passing these contours to the classifier would yield inaccurate predictions, as the network was not trained on these “thicker” contours.
 As a solution to this problem, we use the thicker contours as a mask. We apply this mask to the binarized original image, performing a bitwise AND operation. The result is a proper representation of what was written without the noise.
-\begin{figure*}[h!]
+\begin{figure*}[h]
 	\centering
 	\subfigure[Mask]{\includegraphics[width=.3\linewidth]{ImagesForReport/mask.jpg}}\quad
 	\subfigure[Binary Subimage]{\includegraphics[width=.3\linewidth]{ImagesForReport/binary.jpg}}
