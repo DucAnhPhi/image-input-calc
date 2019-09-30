@@ -325,10 +325,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		\subfigure[Original Frame]{\includegraphics[width=.45\linewidth]{ImagesForReport/Frame2}}\quad
 		\subfigure[After Simple Preprocessing]{\includegraphics[width=.45\linewidth]{ImagesForReport/PostPreprocessed2}}
 		
-		\subfigure[Border Removal Mask (Black pixels will not be removed)]{\includegraphics[width=.45\linewidth]{ImagesForReport/backgroundMask2}}\quad
+		\subfigure[Border Removal Process]{\includegraphics[width=.45\linewidth]{ImagesForReport/borderMaskWithoutRemoval}}\quad
 		\subfigure[Resulting Image]{\includegraphics[width=.45\linewidth]{ImagesForReport/BackgroundRemoved2}}
 		
 		\caption{Performance of the Border Removal Mask.
+		The Border Removal Process (as seen in subfigure(c)) allows for the removal of all contours which connect to the border after the strong dilation (red pixels).
+		Any pixels that are black both after the Simple Preprocessing step and after the Border Removal Process remain black.		
 		Please note that some contours caused by objects remain, because they don't connect well with the border of the image.}
 		\label{fig:BorderRemoval}
 		%??? Make captions in center
