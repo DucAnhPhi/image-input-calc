@@ -87,7 +87,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		\label{fig:FullFlow}
 	\end{figure}
 
-	\addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
+	\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 	\pagebreak\section{Previous work}
 	As mentioned in the introduction, we are approaching a number of common problems in computer science. Therefore, an amount of related work exists. The motivation of this report declares that we took inspiration of a blog post \cite{inspired-blog} proposing an application with a similar workflow. 
 	
@@ -585,13 +585,12 @@ As a solution to this problem, we use the thicker contours as a mask. We apply t
 \small{Author: Fenja Kollasch} \newline \newline
 After the preprocessing routine is complete, each handwritten character is extracted from the original image. The correct order in which the characters will appear in the term is also known. Now, the remaining challenge is to recognize the characters and assign the correct labels such that an evaluation of the written term can take place.
 	
-	Therefore, we need to solve a typical classification problem. It is similar to the classification of the \textit{MNIST} image data set including 60000 images of handwritten digits. Additional to the digits from 0 to 9, our classifier also needs to recognize the symbols \textit{+}, \textit{(}, and \textit{)}, as well as the letters \textit{x} and \textit{y}. All kinds of dashes like the ones used in an equal sign or a minus symbol will not be recognized by machine learning techniques but will be handled by manual classification.
+	Therefore, we need to solve a typical classification problem. It is similar to the classification of the \textit{MNIST} image data set including 60000 images of handwritten digits. Additional to the digits from 0 to 9, our classifier also needs to recognize the symbols \textit{+}, \textit{-}, \textit{/} \textit{(}, and \textit{)}. Distinguishing between the mathematical operators is especially a challenge. Brackets, dashes, and minus symbols have a very similar shape.
 	
 	To classify the image, we use a deep convolutional neural network (CNN). The network will be trained in beforehand. During the use of our main application, the segmented and preprocessed images of the characters are going though the forward pass of the trained model. The labels that were assigned during this process are furthermore send to the symbolic math solver to evaluate the result of the term. 
 	
 	The framework containing most of the machine learning functions we are using, is \texttt{PyTorch}. We decided to use \texttt{PyTorch} because we familiarized ourselves with this library during the exercises of this class. Furthermore, \texttt{PyTorch} offers complete models suitable for classification.
 		
-	Dash- or dotlike symbols however are extremely hard to recognize automatically, since they cause major overfitting within the network. A highly accurate classifier is crucial for our program to work. For this reason, we perform a manual classification of difficult symbols and leave the automatic classification for symbols with distinctive features.
 	
 	\paragraph{Training data}
 		To create a well trained model, a sufficient amount of training data is crucial. For the training routine, we decided to use two public data sets of handwritten symbols. Additionally, we created some training images ourselves that are created the same way as the input of the future classifier in our system. All of these images merge into a combined data set which will be finally used to train the character classificator.
@@ -622,7 +621,22 @@ After the preprocessing routine is complete, each handwritten character is extra
 		
 		Stochastic optimization is done by using an \textit{ADAM}\cite{adam} optimizer. Since it is claimed to work best on classification issues with multiple classes, we use cross entropy loss as a loss function.
 		
-		We decided to leave 11 different symbols to the automatical classification: The digits from 0 to 9,  and \textit{+}. Therefore, the classification problem we are trying to solve is very close to MNIST what makes the chances high to achieve a good accuracy. Other operators will be classified in an earlier step in a manual way. Thus, our classifier needs to map the images to one of 15 labels.
+		We trained multiple different models to be able to choose those who work best in practice. All models use data samples from the same combination of data sets but differ in the number of symbols that were included. The models that performed the best in a use case are those trained on digits and plus symbols only. By handling the recognition of $-, /, (, )$ manually, the confusion of the network is reduced and the results are better. 
+		
+		The models were tested on a separate data set including samples from MNIST, HASY, and our own images that were not used during the training of any of the classifiers. Most of our models achieved a quite good accuracy on these testing data (over 90\%). Table \ref{tab:accuracies} shows the accuracies of our three best performing models.
+		\begin{table}[H]
+			\begin{tabular}{l|l}
+				\textbf{Model} & \textbf{Accuracy} \\
+				\hline
+				Trained on 0-9, + & \\
+				\hline
+				Trained on 0-9, +, -, /, (, ) & \\
+				\hline
+				Trained on 0-9, +, (, ) &
+			\end{tabular}
+			\caption{The accuracies on the test set for three of our models}
+			\label{tab:accuracies}
+		\end{table}
 				
 		\subparagraph{Neural network}
 		
@@ -688,10 +702,17 @@ AlexNet(
 	\end{table}
 	
 	\paragraph{Automatic Classification}
-	After the training is complete, we save the model to a \textit{.ckpt} file. The actual classifier that will be used in our program will be an instance of the class \texttt{MathSymbolClassifier}. This class simply contains an \textit{AlexNet} instance in which we load the information from the trained model. To predict what each of our segmented images shows, the class provides a function \texttt{classify}. The function takes a \texttt{NumPy} array with images as an input, creates a tensor out of this array and leads the data through the network. Afterwards the predicted label is returned as a string and can be further processed by the symbolic math solver \texttt{SymPy}.
-	
-	\paragraph{Manual Classification}
-	Before the extracted symbols are given as an input for the automatic classifier, we check manually if they picture a symbol that our classifier can not recognize. This applies for opening and closing brackets, minus symbols, equal signs, commas, and multiplication dots.
+	After the training is complete, we save the model to a \textit{.ckpt} file. The actual classifier that will be used in our program will be an instance of the class \texttt{MathSymbolClassifier}. This classifier allows to use multiple models for classification. As an input, the constructor receives a dictionary containing paths to all models that should be considered. To classify a collection of images, the \texttt{MathSymbolClassifier} provides a function \texttt{classify}. The function works by executing the following steps:
+	\begin{enumerate}
+		\item For each model, pass the input data through the forward pass
+		\item We receive prediction matrices for each model
+		\item Save the highest probability for each sample by calculating the rowwise maximum of the probability matrix.
+		\item Concatenate the resulting column with the best probabilities from the previously regarded prediction matrices.
+		\item Save the index of the highest probability from each prediction matrix since they describe the labels.
+		\item We receive a matrix where each columns describe the best predictions for the input data. Calculate the rowwise maximum to receive the globally best prediction.
+		\item Take the labels that belong to the globally best predictions
+		\item Return either the label indices as they are or map them to the symbols they describe and return the symbol vector.
+	\end{enumerate}
 	
 	\subsection{Calculations}
 	\small{Author: Fenja Kollasch} \newline \newline
