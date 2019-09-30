@@ -111,6 +111,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\subsection{Image processing and segmentation}
 	The plain image of an equation that our program takes as an input is not suitable for automatic classification. The single written characters need to be extracted while the order and placing of each character must be remembered. Furthermore, a number of image transformations is applied to clean the image from noise and make it easier to get recognized by the network. To perform the symbol segmentation and preprocess the images correctly, we use concepts from visual computing and image processing.	
 	
+	\vspace{1cm}
 	\subsubsection{Adaptive Threshold}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	The "Adaptive Threshold" function \cite{adaThresh}, found in the \texttt{OpenCV} library is very useful during Preprocessing. %???
@@ -162,8 +163,11 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	The user can have the program analyse images from a variety of sources.
 	The library \texttt{OpenCV} is capable of reading image files, video files and may also use a webcam, if present.
-	This enables a smooth user experience and allows realtime analysis of an equation.
-	
+	This enables a smooth user experience and allows realtime analysis of an equation.\\
+	Sources of images for testing and optimizing this Calculator were created by writing equations on paper or whiteboard with a variety of different writing utensils.
+	These include ballpoint pens, pencils, felt tip pens, fountain pens and more.
+	This was done to ensure a variety of colours, thicknesses and styles of writing.\\
+	Images and videos were then taken of these equations, or the image was placed in front of a webcam for live testing.
 	
 	%Our program evaluates images.
 	%The input source could be an image file, a video file or the local webcam.
@@ -184,17 +188,18 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		Correcting for this, is not a simple task.
 %		A future improvement of this project would improve greatly by having an adaptive preprocessing step.
 		% !!!
-		\item Simplification of the input dimensions: Explicitly we want our image to be a binary black-white image, with the colours black (0) and white (255).
-		\item Connectedness of the symbols: For later steps, it is useful to not segment any symbols. In the same manner, we do not wish for two different symbols to be connected.
+		\item Simplification of the input dimensions: Explicitly we want our image to be a binary black-white image, with the colours black (0) for text and white (255) for background.
+		\item Connectedness of the symbols: For later steps, it is useful to not divide any symbols into multiple parts. In the same manner, we do not wish for two different symbols to be connected.
+		\item Background contour removal: Oftentimes when taking an image of an equation there will be other objects in the image (e.g. pencils, the border of the paper, etc.).
 		\item Removal of noise: Often the background (e.g. paper or whiteboard) is not uniform and this can create spots in the image. (The human eye is very good at filtering these out.)
-		\item Background contour removal: Oftentimes when taking an image of a contour there will be other objects in the image (e.g. pencils, the border of the paper, etc.).
-		\item Correction for reflected bright spots: Especially, when using images from white boards, the program has to contend with reflected light sources.
+		Similarly reflected light sources can cause noise.
+		This happens more often on whiteboards than paper, because they tend to reflect more easily. %Especially, when using images from white boards, the program has to contend with reflected light sources.
 	\end{itemize}
 		%!!! ??? Add more
 		We correct for (most of) these issues in three separate steps:\\
 		First we use a few select image processing steps to deal with most of the issues.
 		In a second step, we remove the contours that can be attributed to background objects.
-		Lastly, we correct for reflected light sources. %!!! Add to master
+		Lastly, we correct for reflected light sources and some types of noise.
 
 	\subsubsection{Simple Preprocessing}
 	\small{Author: Timothy Jay Herbst} \newline \newline
@@ -265,7 +270,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		The image our program receives as input is likely not easily analyzed as is.
 		We therefore pre-process the image with a few select operations before continuing with our algorithm.
 		It should be noted here that there is a great variety of different algorithms that work well.
-		The algorithm we will be presenting here is the one we found to work well for our purpose.\\
+		The algorithm we will be presenting here is the one we found to work best for our purpose.\\
 		It operates in five steps (see fig: \ref{fig:SimplePreprocessing}):
 		\begin{itemize}
 			\item Grayscaling: At first, we grayscale our image.
@@ -278,7 +283,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 			This threshold differentiates the symbols from the background well.
 			\item Dilation: After the previous steps, it is possible that some of the symbols have decomposed into several parts.
 			This allows for easier contour detection.
-			However, this makes the contour more difficult for the classifier to recognise, which is why this step will be undone later. %??? Errosion is Dilation correct?
+			However, this makes the contour more difficult for the classifier to recognise.
+			Because of this a new image without this step is created for classification. %??? Errosion is Dilation correct?
 %			(Because our image is inverted, the code uses an erosion function.) %??? fix
 			Therefore, it is useful at this point to thicken the contours.
 		\end{itemize}
@@ -298,8 +304,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		After these pre-processing steps, we have a fairly good image.
 		However, very often the shape of background objects register as contours.
 		THis section explains how to remove the contours of background objects.
-		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to be flaky and can be roughly traced to the border of an image, see fig \ref{fig:BorderRemoval}.
-		Using this knowledge we can create a mask, which removes the background contours.\\
+		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to connect to the border of the image via other contours, see fig \ref{fig:BorderRemoval}.
+		Using this knowledge we can create a mask, which removes most background contour objects.\\
 		We determine the mask in the following steps:
 		\begin{itemize}
 			\item Simple Preprocessing: At first we need to simplify the image. We use a similar algorithm as used in the section "Simple Preprocessing" for this.
@@ -328,16 +334,16 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 		%??? Make captions in center
 	\end{figure*}
 	
-	\subsubsection{Reflection Removal}
+	\subsubsection{Bright Noise Removal}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	Bright light sources may reflect off the surface on which the equation is written.
-	This occurs especially often when using a white board, but also on paper (see fig. \ref{fig:BrightnessRemoval}).
+	This occurs especially often when using a white board, but also on paper.
 	Unfortunately, the adaptive threshold function cannot differentiate between the writing and the bright reflections.
 	Fortunately, the reflected light sources all have a common trait:
 	They are significantly brighter than the average image.
 	It is therefore possible to create a fairly simple mask which simply removes all pixels which are significantly brighter than the average pixel of the image.
-	After applying this mask, the image no longer contains contours caused by reflected light sources.%??? significantly
-	A positive side effect is, that noise caused by imperfections on paper get removed because of their brightness.
+	After applying this mask, the image no longer contains contours caused by reflected light sources. %??? significantly
+	A positive side effect is, that noise caused by imperfections on paper get removed because of their brightness (see fig. \ref{fig:BrightnessRemoval})..
 	
 	\begin{figure*}[htp]
 		\centering
@@ -459,20 +465,20 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\subsubsection{Determining the Direction of Writing}
 	\small{Author: Timothy Jay Herbst} \newline \newline
-	When writing an equation, most people tend to write roughly along an "invisible line".
+	When writing an equation, most people tend to write roughly along an ``invisible line".
 	Therefore, when taking an image of said equation, we can expect it to adhere roughly to the line.
 	We can use this to determine the order of the symbols.\\
-	There are however, two issues with this:\\
-	Firstly, unlike a computer a human will not precisely write their symbols in a line.
-	Oftentimes a symbol will be significantly above or below said line.
-	It gets even worse, if we take a look at exponents, division bars and similar.\\
-	Secondly, the "invisible line" may not be along the horizontal of an image.
+	There are, however, two issues with this:\\
+	First, unlike a computer, a human will not write their symbols precisely on a line.
+	Oftentimes, a symbol will be significantly above or below the line.
+	The situation gets even worse, if we take a look at exponents, division bars and similar.\\
+	Secondly, the ``invisible line" may not be along the horizontal of an image.
 	This may be because of sloppiness of the writer, or because the image was taken at an angle.\\
-	Because of this, it is very useful to be able to determine the direction of such an "invisible line".
-	In the following we will be discussing a method how to determine this line.
-	It should be noted at this point however, that in most images we took this "invisible line" deviates by less than $10^\circ$.
+	Because of this, it may be very useful to determine the direction of such an "invisible line".
 	A good algorithm was found to solve for this problem.
-	Since this was not a significant problem in the image and the code had certain difficulties it was removed.
+	However, in most images we found this "invisible line" deviates by less than $10^\circ$ from the horizontal.
+	Since the code we used, sometimes caused problems when looking at multiple lines of equations, it was removed.
+	The interested reader may find it in the git-repository under the branch \texttt{mergeordering2} in the file \texttt{ordering2.py}.
 	
 	
 	
@@ -484,44 +490,49 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\subsubsection{Assigning Lines to Proposed Line Positions}
 	\small{Author: Timothy Jay Herbst} \newline \newline
-	Our aim is to accurately order the contours into lines.
-	A possible method for doing this is by proposing the position of lines.
-	Then we check for each proposed line, whether or not a given contour is a good fit (if it is within a certain radius of the line).\\
-	For this procedure we at first have to find a rough estimate of the diameter of a line.
+	Another method how to accurately order the contours into lines can be done by proposing y-coordinates for lines and then assigning contours accordingly.
+	%A possible method for doing this is by proposing the y-coordinate position of every line.
+	This can be done by checking for each proposed line, whether or not a given contour is within a certain radius of the line.\\
+	For this procedure, we at first have to find a rough estimate of the height of a line.
 	This can be done in a variety of different ways.
-	The best method we found at first determines the extension (radius of minimal enclosing circle) of every single found contour.
+	The best method we found at first determines the extension (radius of minimum enclosing circle) of every single found contour.
 	Of these, the biggest radius that isn't part of a fraction is then chosen to be the presumed line radius.\\
 	To find the ideal line position, we propose a great variety of possible lines.
-	In practice we choose a line every $0.4 \cdot \mathrm{line radius}$.
-	For every one of these lines, the appropriate contours are assigned.
+	In practice, we choose a line every $0.4 \cdot \mathrm{line radius}$.
+	For each of these lines, the appropriate contours are assigned.
 	Because we choose a lot of different lines, it is very likely that contours are present in multiple lines.
-	We can find the best lines, by removing all lines, that have a neighbouring lines, which contain more symbols.
+	We can find the best lines by removing all lines that have a neighbouring line which contain more symbols.
 	The longest lines correspond to the written lines.\\
 	Afterwards, all lines with less than 3 symbols in them are removed.
-	This can be done with confidence, because even the smallest equation (e.g. "1+1") has at least 3 symbols.\\
+	This can be done with confidence, because even the shortest equation (e.g. "1+1") has at least 3 symbols.\\
 	
 	While there are some obvious flaws with this method, it works surprisingly and consistently well.
-	It performs especially well, when equations are written along lines with large spaces between symbols.
-	Compared to other methods it can maintain the position of a line and doesn't wander into other lines.\\
-	It does however, have difficulty if there are hazy patches in an image, which cause a large amount of wrong contours close to each other.
+	It performs especially well when equations are written along lines with large spaces between symbols.
+	Compared to other methods, it can maintain the position of a line and doesn't wander into other lines.\\
+	It does however, have difficulty if there are large amounts of wrong contours close to each other.
 	The algorithm will always attempt to place a line around these contours.\\
-	Another issue is caused, if the lines are written too close and there is a large contour.
-	If this is the case, then the line might be placed in between both lines and use contours from both lines.
+	Another issue appears if the lines are written too close together and there is a large contour.
+	If this is the case, then the proposed line position will lie between both lines and read contours from both lines.\\
+	This algorithm performs better, if the image contains many small contours, which are randomly distributed across the image.
 	%!!! ??? Add more issues
 	%!!! ??? Add images
 	
 	\pagebreak\subsection{Recognition}
 	\subsubsection{Preclassification}
 	
+	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.75\textwidth]{ImagesForReport/preclassify.jpg}
-		\caption{Classification of Math Symbols without a Neural Network.}
+		\caption{Classification of Math Symbols without a Neural Network.
+		Minuses are marked blue. Multiplications are marked yellow.  Division bars are marked green. Decimal points are marked magenta. Equal signs are marked red.}
 		\label{fig:preclassify}
 	\end{figure}
 
-	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
-	Given the size, shape and positional information along with the order in which the symbols are written it is possible to classify certain symbols without the need for a neural network. This is very beneficial for two main reasons. The classification problem becomes easier as there are less classes to differentiate from. Additionally it saves computational time, as less contours have to be passed through the network. As a drawback the rule based classification might be less accurate.\\
+	Given the size, shape and positional information of the symbols, along with the order in which they are written, it is possible to classify certain symbols without the need for a neural network. 
+	This is very beneficial for two main reasons. 
+	The classification problem becomes easier, as there are fewer classes to differentiate from.
+	Additionally, it saves computational time, as fewer contours have to be passed through the network. As a drawback the rule based classification might be less accurate.\\
 	We assume that symbols need to have a simple shape while sill being distinct, in order to be accurately classified by certain local rules.\\
 	We came up with these rules based on experimentation.
 	
@@ -556,11 +567,11 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\paragraph{Preclassify point-shaped Math Symbols}
 	\small{Author: Timothy Jay Herbst} \newline \newline
-	A difficulty with detecting handwritten equations is the common usage of points or point-like symbols.
+	A difficulty with detecting points or point-like symbols is the abundant use of these.
 	This makes it nearly impossible to account for all possible interpretations of this.
 	Therefore we have focused on the two most common cases:
-	The multiplication dot ("$\cdot$") and the comma or dot indicating a partial number (e.g. "$3,14$" or "$3.14$").\\
-	Other important times where a dot appears in an equation, which unfortunately we were unable to cover, include points included in letters (e.g. "$i=\sqrt{-1}$"), the time derivative of a variable (e.g. "$\dot{x}=v$") and the dots included in a definition symbol ("$:=$" or "$=:$").\\  % ??? cite https://en.wikipedia.org/wiki/List_of_mathematical_symbols
+	The multiplication dot ``$\cdot$") and the comma or dot indicating a non-integer number (e.g. ``$3,14$" or ``$3.14$").\\
+	There are other important times where a dot appears in an equation, which unfortunately we were unable to cover, including points in letters (e.g. ``$i=\sqrt{-1}$"), the time derivative of a variable (e.g. ``$\dot{x}=v$") and the dots included in a definition symbol (``$:=$" or ``$=:$").\\  % ??? cite https://en.wikipedia.org/wiki/List_of_mathematical_symbols
 	As the line has already been ordered, we are able to take a look at the preceding and following contour.
 	
 	\subparagraph{Comma}
@@ -611,7 +622,7 @@ After the preprocessing routine is complete, each handwritten character is extra
 			\indent\small{(Author: Timothy Jay Herbst, Fenja Kollasch)}
 			\vspace{-0.5 cm}
 		\subparagraph{Custom training images}	
-		Furthermore, we generated some training images ourselves by writing down symbols and capture them the same way in which our application will capture the mathematical formula during usage.
+		In addition, we generated some training images ourselves by writing down symbols and capturing them the same way in which our application will capture the mathematical formulae during use.
 		All training equations were written on paper.
 		A variety of different writing utensils of different colors and thicknesses were used.
 		Images were then separated using the methods that may be found on the branch \texttt{gathertrainingdata2}. %??? link
@@ -703,6 +714,8 @@ AlexNet(
 	\section{Experiments}
 	
 	\subsection{Testing the Preprocessing}
+	
+	\small{Author: Timothy Jay Herbst} \newline \newline
 	We tested our Preprocessing on a variety of different images (see fig: \ref{fig:PreprocessingExamples}).
 	For this we varied the writing medium (paper or whiteboard) and the pen used.
 	(We varied colour and thickness.)\\
@@ -748,16 +761,16 @@ AlexNet(
 	
 	\subsection{Comparing Preclassification and Neural Networks}
 	\small{Author: Timothy Jay Herbst, Duc Anh Phi} \newline \newline
-	In the following experiment we will be testing the Image-Input-Calculator and also give some motivation as to why it uses several preclassification functions.
-	For this we will compare how well the calculator performs using two different types of classifiers:\\
-	The first classifier is capable of classifying a contour to all symbols that might be in the equation we are analysing.
-	Those are the digits "0" through "9","+","-","/", "(" and ")".
-	The only time at which we use the preclassification processes are for deciding whether a dot is a multiplication symbols "$\cdot$", a comma "," or dot "." which separates digits larger and smaller than 1 or if the dot is not part of the equation at all.\\
+	In the following experiment, we test the Image-Input-Calculator and also give some motivation as to why it uses several preclassification functions.
+	For this, we will compare how well the calculator performs using two different types of classifiers:\\
+	The first classifier is capable of classifying a contour as one of the symbols that might be in the equation we are analysing.
+	These are the digits 0 through 9 , + , - , / , ( and ).
+	The only time at which that we use preclassification processes is for deciding whether a dot is a multiplication symbol "$\cdot$", a comma "," or decimal point "." or if the dot is not part of the equation at all.\\
 	The second classifier uses as many preclassifying methods as we were able to develop.
-	This means it is able to classify a contour to any digit "0" through "9" and "+".
+	This means it is able to classify a contour to any digit 0 through 9 and +.
 	It is not possible for this classifier to correctly identify "(" and ")".\\ %??? add accuracy on MNIST and Mixed
-	To compare how well they classify, we have created several images of equations with varying amounts of digits.
-	Both classifiers have been tested on equations of the same style and it has been determined, how often contours were correctly or incorrectly classified.
+	To compare how well these two approaches classify, we have created several images of equations with varying amounts of digits.
+	Both classifiers were tested on equations of the same style and we tracked, how often contours were correctly or incorrectly classified.
 	These results can be seen in table \ref{tab:Exp1}.
 	
 	
@@ -827,15 +840,15 @@ AlexNet(
 	\subsection{Pre-Processing}
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	Transforming the original image into a usable binary image worked relatively smoothly.
-	The main issues which arise during this part are caused by the large variety of images.
-	These vary in brightness, background color and medium of writing to name a few.
+	The main issues which arise during this step are caused by the large variety of images.
+	These vary in brightness, background color and writing medium, to name a few.
 	However, it was possible to develop a method which consistently gives good results.\\
 	The simple pre-processing step performs well on a variety of images.
-	It does however, develop problems on very large and small images, because it operates with a fixed kernel size.
-	A solution for this would be to have the kernel size adapt with the size of the image or scaling the image.
+	It does, however, experience problems on very large and small images, because it operates with a fixed kernel size.
+	A solution for this would be to have the kernel size adapt to the size of the image or to scale the image.
 	However, when scaling the image we found that it could happen that the equation would dissapear if written less clearly.\\
 	The border removal process performs well when removing contours caused by objects that are not the equation.
-	It does fail sometimes, however, if the colour of the background object does not differ strongly from the background colour.
+	It does fail sometimes, however, if the colour of the background object does not differ strongly from the overall background colour.
 	Then the border of the object may not be a consistent line.
 	It can then not be fully removed and a part of the border may remain (see fig \ref{fig:PartialBorder}).
 	\begin{figure*}[htp]
@@ -844,17 +857,17 @@ AlexNet(
 		\subfigure{\includegraphics[width=.45\linewidth]{ImagesForReport/PartialBorder2}}
 		
 		\caption{Many of the background contours are removed.
-		However, the paper on the left side of the image is only partially removed and the eraser is to far away from the border to be removed.}
+		However, the paper on the left side of the image is only partially removed and the eraser is too far away from the border to be removed.}
 		\label{fig:PartialBorder}
 	\end{figure*}
 	Also if an object is fully within the image, it is not likely to disappear in this step.
-	It will, however, disappear in during the line ordering step because it is the only contour in that line and therefore can't be part of an equation.\\
+	It will, however, likely disappear during the line ordering step because it is unlikely to be in the same line as another contour and will be removed because lines that consist of only one line can't be equations.\\
 	
 	The brightness removal process allows for the removal of reflected light sources.
-	It also helps remove small sources of noise from the background of an image if the background is brighter than the image is on average.
-	If the image were on average darker than the equation, it would cause the writing to disappear.
+	It also helps remove small sources of noise from the background of an image, if the background is brighter than the image is on average.
+	If the image were on average darker than the equation, however, it could cause the writing to disappear.
 	However, we were never able to observe this on a whiteboard or paper.
-	This step makes it impossible to detect an equation on e.g. a blackboard, because here the writing is brighter than the background.
+	This step makes it impossible to detect an equation on e.g. a blackboard, because here, the writing is brighter than the background.
 	
 	\subsection{Classification problems}
 	\small{Author: Fenja Kollasch} \newline \newline
