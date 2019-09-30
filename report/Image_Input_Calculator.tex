@@ -284,7 +284,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 
 
 		The image our program receives as input is likely not easily analyzed as is.
-		We therefore pre-process the image with a few select operations before continuing with our algorithm.
+		We therefore preprocess the image with a few select operations before continuing with our algorithm.
 		It should be noted here that there is a great variety of different algorithms that work well.
 		The algorithm we will be presenting here is the one we found to work best for our purpose.\\
 		It operates in five steps (see fig: \ref{fig:SimplePreprocessing}):
@@ -317,7 +317,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	
 	\subsubsection{Border Removal}%??? !!! Add red mask
 		\small{Author: Timothy Jay Herbst} \newline \newline
-		After these pre-processing steps, we have a fairly good image.
+		After these preprocessing steps, we have a fairly good image.
 		However, very often the shape of background objects register as contours.
 		THis section explains how to remove the contours of background objects.
 		For this, we make use of a simple observation: symbols tend to be separate from other contours, while background contours tend to connect to the border of the image via other contours, see fig \ref{fig:BorderRemoval}.
@@ -510,7 +510,7 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\small{Author: Timothy Jay Herbst} \newline \newline
 	Another method how to accurately order the contours into lines can be done by proposing y-coordinates for lines and then assigning contours accordingly.
 	%A possible method for doing this is by proposing the y-coordinate position of every line.
-	This can be done by checking for each proposed line, whether or not a given contour is within a certain radius of the line.\\
+	We do this by checking for each proposed line, whether or not a given contour is within a certain radius of the line.\\
 	For this procedure, we at first have to find a rough estimate of the height of a line.
 	This can be done in a variety of different ways.
 	The best method we found at first determines the extension (radius of minimum enclosing circle) of every single found contour.
@@ -583,8 +583,8 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	\subparagraph{Equal Bars}\label{equalbars}
 	While a fraction bar will always have symbols above and below it, equal sign bars always appear in pairs. They either have a single contour (their counter part) above or below them, but never both.
 	
-	\paragraph{Preclassify point-shaped Math Symbols}
 	\small{Author: Timothy Jay Herbst} \newline \newline
+	\paragraph{Preclassify point-shaped Math Symbols}
 	A difficulty with detecting points or point-like symbols is the abundant use of these.
 	This makes it nearly impossible to account for all possible interpretations of this.
 	Therefore we have focused on the two most common cases:
@@ -881,7 +881,7 @@ AlexNet(
 	The main issues which arise during this step are caused by the large variety of images.
 	These vary in brightness, background color and writing medium, to name a few.
 	However, it was possible to develop a method which consistently gives good results.\\
-	The simple pre-processing step performs well on a variety of images.
+	The simple preprocessing step performs well on a variety of images.
 	It does, however, experience problems on very large and small images, because it operates with a fixed kernel size.
 	A solution for this would be to have the kernel size adapt to the size of the image or to scale the image.
 	However, when scaling the image we found that it could happen that the equation would dissapear if written less clearly.\\
@@ -1015,7 +1015,7 @@ $ python3 app.py
 
 %This step had to have a very low false negative rate.
 %In other words, we had to allow for a small amount of noise rather than accidently have symbols or parts of symbols disappear.
-%The simple pre-processing step performed well on this task.\\
+%The simple preprocessing step performed well on this task.\\
 %Images were already usable after preprocessing.
 %However, often contours could be found which did not belong to the equation itself.
 %These contours can almost always be classified as either objects which are not text (for instance the border of a piece of paper) or as simple noise (caused for instance by the texture of the paper).
