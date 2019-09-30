@@ -12,7 +12,7 @@ from tqdm import tqdm
 from preprocessing import PreProcessing
 
 MATH_SYMBOLS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                '+']
+                '+', '-', '/', '(', ')']
 SYMBOL_CODES = [
                 196]
 
@@ -22,19 +22,24 @@ IMAGE_DIMS = (1, 32, 32)
 class DataCollection(Dataset):
 
     def __init__(self, data_root='HASY', data_subfolder=os.path.join('classification-task', 'fold-1'),
-                 train_file='train.csv', test_file='test.csv', train=True):
+                 train_file='train.csv', test_file='test.csv', train=True, use_hasy=True, use_mnist=True, use_own=True,
+                 own_path='all_symbols', no_strokes=False, no_labels=15):
         super(DataCollection, self).__init__()
         self.train = train
         self.data_root = data_root
         self.data_subfolder = os.path.join(self.data_root, data_subfolder)
-        self.no_labels = len(MATH_SYMBOLS)
+        self.no_labels = no_labels
         self.img_dims = IMAGE_DIMS
         self.train_file = train_file
         self.test_file = test_file
 
-        imgs, labels = self.get_hasy_data()
-        self.append_mnist(imgs, labels, train)
-        self.append_own(imgs, labels)
+        imgs, labels = [], []
+        if use_hasy:
+            imgs, labels = self.get_hasy_data()
+        if use_mnist:
+            self.append_mnist(imgs, labels, train)
+        if use_own:
+            self.append_own(imgs, labels, train, path=own_path, no_strokes=no_strokes)
         self.data = imgs
         self.targets = labels
         self.size = len(imgs)
@@ -114,11 +119,12 @@ class DataCollection(Dataset):
         if not pillow:
             img = DataCollection.custom_preprocessing(img, invert)
         flip = transforms.RandomHorizontalFlip()
+        rotation1 = transforms.RandomRotation(10)
         rotation2 = transforms.RandomRotation(10)
         rotation3 = transforms.RandomRotation(5)
-        augmented = [rotation2(img), rotation3(img), flip(img),
-                     rotation2(flip(img)),flip(rotation2(img)), 
-		     rotation3(flip(img)), flip(rotation3(img))]
+        augmented = [rotation1(img), rotation2(img), rotation3(img), flip(img),
+                     rotation2(flip(img)),flip(rotation2(img)), rotation3(flip(img)),
+                     flip(rotation3(img))]
         for augmented_img in augmented:
             imgs.append(DataCollection.torch_preprocess(augmented_img))
             labels.append(label)
@@ -154,25 +160,42 @@ class DataCollection(Dataset):
         for label in tqdm(mnist_data.targets):
             labels.append(label.item())
 
-    def append_own(self, imgs, labels, path='own_training_data'):
+    def append_own(self, imgs, labels, train, path='all_symbols', no_strokes=False):
         label_idx = 0
         for symbol in MATH_SYMBOLS:
             try:
-                images = os.listdir(os.path.join(path, symbol))
+                if symbol == '/':
+                    symbol = 'div'
+                if symbol == '(':
+                    symbol = 'brckts'
+                    if no_strokes:
+                        label_idx -= 2
+                if train:
+                    full_path = os.path.join(path, symbol)
+                else:
+                    full_path = os.path.join(path, symbol, 'test')
+                images = os.listdir(full_path)
                 for image_file in images:
-                    img = cv2.imread(os.path.join(path, symbol, image_file))
-                    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    pil_img = Image.fromarray(img, 'L')
-                    rotated1 = transforms.RandomRotation(10)(pil_img)
-                    rotated2 = transforms.RandomRotation(5)(pil_img)
-                    imgs.append(self.torch_preprocess(pil_img))
-                    imgs.append(self.torch_preprocess(rotated1))
-                    imgs.append(self.torch_preprocess(rotated2))
-                    labels.append(label_idx)
-                    labels.append(label_idx)
-                    labels.append(label_idx)
-                    if symbol == '+':
-                        DataCollection.data_augmentation(pil_img, label_idx, imgs, labels, pillow=True, invert=False)
+                    if image_file != 'test':
+                        img = cv2.imread(os.path.join(full_path, image_file))
+                        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                        pil_img = Image.fromarray(img, 'L')
+                        rotated1 = transforms.RandomRotation(10)(pil_img)
+                        rotated2 = transforms.RandomRotation(5)(pil_img)
+                        augmented = [pil_img, rotated1, rotated2]
+                        for pic in augmented:
+                            imgs.append(self.torch_preprocess(pic))
+                            labels.append(label_idx)
+                            if symbol == 'brckts':
+                                flipped_pic = pic.transpose(Image.FLIP_LEFT_RIGHT)
+                                imgs.append(self.torch_preprocess(flipped_pic))
+                                labels.append(label_idx+1)
+
+                        if symbol == '+' or symbol == '-' or symbol == 'brckts':
+                            DataCollection.data_augmentation(pil_img, label_idx, imgs, labels, pillow=True, invert=False)
+                        if symbol == 'brckts':
+                            DataCollection.data_augmentation(flipped_pic, label_idx+1, imgs, labels, pillow=True,
+                                                             invert=False)
             except FileNotFoundError:
                 print("No training data for {0}. Skipping".format(symbol))
             label_idx += 1
