@@ -71,15 +71,15 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	Instead the focus should lie on improving the efficiency of entering an equation into the calculator.\\
 	We decided to make a calculator able to find the solution to an equation, when given an image of it.
 	Ideally the project will some day be usable as a smart-phone app, where the user may scan any equation and instantly get a result.
-	In this paper, we explain how such a calculator can be designed.\\ Similar projects have been successfully implemented \cite{inspired-blog}. Our project places its focus more on the complex task of using real and often noisy images.
+	In this paper, we explain how such a calculator can be designed.\\ Similar projects have been successfully implemented \cite{inspired-blog}. Our project places its focus more on the complex task of using real and often noisy images. It would be really useful if one could hold a sheet of equations in front of a camera and see the computed results immediately.
 	We hope that this serves as an inspiration to solve similar issues, and that the code provided proves useful.
 	
 	\section{Introduction}
 		\small{Author: Fenja Kollasch, Duc Anh Phi} \newline \newline
-	They way our brain solves handwritten formulae is similar to our program. We see the equation \texttt{(input)}, more specific extract each character \texttt{(segmentation)}, and recognize them as what they represent \texttt{(recognition)}. The focus is on what is written, so other things like the background are disregarded \texttt{(preprocessing)}. We skim over the equations from left, to right, top to bottom \texttt{(ordering)} and compute the result in our head along the way \texttt{(solving)}. Usually all the steps before finally computing the result, like segmentation and recognition are done effortlessly by our brain - the actual solving takes more time. Interestingly this phenomena is reversed with a machine. Calculations are rapid and easy to implement. However, reconstructing the written formula, by reading and interpreting visual information takes much more effort. It entails challenges in the areas of visual computing and machine learning.\\\\
+	They way our brain solves handwritten formulae is similar to our program. We see the equation \texttt{(input)} and focus on what is written, so other things like the background are disregarded \texttt{(preprocessing)}. Then we extract each character from the rest \texttt{(segmentation)}, and recognize them as what they represent \texttt{(recognition)}. We skim over the equations from left, to right, top to bottom \texttt{(ordering)} and compute the result in our head along the way \texttt{(solving)}. Usually all the steps before finally computing the result, like segmentation and recognition are done effortlessly by our brain - the actual solving takes more time. Interestingly this phenomena is reversed in a machine. Calculations are rapid and easy to implement. However, reconstructing the written formula, by reading and interpreting visual information takes much more effort. It entails challenges in the areas of visual computing and machine learning.\\\\
 	For once, several visual computing methods need to be applied to the image. The application has to segment the input image into one segment per character. These segments have to be put in an order which correctly represents the written formula. This ordering step is not trivial as there can be multiple lines of written equations with varying height and straightness. Each line can also contain fractions. They pose a problem, as their nominators and denominators could be assigned to the wrong line. Making things more complicated, fractions can be nested too.\\\\
 	Machine learning methods can be applied for the recognition of each segmented character. Luckily, the recognition of handwritten symbols is a well-known problem that has been approached by various researchers before. LeCun et al \cite{lecun1998} for instance discussed different methods to recognized handwritten digits in 1998. With this work, they made a huge contribution by providing this MNIST database of handwritten digits \cite{mnist} that is used for many toy examples in machine learning. In fact, the task that is solved around the MNIST dataset does not differ very much from our own classification task. Symbols that can appear in a calculator input will mainly be digits from 0 to 9. Additionally, mathematical operators, brackets, latin symbols and greek symbols could be found in a mathematical formula. For this work however, we will focus on recognizing only digits and simple mathematical operators like plus, minus, multiplication-, and division symbols, as well as brackets.\\\\
-	After these steps are completed, we end up with a reconstructed formula which we pass to a symbolic math solver, in our case \texttt{SymPy}, which is an open source python library. We then present the recognized equations with the computed results.\\\\
+	After these steps are completed, we end up with a reconstructed formula which we pass to a symbolic math solver, in our case \texttt{SymPy}, which is an open source python library.\\\\
 	We implemented the program to harnesses the local webcam and use the stream of frames as the input. The whole process of preprocessing, segmenting and ordering each frame is computed and displayed in near real-time.
 	The whole application flow is summarized in the figure below:
 	\begin{figure}[h]
@@ -412,12 +412,12 @@ maxcitenames=2]{biblatex} %% biber with biblatex
 	The algorithm for computing the line thickness of a contour was taken from \cite{stackexchange}
 	\begin{enumerate}
 		\item We start with a binary image (see fig. \ref{fig:linethickness}), with pixel values either zero (black) or 255 (white).
-		\item Summing up the image gives us the sum of all white pixels, as black pixel are zero. In other words, the sum gives us the area of the whole white line (in pixel times 255).
-		\item After skeletonizing the image, the white line becomes one pixel thick (see fig. \ref{fig:linethickness}). The resulting skeleton is a 1-pixel-thin approximation of the original image.\\
-		Summing up the skeleton gives us the approximate length of the line.
+		\item Summing up the image gives us the sum of all white pixels, as black pixel are zero. In other words, the sum gives us the area of the whole white line (in pixel, times 255):
 		\begin{align}
 		Area = Sum/255
 		\end{align}
+		\item After skeletonizing the image, the white line becomes one pixel thick (see fig. \ref{fig:linethickness}). The resulting skeleton is a 1-pixel-thin approximation of the original image.\\
+		Summing up the skeleton gives us the approximate length of the line.
 		\item With the line area and length, we calculate its thickness as:
 		\begin{align}
 		Thickness = Area / Length
@@ -907,14 +907,13 @@ AlexNet(
 	However, we were never able to observe this on a whiteboard or paper.
 	This step makes it impossible to detect an equation on e.g. a blackboard, because here, the writing is brighter than the background.
 	
+	\subsection{Segmentation}
+	\small{Author: Duc Anh Phi} \newline \newline
+	We segment written characters from the image using visual computing methods. Unfortunately this segmentation process can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. This occurs for low light images with thin contours. In this setting it is difficult to differentiate between an actual dot and noise. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power (for training the models) but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
+	
 	\subsection{Classification problems}
 	\small{Author: Fenja Kollasch} \newline \newline
 	A major issue appearing during development was the fact that the usability of our application depends highly on the accuracy of the classifier. Our initial ambition was to recognize various more symbols automatically. Unfortunately, we were not able to gather enough training data and therefore we could not create models with the desired accuracy. Any classifier that recognizes less than 95\% causes major drops in the overall performance of our program and makes it unusable. Furthermore, it took a long time to create well-trained models making the training procedure tedious and impeding our progress.
-
-		
-	\subsection{Segmentation}
-	\small{Author: Duc Anh Phi} \newline \newline
-	We segment written characters from the image using visual computing methods. Unfortunately this segmentation process can still be fooled by noise. After the preprocessing we remove noise based on a computed line thickness threshold. For most cases this works well, however it can happen that the threshold is not representative of what was actually written. As seen in this example(!Example with the holes in the paper). This would cause actual written symbols to be regarded as noise and consequently being removed. The reverse case that actual noise is regarded as written symbols is another problem we have not solved yet. Alternatively you could train a network differentiating between noise and written symbols. We have not explored semantic segmentation using deep learning. We assumed it would require too much resources not only in computational power (for training the models) but also in finding sufficient data to train on, as usually these algorithms require pixel-wise labeling of images.
 
 	
 	\subsection{Comparing Preclassification and Neural Networks}
@@ -954,7 +953,7 @@ AlexNet(
 	
 	\pagebreak
 	\section{Installation and Usage}
-	\small{Author: Duc Anh Phi)\\
+	\small{Author: Duc Anh Phi}\\
 	\subsection{Prerequisites}
 	For the classification, it is important to have a trained model in the same directory as the source code.
 	
